@@ -1,12 +1,22 @@
 import {
+  BadgeDollarSign,
   Bot,
   BriefcaseBusiness,
   CalendarDays,
   CreditCard,
+  GraduationCap,
   FileSpreadsheet,
+  FolderOpen,
+  Gavel,
   Home,
   Megaphone,
+  MessagesSquare,
+  Network,
+  PlugZap,
   Repeat2,
+  Settings,
+  ShieldCheck,
+  Store,
   Users,
   WalletCards
 } from "lucide-react";
@@ -22,5 +32,15 @@ export const navigation: readonly NavigationItem[] = [
   { label: "Agenda", href: "/agenda", icon: CalendarDays },
   { label: "Marketing", href: "/marketing", icon: Megaphone },
   { label: "Automatisations", href: "/automatisations", icon: Repeat2 },
-  { label: "IA Business", href: "/ia-business", icon: Bot }
+  { label: "IA Business", href: "/ia", icon: Bot },
+  { label: "Entreprise", href: "/entreprise", icon: Gavel },
+  { label: "Documents", href: "/documents", icon: FolderOpen },
+  { label: "Support", href: "/support", icon: MessagesSquare },
+  { label: "Entreprises", href: "/entreprises", icon: Network },
+  { label: "Parametres", href: "/settings", icon: Settings },
+  { label: "Billing SaaS", href: "/billing", icon: BadgeDollarSign },
+  { label: "Integrations", href: "/integrations", icon: PlugZap },
+  { label: "Academy", href: "/centrix-academy", icon: GraduationCap },
+  { label: "Marketplace", href: "/marketplace", icon: Store },
+  { label: "Securite", href: "/security", icon: ShieldCheck }
 ] as const;

@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { ComptabiliteWorkspace } from "@/components/comptabilite/ComptabiliteWorkspace";
 
 export default function ComptabilitePage() {
-  return <ModulePage {...pageCopy.comptabilite} />;
+  return <ComptabiliteWorkspace />;
 }

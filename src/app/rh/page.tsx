@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { HrWorkspace } from "@/components/hr/HrWorkspace";
 
 export default function RhPage() {
-  return <ModulePage {...pageCopy.rh} />;
+  return <HrWorkspace />;
 }

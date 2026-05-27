@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { AutomationsWorkspace } from "@/components/automations/AutomationsWorkspace";
 
 export default function AutomatisationsPage() {
-  return <ModulePage {...pageCopy.automatisations} />;
+  return <AutomationsWorkspace />;
 }

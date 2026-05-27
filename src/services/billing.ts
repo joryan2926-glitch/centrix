@@ -1,4 +1,4 @@
-import type { BillingDocument, BillingLine, BillingStatus, BillingTotals, FrenchVatRate } from "@/types/billing";
+import type { BillingDocument, BillingLine, BillingNotification, BillingStatus, BillingTotals, FrenchVatRate, SaaSBillingData, SaaSSubscription, SubscriptionPlanCode } from "@/types/billing";
 
 export function createBillingId(prefix = "doc") {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -74,4 +74,58 @@ export function createHistory(label: string, detail: string) {
     label,
     detail
   };
+}
+
+export const subscriptionStatusLabels: Record<SaaSSubscription["status"], string> = {
+  active: "Actif",
+  trialing: "Essai",
+  suspended: "Suspendu",
+  canceled: "Annule",
+  past_due: "Impaye"
+};
+
+export const planLabels: Record<SubscriptionPlanCode, string> = {
+  free: "Free",
+  starter: "Starter",
+  premium: "Premium",
+  business: "Business",
+  enterprise: "Enterprise"
+};
+
+export function getSaaSBillingDashboard(data: SaaSBillingData) {
+  const activeSubscriptions = data.subscriptions.filter((subscription) => subscription.status === "active");
+  const mrr = activeSubscriptions.reduce((sum, subscription) => {
+    const plan = data.plans.find((item) => item.id === subscription.planId);
+    return sum + (plan?.monthlyPrice ?? 0);
+  }, 0);
+  const totalRevenue = data.payments.filter((payment) => payment.status === "paid").reduce((sum, payment) => sum + payment.amount, 0);
+  const churnRate = data.subscriptions.length ? (data.subscriptions.filter((subscription) => subscription.status === "canceled").length / data.subscriptions.length) * 100 : 0;
+
+  return {
+    mrr,
+    activeSubscriptions: activeSubscriptions.length,
+    totalRevenue,
+    churnRate,
+    trials: data.subscriptions.filter((subscription) => subscription.status === "trialing").length,
+    failedPayments: data.payments.filter((payment) => payment.status === "failed").length,
+    premiumCustomers: data.customers.filter((customer) => customer.premium).length
+  };
+}
+
+export function createBillingNotification(customerId: string | null, title: string, detail: string, severity: BillingNotification["severity"] = "info"): BillingNotification {
+  return {
+    id: createBillingId("bill-notif"),
+    customerId,
+    title,
+    detail,
+    severity,
+    createdAt: new Date().toISOString()
+  };
+}
+
+export function subscriptionTone(status: SaaSSubscription["status"]) {
+  if (status === "active") return "emerald" as const;
+  if (status === "trialing") return "cyan" as const;
+  if (status === "past_due" || status === "suspended") return "rose" as const;
+  return "violet" as const;
 }

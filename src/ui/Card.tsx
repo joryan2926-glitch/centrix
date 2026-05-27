@@ -1,14 +1,14 @@
 import { clsx } from "clsx";
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { theme } from "@/services/theme";
 
-type CardProps = {
+type CardProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
   className?: string;
   interactive?: boolean;
 };
 
-export function Card({ children, className, interactive = false }: CardProps) {
+export function Card({ children, className, interactive = false, ...props }: CardProps) {
   return (
     <section
       className={clsx(
@@ -20,6 +20,7 @@ export function Card({ children, className, interactive = false }: CardProps) {
         theme.transition,
         className
       )}
+      {...props}
     >
       {children}
     </section>

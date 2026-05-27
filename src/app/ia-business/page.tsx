@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { AiWorkspace } from "@/components/ia/AiWorkspace";
 
 export default function IaBusinessPage() {
-  return <ModulePage {...pageCopy["ia-business"]} />;
+  return <AiWorkspace />;
 }

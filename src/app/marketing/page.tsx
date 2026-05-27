@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { MarketingWorkspace } from "@/components/marketing/MarketingWorkspace";
 
 export default function MarketingPage() {
-  return <ModulePage {...pageCopy.marketing} />;
+  return <MarketingWorkspace />;
 }

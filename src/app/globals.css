@@ -123,3 +123,45 @@ body {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.35);
 }
+
+.agenda-calendar {
+  --fc-border-color: rgba(255, 255, 255, 0.1);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: rgba(255, 255, 255, 0.045);
+  --fc-list-event-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --fc-today-bg-color: rgba(94, 231, 255, 0.08);
+  --fc-button-bg-color: rgba(255, 255, 255, 0.07);
+  --fc-button-border-color: rgba(255, 255, 255, 0.12);
+  --fc-button-hover-bg-color: rgba(255, 255, 255, 0.13);
+  --fc-button-active-bg-color: rgba(94, 231, 255, 0.16);
+  color: #e2e8f0;
+}
+
+.agenda-calendar .fc {
+  font-family: inherit;
+}
+
+.agenda-calendar .fc-toolbar-title {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.agenda-calendar .fc-button {
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  text-transform: none;
+}
+
+.agenda-calendar .fc-event {
+  border-radius: 8px;
+  border: 0;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.24);
+  cursor: pointer;
+}
+
+.agenda-calendar .fc-col-header-cell,
+.agenda-calendar .fc-timegrid-slot-label,
+.agenda-calendar .fc-list-day-cushion {
+  color: #94a3b8;
+}

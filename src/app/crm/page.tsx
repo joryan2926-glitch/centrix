@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { CrmWorkspace } from "@/components/crm/CrmWorkspace";
 
 export default function CrmPage() {
-  return <ModulePage {...pageCopy.crm} />;
+  return <CrmWorkspace />;
 }

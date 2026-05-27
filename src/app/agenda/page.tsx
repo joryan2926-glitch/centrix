@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/saas/ModulePage";
-import { pageCopy } from "@/data/modules";
+import { AgendaWorkspace } from "@/components/agenda/AgendaWorkspace";
 
 export default function AgendaPage() {
-  return <ModulePage {...pageCopy.agenda} />;
+  return <AgendaWorkspace />;
 }
