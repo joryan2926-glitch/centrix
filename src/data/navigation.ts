@@ -1,44 +1,110 @@
 import {
   BarChart3,
   BadgeDollarSign,
+  BellRing,
   Bot,
+  BrainCircuit,
+  Building2,
   BriefcaseBusiness,
   CalendarDays,
   ChartNoAxesCombined,
   CreditCard,
+  FileSignature,
   FileSpreadsheet,
   FolderOpen,
   Gavel,
+  GitBranch,
   Home,
   LineChart,
   Megaphone,
   MessagesSquare,
+  PanelsTopLeft,
   Repeat2,
+  Rocket,
   Settings,
+  ShieldCheck,
+  Sparkles,
   Store,
+  UserRound,
   Users,
+  WandSparkles,
   WalletCards
 } from "lucide-react";
-import type { NavigationItem } from "@/types/navigation";
+import type { NavigationGroup, NavigationItem } from "@/types/navigation";
 
-export const navigation: readonly NavigationItem[] = [
-  { label: "Dashboard", href: "/", icon: Home },
-  { label: "CRM", href: "/crm", icon: BriefcaseBusiness },
-  { label: "Clients", href: "/clients", icon: Users },
-  { label: "Facturation", href: "/facturation", icon: CreditCard },
-  { label: "Comptabilite", href: "/comptabilite", icon: FileSpreadsheet },
-  { label: "Finance", href: "/finance", icon: ChartNoAxesCombined },
-  { label: "RH", href: "/rh", icon: WalletCards },
-  { label: "Agenda", href: "/agenda", icon: CalendarDays },
-  { label: "Marketing", href: "/marketing", icon: Megaphone },
-  { label: "Reseaux Sociaux", href: "/reseaux-sociaux", icon: LineChart },
-  { label: "Automatisations", href: "/automatisations", icon: Repeat2 },
-  { label: "IA Business", href: "/ia", icon: Bot },
-  { label: "Documents Cloud", href: "/documents", icon: FolderOpen },
-  { label: "Juridique", href: "/juridique", icon: Gavel },
-  { label: "Marketplace", href: "/marketplace", icon: Store },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Support", href: "/support", icon: MessagesSquare },
-  { label: "Parametres", href: "/settings", icon: Settings },
-  { label: "Billing SaaS", href: "/billing", icon: BadgeDollarSign }
+export const navigationGroups: readonly NavigationGroup[] = [
+  {
+    label: "Dashboard",
+    items: [
+      { label: "Vue globale", href: "/dashboard", icon: Home, badge: "Live" },
+      { label: "KPI & analytics", href: "/analytics", icon: BarChart3 },
+      { label: "Onboarding", href: "/onboarding", icon: Rocket }
+    ]
+  },
+  {
+    label: "Business",
+    items: [
+      { label: "CRM", href: "/crm", icon: BriefcaseBusiness },
+      { label: "Clients", href: "/clients", icon: Users },
+      { label: "Ventes", href: "/sales", icon: BadgeDollarSign },
+      { label: "Facturation", href: "/facturation", icon: CreditCard },
+      { label: "Comptabilite", href: "/comptabilite", icon: FileSpreadsheet },
+      { label: "Banque & Finance", href: "/finance", icon: ChartNoAxesCombined },
+      { label: "Previsionnel", href: "/predictive-ai", icon: BrainCircuit }
+    ]
+  },
+  {
+    label: "Equipe",
+    items: [
+      { label: "RH", href: "/rh", icon: WalletCards },
+      { label: "Salaires", href: "/rh", icon: CreditCard },
+      { label: "Agenda", href: "/agenda", icon: CalendarDays },
+      { label: "Projets", href: "/projects", icon: PanelsTopLeft },
+      { label: "Collaboration", href: "/notifications", icon: MessagesSquare }
+    ]
+  },
+  {
+    label: "Marketing",
+    items: [
+      { label: "Marketing digital", href: "/marketing-digital", icon: Megaphone },
+      { label: "Reseaux sociaux", href: "/reseaux-sociaux", icon: LineChart },
+      { label: "Campagnes", href: "/marketing", icon: BarChart3 },
+      { label: "Automatisations", href: "/automatisations", icon: Repeat2 },
+      { label: "Workflows", href: "/workflows", icon: GitBranch }
+    ]
+  },
+  {
+    label: "IA CENTRIX",
+    items: [
+      { label: "Assistant IA", href: "/ia", icon: Bot, badge: "AI" },
+      { label: "Generation contenu", href: "/ia-business", icon: WandSparkles },
+      { label: "Analyse business", href: "/business-intelligence", icon: BrainCircuit },
+      { label: "Recommandations IA", href: "/analytics-ia", icon: Sparkles },
+      { label: "IA financiere", href: "/finance", icon: ChartNoAxesCombined }
+    ]
+  },
+  {
+    label: "Entreprise",
+    items: [
+      { label: "Creation entreprise", href: "/entreprise", icon: Building2 },
+      { label: "Juridique", href: "/juridique", icon: Gavel },
+      { label: "Documents", href: "/documents", icon: FolderOpen },
+      { label: "Signatures", href: "/documents-cloud", icon: FileSignature },
+      { label: "Marketplace", href: "/marketplace", icon: Store },
+      { label: "Academy", href: "/centrix-academy", icon: UserRound }
+    ]
+  },
+  {
+    label: "Systeme",
+    items: [
+      { label: "Parametres", href: "/settings", icon: Settings },
+      { label: "Notifications", href: "/notifications", icon: BellRing },
+      { label: "API", href: "/api-management", icon: GitBranch },
+      { label: "Integrations", href: "/integrations", icon: Repeat2 },
+      { label: "Cybersecurite", href: "/security", icon: ShieldCheck },
+      { label: "Billing SaaS", href: "/billing", icon: BadgeDollarSign }
+    ]
+  }
 ] as const;
+
+export const navigation: readonly NavigationItem[] = navigationGroups.flatMap((group) => group.items);

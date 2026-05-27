@@ -1,0 +1,10 @@
+"use client";
+
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { SalesData } from "@/types/sales";
+
+export function SalesCharts({ data }: { data: SalesData }) {
+  const pipeline = data.pipeline.map((stage) => ({ name: stage.label, value: data.leads.filter((lead) => lead.stage === stage.id).reduce((sum, lead) => sum + lead.potentialValue, 0), leads: data.leads.filter((lead) => lead.stage === stage.id).length }));
+  const sellers = data.teams.map((seller) => ({ name: seller.name, revenue: seller.closedRevenue, quota: seller.quota }));
+  return <section className="grid gap-4 xl:grid-cols-[1fr_0.8fr]"><div className="rounded-[18px] border border-slate-200 bg-white/82 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"><h2 className="text-lg font-black text-slate-950">Pipeline commercial</h2><div className="mt-5 h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data={pipeline}><CartesianGrid stroke="rgba(15,23,42,0.08)" vertical={false} /><XAxis dataKey="name" stroke="#64748b" fontSize={11} /><YAxis stroke="#64748b" fontSize={12} /><Tooltip contentStyle={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14 }} /><Line dataKey="value" stroke="#2563EB" strokeWidth={3} type="monotone" /><Line dataKey="leads" stroke="#10b981" strokeWidth={2} type="monotone" /></LineChart></ResponsiveContainer></div></div><div className="rounded-[18px] border border-slate-200 bg-white/82 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"><h2 className="text-lg font-black text-slate-950">Performance commerciaux</h2><div className="mt-5 h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={sellers}><CartesianGrid stroke="rgba(15,23,42,0.08)" vertical={false} /><XAxis dataKey="name" stroke="#64748b" fontSize={12} /><YAxis stroke="#64748b" fontSize={12} /><Tooltip contentStyle={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14 }} /><Bar dataKey="revenue" fill="#2563EB" radius={[10, 10, 0, 0]} /><Bar dataKey="quota" fill="#cbd5e1" radius={[10, 10, 0, 0]} /></BarChart></ResponsiveContainer></div></div></section>;
+}

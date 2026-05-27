@@ -4,6 +4,12 @@ export type NavigationItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  badge?: string;
+};
+
+export type NavigationGroup = {
+  label: string;
+  items: readonly NavigationItem[];
 };
 
 export type Metric = {

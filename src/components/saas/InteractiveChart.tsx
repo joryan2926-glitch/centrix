@@ -40,8 +40,8 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
     <Card className="p-5" interactive>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+          <h2 className="text-base font-bold text-slate-950">{title}</h2>
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
         </div>
         <Badge tone="cyan">
           {active.label} · {active.value}
@@ -50,21 +50,21 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
       </div>
 
       {type === "line" ? (
-        <div className="mt-6 overflow-hidden rounded-[8px] border border-white/10 bg-slate-950/35 p-3">
+        <div className="mt-6 overflow-hidden rounded-[16px] border border-slate-200 bg-white/72 p-3">
           <svg viewBox="0 0 640 220" className="h-56 w-full" role="img" aria-label={title}>
             <defs>
               <linearGradient id={lineGradientId} x1="0" x2="1" y1="0" y2="0">
-                <stop stopColor="#5ee7ff" />
-                <stop offset="0.55" stopColor="#8b5cf6" />
-                <stop offset="1" stopColor="#a7f3d0" />
+              <stop stopColor="#2563EB" />
+              <stop offset="0.55" stopColor="#0B7CFF" />
+              <stop offset="1" stopColor="#6D5DFC" />
               </linearGradient>
               <linearGradient id={areaGradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop stopColor="#5ee7ff" stopOpacity="0.22" />
-                <stop offset="1" stopColor="#5ee7ff" stopOpacity="0" />
+                <stop stopColor="#2563EB" stopOpacity="0.18" />
+                <stop offset="1" stopColor="#2563EB" stopOpacity="0" />
               </linearGradient>
             </defs>
             {[0, 1, 2, 3].map((line) => (
-              <line key={line} x1="20" x2="620" y1={35 + line * 45} y2={35 + line * 45} stroke="rgba(255,255,255,0.07)" />
+              <line key={line} x1="20" x2="620" y1={35 + line * 45} y2={35 + line * 45} stroke="rgba(15,23,42,0.08)" />
             ))}
             <path d={`${linePath} L 620 200 L 20 200 Z`} fill={`url(#${areaGradientId})`} />
             <path
@@ -84,7 +84,7 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
 
               return (
                 <g key={point.label} onMouseEnter={() => setActiveIndex(index)} className="cursor-pointer">
-                  <circle cx={x} cy={y} r={isActive ? 9 : 6} fill={isActive ? "#f8fafc" : "#5ee7ff"} />
+                  <circle cx={x} cy={y} r={isActive ? 9 : 6} fill={isActive ? "#0F172A" : "#2563EB"} />
                   <circle cx={x} cy={y} r="18" fill="transparent" />
                   <text x={x} y="216" textAnchor="middle" className="fill-slate-500 text-[12px]">
                     {point.label}
@@ -106,14 +106,14 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
               >
-                <span className={isActive ? "text-white" : "text-slate-400"}>{point.label}</span>
-                <span className="h-3 overflow-hidden rounded-full bg-white/10">
+                <span className={isActive ? "text-slate-950" : "text-slate-500"}>{point.label}</span>
+                <span className="h-3 overflow-hidden rounded-full bg-slate-100">
                   <span
-                    className="block h-full rounded-full bg-gradient-to-r from-cyan-200 via-violet-300 to-emerald-200 transition-all duration-500"
+                    className="block h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-violet-500 transition-all duration-500"
                     style={{ width: `${(point.value / max) * 100}%` }}
                   />
                 </span>
-                <span className="text-right font-semibold text-cyan-100">
+                <span className="text-right font-bold text-blue-700">
                   {point.value}
                   {valueSuffix}
                 </span>

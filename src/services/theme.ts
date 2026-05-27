@@ -1,11 +1,11 @@
 export const theme = {
   radius: {
-    sm: "rounded-[6px]",
-    md: "rounded-[14px]",
+    sm: "rounded-[10px]",
+    md: "rounded-[18px]",
     full: "rounded-full"
   },
-  transition: "transition-all duration-300 ease-out motion-reduce:transition-none",
-  surface: "border border-slate-200/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(247,250,255,0.72))] shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl",
+  transition: "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+  surface: "border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,247,255,0.72))] shadow-[0_22px_70px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl",
   interactive: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f9fc]"
 } as const;
 

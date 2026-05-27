@@ -1,3 +1,5 @@
+@import "@xyflow/react/dist/style.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,8 +10,9 @@
   --surface: rgba(255, 255, 255, 0.84);
   --surface-strong: rgba(255, 255, 255, 0.96);
   --line: rgba(15, 23, 42, 0.1);
-  --centrix-blue: #0077ff;
-  --centrix-navy: #071225;
+  --centrix-blue: #2563eb;
+  --centrix-sky: #0ea5e9;
+  --centrix-navy: #050b18;
 }
 
 * {
@@ -33,10 +36,10 @@ body {
 @layer utilities {
   .bg-app-light {
     background:
-      radial-gradient(circle at 12% 8%, rgba(0, 119, 255, 0.14), transparent 28%),
-      radial-gradient(circle at 86% 14%, rgba(109, 93, 252, 0.12), transparent 30%),
-      radial-gradient(circle at 52% 88%, rgba(14, 165, 233, 0.09), transparent 34%),
-      linear-gradient(135deg, #f8fbff 0%, #f4f7fb 48%, #eef5ff 100%);
+      radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.18), transparent 30%),
+      radial-gradient(circle at 86% 14%, rgba(14, 165, 233, 0.13), transparent 32%),
+      radial-gradient(circle at 52% 88%, rgba(99, 102, 241, 0.10), transparent 36%),
+      linear-gradient(135deg, #fbfdff 0%, #f6f9ff 42%, #edf5ff 100%);
   }
 
   .bg-grid-light {
@@ -45,6 +48,19 @@ body {
       linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
     background-size: 54px 54px;
     mask-image: linear-gradient(to bottom, black, transparent 76%);
+  }
+
+  .centrix-orbit {
+    background:
+      linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.28), transparent),
+      radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 62%);
+  }
+
+  .premium-ring {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.72) inset,
+      0 24px 80px rgba(15, 23, 42, 0.08),
+      0 0 54px rgba(37, 99, 235, 0.10);
   }
 
   .bg-app-dark {
@@ -141,6 +157,15 @@ body {
 .centrix-content textarea,
 .centrix-content select {
   color: #0f172a;
+}
+
+.centrix-content .centrix-inverse,
+.centrix-content .centrix-inverse .text-white {
+  color: #ffffff;
+}
+
+.centrix-content .centrix-inverse .text-blue-50\/78 {
+  color: rgba(239, 246, 255, 0.78);
 }
 
 @media (prefers-reduced-motion: reduce) {

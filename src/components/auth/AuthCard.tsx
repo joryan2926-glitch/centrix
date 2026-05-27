@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Chrome, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { CentrixLogo } from "@/components/ui";
+import { resetPassword, signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/supabase";
+import type { AuthMode } from "@/types/auth";
+import { Button } from "@/ui/Button";
+import { Card } from "@/ui/Card";
+import { Toast } from "@/ui/Toast";
+
+type AuthCardProps = {
+  mode: AuthMode;
+};
+
+const copy = {
+  login: { title: "Bienvenue", detail: "Connectez-vous a votre cockpit CENTRIX.", cta: "Entrer dans CENTRIX" },
+  register: { title: "Creer un workspace", detail: "Configurez votre plateforme enterprise premium.", cta: "Creer mon compte" },
+  forgot: { title: "Reinitialiser", detail: "Recevez un lien securise de recuperation.", cta: "Envoyer le lien" }
+};
+
+export function AuthCard({ mode }: AuthCardProps) {
+  const [toast, setToast] = useState<{ title: string; detail: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    setLoading(true);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const name = String(formData.get("name") ?? "");
+
+    const result =
+      mode === "login"
+        ? await signInWithPassword({ email, password })
+        : mode === "register"
+          ? await signUpWithPassword({ email, password, name })
+          : await resetPassword(email);
+
+    setLoading(false);
+    setToast({
+      title: result.error ? "Action impossible" : result.mode === "demo" ? "Mode demo actif" : "Action confirmee",
+      detail: result.error?.message ?? (mode === "forgot" ? "Consultez votre boite email." : "Session prete pour CENTRIX.")
+    });
+  }
+
+  async function handleGoogle() {
+    const result = await signInWithGoogle();
+    setToast({
+      title: result.error ? "OAuth indisponible" : "Google OAuth prepare",
+      detail: result.error?.message ?? "Connexion Google connectee a Supabase Auth."
+    });
+  }
+
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#f7f9fc] px-4 py-10">
+      {toast ? <Toast title={toast.title} detail={toast.detail} /> : null}
+      <div className="fixed inset-0 -z-10 bg-app-light" />
+      <Card className="grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1fr_430px]">
+        <div className="bg-[#071225] p-8 text-white sm:p-10">
+          <CentrixLogo inverse />
+          <h1 className="mt-12 max-w-md text-4xl font-black tracking-tight">Authentification enterprise CENTRIX.</h1>
+          <p className="mt-4 max-w-md text-sm leading-6 text-blue-50/72">
+            Sessions securisees, OAuth Google, preparation 2FA et protection routes pour votre plateforme SaaS.
+          </p>
+          <div className="mt-10 grid gap-3">
+            {["Protection donnees", "Sessions Supabase Auth", "Routes applicatives securisees"].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-[16px] border border-white/10 bg-white/[0.07] p-4">
+                <ShieldCheck size={19} />
+                <span className="text-sm font-semibold">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <form action={handleSubmit} className="p-8 sm:p-10">
+          <CentrixLogo className="lg:hidden" />
+          <h2 className="mt-2 text-2xl font-black text-slate-950 lg:mt-0">{copy[mode].title}</h2>
+          <p className="mt-2 text-sm text-slate-500">{copy[mode].detail}</p>
+          <div className="mt-8 space-y-4">
+            {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Julien Business" /> : null}
+            <Field icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" />
+            {mode !== "forgot" ? <Field icon={<LockKeyhole size={17} />} label="Mot de passe" name="password" placeholder="centrix-premium" type="password" /> : null}
+          </div>
+          <Button className="mt-6 w-full" disabled={loading} variant="primary">
+            {loading ? "Traitement..." : copy[mode].cta}
+            <ArrowRight size={17} />
+          </Button>
+          {mode !== "forgot" ? (
+            <Button className="mt-3 w-full" onClick={handleGoogle} type="button">
+              <Chrome size={17} />
+              Continuer avec Google
+            </Button>
+          ) : null}
+          <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-500">
+            {mode !== "login" ? <Link href="/login" className="hover:text-blue-700">Se connecter</Link> : null}
+            {mode !== "register" ? <Link href="/register" className="hover:text-blue-700">Creer un compte</Link> : null}
+            {mode !== "forgot" ? <Link href="/forgot-password" className="hover:text-blue-700">Mot de passe oublie</Link> : null}
+          </div>
+        </form>
+      </Card>
+    </main>
+  );
+}
+
+function Field({ icon, label, name, placeholder, type = "text" }: { icon: React.ReactNode; label: string; name: string; placeholder: string; type?: string }) {
+  return (
+    <label className="block text-sm font-semibold text-slate-700">
+      {label}
+      <span className="mt-2 flex h-11 items-center gap-2 rounded-[12px] border border-slate-200 bg-white px-3 transition focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100">
+        <span className="text-slate-400">{icon}</span>
+        <input required className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none" name={name} placeholder={placeholder} type={type} />
+      </span>
+    </label>
+  );
+}
