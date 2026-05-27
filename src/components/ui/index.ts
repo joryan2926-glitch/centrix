@@ -1,0 +1,1 @@
+export { CentrixLogo } from "./CentrixLogo";

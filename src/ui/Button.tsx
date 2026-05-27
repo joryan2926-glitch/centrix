@@ -11,12 +11,12 @@ export function Button({ children, className, variant = "surface", ...props }: B
   return (
     <button
       className={clsx(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-[8px] px-4 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+        "inline-flex h-11 items-center justify-center gap-2 rounded-[12px] px-4 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
         theme.transition,
         theme.interactive,
-        variant === "primary" && "bg-white text-slate-950 hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-glow",
-        variant === "ghost" && "text-slate-300 hover:bg-white/8 hover:text-white",
-        variant === "surface" && "border border-white/10 bg-white/[0.065] text-slate-200 hover:-translate-y-0.5 hover:bg-white/[0.115]",
+        variant === "primary" && "bg-gradient-to-r from-[#0077ff] via-[#246bff] to-[#6d5dfc] text-white shadow-[0_18px_38px_rgba(0,119,255,0.24)] hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(0,119,255,0.30)]",
+        variant === "ghost" && "text-slate-600 hover:bg-slate-900/5 hover:text-slate-950",
+        variant === "surface" && "border border-slate-200 bg-white/80 text-slate-700 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700",
         className
       )}
       {...props}
