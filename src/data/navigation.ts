@@ -36,19 +36,19 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     label: "Dashboard",
     items: [
-      { label: "Vue globale", href: "/dashboard", icon: Home, badge: "Live" },
-      { label: "KPI & analytics", href: "/analytics", icon: BarChart3 },
+      { label: "Vue globale", href: "/dashboard", icon: Home, badge: "Live", favorite: true, keywords: ["home", "dashboard", "kpi", "activite"] },
+      { label: "KPI & analytics", href: "/analytics", icon: BarChart3, favorite: true, keywords: ["reporting", "statistiques", "business intelligence"] },
       { label: "Onboarding", href: "/onboarding", icon: Rocket }
     ]
   },
   {
     label: "Business",
     items: [
-      { label: "CRM", href: "/crm", icon: BriefcaseBusiness },
-      { label: "Clients", href: "/clients", icon: Users },
-      { label: "Ventes", href: "/sales", icon: BadgeDollarSign },
-      { label: "Facturation", href: "/facturation", icon: CreditCard },
-      { label: "Comptabilite", href: "/comptabilite", icon: FileSpreadsheet },
+      { label: "CRM", href: "/crm", icon: BriefcaseBusiness, favorite: true, keywords: ["pipeline", "prospects", "leads", "clients"] },
+      { label: "Clients", href: "/clients", icon: Users, favorite: true, keywords: ["portail", "contacts", "comptes"] },
+      { label: "Ventes", href: "/sales", icon: BadgeDollarSign, keywords: ["pipeline", "deals", "revenus"] },
+      { label: "Facturation", href: "/facturation", icon: CreditCard, favorite: true, keywords: ["devis", "factures", "paiement", "stripe"] },
+      { label: "Comptabilite", href: "/comptabilite", icon: FileSpreadsheet, keywords: ["tva", "depenses", "revenus"] },
       { label: "Banque & Finance", href: "/finance", icon: ChartNoAxesCombined },
       { label: "Previsionnel", href: "/predictive-ai", icon: BrainCircuit }
     ]
@@ -76,7 +76,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     label: "IA CENTRIX",
     items: [
-      { label: "Assistant IA", href: "/ia", icon: Bot, badge: "AI" },
+      { label: "Assistant IA", href: "/ia", icon: Bot, badge: "AI", favorite: true, keywords: ["chatgpt", "assistant", "generation"] },
       { label: "Generation contenu", href: "/ia-business", icon: WandSparkles },
       { label: "Analyse business", href: "/business-intelligence", icon: BrainCircuit },
       { label: "Recommandations IA", href: "/analytics-ia", icon: Sparkles },
@@ -97,6 +97,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     label: "Systeme",
     items: [
+      { label: "Profil", href: "/profile", icon: UserRound },
       { label: "Parametres", href: "/settings", icon: Settings },
       { label: "Notifications", href: "/notifications", icon: BellRing },
       { label: "API", href: "/api-management", icon: GitBranch },
@@ -108,3 +109,4 @@ export const navigationGroups: readonly NavigationGroup[] = [
 ] as const;
 
 export const navigation: readonly NavigationItem[] = navigationGroups.flatMap((group) => group.items);
+export const favoriteNavigation = navigation.filter((item) => item.favorite);

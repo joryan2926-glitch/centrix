@@ -8,17 +8,18 @@ type MetricCardProps = {
 
 export function MetricCard({ metric }: MetricCardProps) {
   return (
-    <Card className="p-5" interactive>
+    <Card className="p-5 sm:p-6" interactive>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-500/12 blur-2xl" />
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-slate-500">{metric.label}</div>
-        <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_16px_rgba(0,119,255,0.42)]" />
+        <div className="relative text-sm font-extrabold tracking-[-0.01em] text-slate-600">{metric.label}</div>
+        <span className="relative h-2.5 w-2.5 rounded-full bg-blue-600 shadow-[0_0_18px_rgba(37,99,235,0.62)]" />
       </div>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <span className="text-3xl font-semibold text-slate-950">{metric.value}</span>
+      <div className="relative mt-4 flex items-end justify-between gap-3">
+        <span className="text-4xl font-black tracking-[-0.04em] text-slate-950">{metric.value}</span>
         <Badge tone={metric.tone ?? "emerald"}>{metric.delta}</Badge>
       </div>
-      <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-cyan-400 transition-all duration-700 group-hover:w-[92%]" />
+      <div className="relative mt-6 h-2 overflow-hidden rounded-full bg-slate-100 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
+        <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#2563EB] to-[#0B7CFF] shadow-[0_0_18px_rgba(37,99,235,0.35)] transition-all duration-700 ease-out group-hover:w-[92%]" />
       </div>
     </Card>
   );

@@ -35,14 +35,8 @@ export function useAgendaData() {
 
     const channel = supabase
       .channel("centrix-agenda-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "calendar_events" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "event_participants" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "reminders" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "meetings" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "event_comments" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "calendars" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "availability_slots" }, () => refresh())
       .subscribe();
 
     return () => {

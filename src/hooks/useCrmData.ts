@@ -52,11 +52,10 @@ export function useCrmData() {
 
     const channel = supabase
       .channel("centrix-crm-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_leads" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_clients" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_notes" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_tasks" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_activities" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "prospects" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => refresh())
       .subscribe();
 
     return () => {

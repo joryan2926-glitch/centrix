@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Chrome, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { CentrixLogo } from "@/components/ui";
-import { resetPassword, signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/supabase";
+import { googleOAuthAction, resetPasswordAction, signInAction, signUpAction } from "@/app/auth/actions";
 import type { AuthMode } from "@/types/auth";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -21,35 +22,39 @@ const copy = {
 };
 
 export function AuthCard({ mode }: AuthCardProps) {
+  const router = useRouter();
   const [toast, setToast] = useState<{ title: string; detail: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-    const name = String(formData.get("name") ?? "");
+    const redirectTo = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+    if (redirectTo) formData.set("redirectTo", redirectTo);
 
     const result =
       mode === "login"
-        ? await signInWithPassword({ email, password })
+        ? await signInAction(formData)
         : mode === "register"
-          ? await signUpWithPassword({ email, password, name })
-          : await resetPassword(email);
+          ? await signUpAction(formData)
+          : await resetPasswordAction(formData);
 
     setLoading(false);
-    setToast({
-      title: result.error ? "Action impossible" : result.mode === "demo" ? "Mode demo actif" : "Action confirmee",
-      detail: result.error?.message ?? (mode === "forgot" ? "Consultez votre boite email." : "Session prete pour CENTRIX.")
-    });
+    setToast({ title: result.title, detail: result.detail });
+
+    if (result.ok && result.redirectTo) {
+      window.setTimeout(() => {
+        router.push(result.redirectTo ?? "/dashboard");
+        router.refresh();
+      }, 600);
+    }
   }
 
   async function handleGoogle() {
-    const result = await signInWithGoogle();
-    setToast({
-      title: result.error ? "OAuth indisponible" : "Google OAuth prepare",
-      detail: result.error?.message ?? "Connexion Google connectee a Supabase Auth."
-    });
+    const result = await googleOAuthAction();
+    setToast({ title: result.title, detail: result.detail });
+    if (result.oauthUrl) {
+      window.location.href = result.oauthUrl;
+    }
   }
 
   return (
@@ -79,6 +84,7 @@ export function AuthCard({ mode }: AuthCardProps) {
           <p className="mt-2 text-sm text-slate-500">{copy[mode].detail}</p>
           <div className="mt-8 space-y-4">
             {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Julien Business" /> : null}
+            {mode === "register" ? <Field icon={<ShieldCheck size={17} />} label="Entreprise" name="company" placeholder="CENTRIX SAS" /> : null}
             <Field icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" />
             {mode !== "forgot" ? <Field icon={<LockKeyhole size={17} />} label="Mot de passe" name="password" placeholder="centrix-premium" type="password" /> : null}
           </div>

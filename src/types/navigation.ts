@@ -5,6 +5,9 @@ export type NavigationItem = {
   href: string;
   icon: LucideIcon;
   badge?: string;
+  keywords?: readonly string[];
+  favorite?: boolean;
+  children?: readonly NavigationItem[];
 };
 
 export type NavigationGroup = {

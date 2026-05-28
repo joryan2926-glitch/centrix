@@ -37,20 +37,20 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
   }, [data, max]);
 
   return (
-    <Card className="p-5" interactive>
+    <Card className="p-6" interactive>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-bold text-slate-950">{title}</h2>
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+          <h2 className="text-base font-black text-slate-950">{title}</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{subtitle}</p>
         </div>
         <Badge tone="cyan">
-          {active.label} · {active.value}
+          {active.label} - {active.value}
           {valueSuffix}
         </Badge>
       </div>
 
       {type === "line" ? (
-        <div className="mt-6 overflow-hidden rounded-[16px] border border-slate-200 bg-white/72 p-3">
+        <div className="mt-6 overflow-hidden rounded-[18px] border border-slate-200 bg-[#f8fafc] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.92)]">
           <svg viewBox="0 0 640 220" className="h-56 w-full" role="img" aria-label={title}>
             <defs>
               <linearGradient id={lineGradientId} x1="0" x2="1" y1="0" y2="0">
@@ -64,7 +64,7 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
               </linearGradient>
             </defs>
             {[0, 1, 2, 3].map((line) => (
-              <line key={line} x1="20" x2="620" y1={35 + line * 45} y2={35 + line * 45} stroke="rgba(15,23,42,0.08)" />
+              <line key={line} x1="20" x2="620" y1={35 + line * 45} y2={35 + line * 45} stroke="rgba(15,23,42,0.10)" />
             ))}
             <path d={`${linePath} L 620 200 L 20 200 Z`} fill={`url(#${areaGradientId})`} />
             <path
@@ -84,7 +84,8 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
 
               return (
                 <g key={point.label} onMouseEnter={() => setActiveIndex(index)} className="cursor-pointer">
-                  <circle cx={x} cy={y} r={isActive ? 9 : 6} fill={isActive ? "#0F172A" : "#2563EB"} />
+                  {isActive ? <circle cx={x} cy={y} r="15" fill="none" stroke="rgba(37,99,235,0.24)" strokeWidth="6" /> : null}
+                  <circle cx={x} cy={y} r={isActive ? 9 : 6} fill={isActive ? "#071226" : "#2563EB"} />
                   <circle cx={x} cy={y} r="18" fill="transparent" />
                   <text x={x} y="216" textAnchor="middle" className="fill-slate-500 text-[12px]">
                     {point.label}
@@ -102,18 +103,18 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
             return (
               <button
                 key={point.label}
-                className="grid w-full grid-cols-[84px_1fr_52px] items-center gap-3 text-left text-sm"
+                className="grid w-full grid-cols-[84px_1fr_52px] items-center gap-3 rounded-[14px] px-2 py-1.5 text-left text-sm transition-colors hover:bg-blue-50"
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
               >
-                <span className={isActive ? "text-slate-950" : "text-slate-500"}>{point.label}</span>
+                <span className={isActive ? "font-black text-slate-950" : "font-semibold text-slate-500"}>{point.label}</span>
                 <span className="h-3 overflow-hidden rounded-full bg-slate-100">
                   <span
-                    className="block h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-violet-500 transition-all duration-500"
+                    className="block h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-blue-500 shadow-[0_0_14px_rgba(37,99,235,0.22)] transition-all duration-500"
                     style={{ width: `${(point.value / max) * 100}%` }}
                   />
                 </span>
-                <span className="text-right font-bold text-blue-700">
+                <span className="text-right font-black text-blue-700">
                   {point.value}
                   {valueSuffix}
                 </span>

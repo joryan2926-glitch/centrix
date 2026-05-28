@@ -10,7 +10,7 @@ type BadgeProps = {
 
 export function Badge({ children, tone = "cyan", className }: BadgeProps) {
   return (
-    <span className={clsx("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold", toneClass(tone), className)}>
+    <span className={clsx("inline-flex rounded-full px-2.5 py-1 text-xs font-black tracking-[-0.01em]", toneClass(tone), className)}>
       {children}
     </span>
   );

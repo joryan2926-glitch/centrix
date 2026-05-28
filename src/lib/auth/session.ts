@@ -1,13 +1,65 @@
+export const publicRoutes = ["/", "/login", "/register", "/forgot-password"] as const;
+
 export const protectedRoutes = [
   "/dashboard",
+  "/onboarding",
   "/crm",
+  "/crm-intelligent",
+  "/clients",
+  "/client-portal",
+  "/sales",
+  "/pipeline",
+  "/projects",
+  "/tasks",
   "/facturation",
+  "/facturation-premium",
   "/comptabilite",
+  "/accounting",
+  "/finance",
   "/billing",
+  "/subscriptions",
+  "/rh",
+  "/hr",
+  "/agenda",
+  "/reservations",
+  "/marketing",
+  "/marketing-digital",
+  "/reseaux-sociaux",
+  "/social-media",
+  "/automatisations",
+  "/automation",
+  "/workflows",
+  "/ia",
+  "/ia-business",
+  "/business-ai",
+  "/documents",
+  "/documents-cloud",
+  "/entreprise",
+  "/juridique",
+  "/marketplace",
+  "/centrix-academy",
+  "/formations",
+  "/community",
+  "/analytics",
+  "/analytics-ia",
+  "/business-intelligence",
+  "/predictive-ai",
+  "/support",
+  "/notifications",
+  "/api-management",
+  "/integrations",
   "/settings",
+  "/profile",
   "/security",
-  "/business-intelligence"
+  "/cybersecurity",
+  "/entreprises",
+  "/multi-entreprises",
+  "/franchises"
 ] as const;
+
+export function isPublicRoute(pathname: string) {
+  return publicRoutes.some((route) => pathname === route);
+}
 
 export function isProtectedRoute(pathname: string) {
   return protectedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));

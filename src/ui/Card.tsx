@@ -12,11 +12,11 @@ export function Card({ children, className, interactive = false, ...props }: Car
   return (
     <section
       className={clsx(
-        "group relative overflow-hidden rounded-[22px]",
+        "group relative overflow-hidden rounded-[24px]",
         theme.surface,
-        "before:pointer-events-none before:absolute before:inset-px before:rounded-[21px] before:border before:border-white/72",
-        "after:pointer-events-none after:absolute after:-left-1/4 after:-top-1/3 after:h-36 after:w-2/3 after:rotate-12 after:bg-blue-500/12 after:blur-3xl after:opacity-0 after:transition-opacity after:duration-500",
-        interactive && "hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-[0_28px_80px_rgba(0,103,255,0.14)] hover:after:opacity-100",
+        "before:pointer-events-none before:absolute before:inset-px before:rounded-[23px] before:border before:border-white/90",
+        "after:pointer-events-none after:absolute after:inset-x-8 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-blue-500/45 after:to-transparent after:opacity-0 after:transition-opacity after:duration-200",
+        interactive && "hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_26px_64px_rgba(37,99,235,0.16),0_0_0_1px_rgba(37,99,235,0.10)] hover:after:opacity-100",
         theme.transition,
         className
       )}
