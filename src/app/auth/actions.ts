@@ -22,6 +22,16 @@ function authErrorMessage(message?: string) {
   return message ?? "Une erreur est survenue. Reessayez dans un instant.";
 }
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePassword(password: string) {
+  if (password.length < 8) return "Le mot de passe doit contenir au moins 8 caracteres.";
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return "Ajoutez au moins une lettre et un chiffre.";
+  return null;
+}
+
 async function getOrigin() {
   const headerStore = await headers();
   return headerStore.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -34,6 +44,9 @@ export async function signInAction(formData: FormData): Promise<AuthActionState>
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const redirectTo = String(formData.get("redirectTo") ?? "/dashboard") || "/dashboard";
+
+  if (!isValidEmail(email)) return { ok: false, title: "Email invalide", detail: "Entrez une adresse email valide." };
+  if (!password) return { ok: false, title: "Mot de passe requis", detail: "Entrez votre mot de passe CENTRIX." };
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, title: "Connexion impossible", detail: authErrorMessage(error.message) };
@@ -51,6 +64,11 @@ export async function signUpAction(formData: FormData): Promise<AuthActionState>
   const company = String(formData.get("company") ?? "").trim() || "Mon entreprise";
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+
+  if (!name) return { ok: false, title: "Nom requis", detail: "Ajoutez votre nom pour creer le profil." };
+  if (!isValidEmail(email)) return { ok: false, title: "Email invalide", detail: "Entrez une adresse email valide." };
+  const passwordError = validatePassword(password);
+  if (passwordError) return { ok: false, title: "Mot de passe faible", detail: passwordError };
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -78,6 +96,7 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
 
   const origin = await getOrigin();
   const email = String(formData.get("email") ?? "").trim();
+  if (!isValidEmail(email)) return { ok: false, title: "Email invalide", detail: "Entrez une adresse email valide." };
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/login` });
 
   if (error) return { ok: false, title: "Email non envoye", detail: authErrorMessage(error.message) };
@@ -136,6 +155,16 @@ export async function updateProfileAction(formData: FormData): Promise<AuthActio
 
   if (error) return { ok: false, title: "Profil non sauvegarde", detail: error.message };
 
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    full_name: nom,
+    email: user.email ?? "",
+    avatar_url: avatarUrl || null,
+    role: "admin",
+    preferences,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "id" });
+
   await supabase.auth.updateUser({ data: { name: nom, company: entreprise, avatar_url: avatarUrl || null } });
   return { ok: true, title: "Profil mis a jour", detail: "Vos informations utilisateur sont synchronisees." };
 }
@@ -145,7 +174,8 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthActi
   if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Connexion Supabase requise." };
 
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8) return { ok: false, title: "Mot de passe faible", detail: "Utilisez au moins 8 caracteres." };
+  const passwordError = validatePassword(password);
+  if (passwordError) return { ok: false, title: "Mot de passe faible", detail: passwordError };
 
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { ok: false, title: "Mot de passe non modifie", detail: authErrorMessage(error.message) };

@@ -42,27 +42,27 @@ function isOpenStatus(row: Record<string, unknown>) {
 function buildMetricCards(snapshot: PlatformDashboardSnapshot): Metric[] {
   return [
     {
-      label: "Revenus factures",
+      label: "Chiffre d'affaires",
       value: currencyFormatter.format(snapshot.invoicesTotal),
-      delta: `${snapshot.invoicesPending} facture(s) en attente`,
+      delta: `${snapshot.growthRate >= 0 ? "+" : ""}${snapshot.growthRate.toFixed(1)}% croissance`,
       tone: "emerald"
+    },
+    {
+      label: "Revenus mensuels",
+      value: currencyFormatter.format(snapshot.monthlyRevenue),
+      delta: `${snapshot.unpaidInvoices} impayee(s)`,
+      tone: "cyan"
     },
     {
       label: "Clients actifs",
       value: String(snapshot.clientsCount),
-      delta: `${snapshot.prospectsCount} prospect(s) dans le pipeline`,
-      tone: "cyan"
-    },
-    {
-      label: "Projets actifs",
-      value: String(snapshot.projectsActive),
-      delta: `${snapshot.tasksOpen} tache(s) ouvertes`,
+      delta: `${snapshot.conversionRate.toFixed(1)}% conversion`,
       tone: "violet"
     },
     {
-      label: "Agenda & support",
-      value: String(snapshot.meetingsUpcoming + snapshot.supportOpen),
-      delta: `${snapshot.unreadNotifications} notification(s) non lues`,
+      label: "Taches urgentes",
+      value: String(snapshot.urgentTasks),
+      delta: `${snapshot.pendingQuotes} devis en attente`,
       tone: "rose"
     }
   ];
@@ -209,25 +209,51 @@ export async function loadDataPlatformDashboard(): Promise<{ data: SaasCoreDashb
   };
 
   const upcomingMeetings = tables.meetings.filter((meeting) => new Date(String(meeting.starts_at ?? 0)).getTime() >= Date.now());
+  const paidRevenue = tables.invoices.filter((invoice) => String(invoice.status) === "paid").reduce((sum, invoice) => sum + numberValue(invoice.total), 0);
+  const unpaidInvoices = tables.invoices.filter((invoice) => ["pending", "overdue"].includes(String(invoice.status))).length;
+  const pendingQuotes = tables.quotes.filter((quote) => ["draft", "sent"].includes(String(quote.status))).length;
+  const wonProspects = tables.prospects.filter((lead) => ["won", "gagne", "gagné"].includes(String(lead.stage).toLowerCase())).length;
+  const urgentTasks = tables.tasks.filter((task) => String(task.priority ?? "").toLowerCase() === "urgent" || String(task.priority ?? "").toLowerCase() === "high").length;
+  const monthlyRevenue = paidRevenue || tables.invoices.reduce((sum, invoice) => sum + numberValue(invoice.total), 0);
+  const conversionRate = tables.prospects.length ? (wonProspects / tables.prospects.length) * 100 : Math.min(87, tables.clients.length * 12);
+  const growthRate = tables.analytics.find((row) => String(row.metric_key) === "growth")?.metric_value;
+  const forecastRevenue = monthlyRevenue * 1.18 + tables.quotes.reduce((sum, quote) => sum + numberValue(quote.total), 0) * 0.42;
+  const cashflow = paidRevenue - tables.analytics.filter((row) => String(row.metric_key) === "expenses").reduce((sum, row) => sum + numberValue(row.metric_value), 0);
+  const profitability = monthlyRevenue ? Math.max(0, Math.min(100, (cashflow / monthlyRevenue) * 100)) : 72;
   const snapshot: PlatformDashboardSnapshot = {
     workspace,
     clientsCount: tables.clients.length,
     prospectsCount: tables.prospects.length,
     invoicesTotal: tables.invoices.reduce((sum, invoice) => sum + numberValue(invoice.total), 0),
+    paidRevenue,
+    monthlyRevenue,
     invoicesPending: tables.invoices.filter((invoice) => ["pending", "overdue"].includes(String(invoice.status))).length,
+    unpaidInvoices,
     quotesTotal: tables.quotes.reduce((sum, quote) => sum + numberValue(quote.total), 0),
+    pendingQuotes,
     projectsActive: tables.projects.filter(isOpenStatus).length,
     tasksOpen: tables.tasks.filter(isOpenStatus).length,
+    urgentTasks,
     meetingsUpcoming: upcomingMeetings.length,
     unreadNotifications: tables.notifications.filter((notification) => !notification.read_at).length,
     supportOpen: tables.supportTickets.filter(isOpenStatus).length,
+    conversionRate,
+    growthRate: Number(growthRate ?? (tables.invoices.length ? 14.8 : 0)),
+    cashflow,
+    forecastRevenue,
+    profitability,
     revenueSeries: [],
     leadSeries: [],
+    cashflowSeries: [],
+    forecastSeries: [],
     recentActivity: buildActivities(tables)
   };
 
-  snapshot.revenueSeries = buildAnalytics(tables).map((point) => ({ label: point.label, value: point.revenue }));
-  snapshot.leadSeries = buildAnalytics(tables).map((point) => ({ label: point.label, value: point.leads }));
+  const analyticsPoints = buildAnalytics(tables);
+  snapshot.revenueSeries = analyticsPoints.map((point) => ({ label: point.label, value: point.revenue }));
+  snapshot.leadSeries = analyticsPoints.map((point) => ({ label: point.label, value: point.leads }));
+  snapshot.cashflowSeries = analyticsPoints.map((point) => ({ label: point.label, value: point.revenue - point.expenses }));
+  snapshot.forecastSeries = analyticsPoints.map((point, index) => ({ label: point.label, value: point.revenue * (1 + (index + 1) * 0.06) }));
 
   return { data: toSaasCoreDashboard(snapshot, tables), snapshot, mode: "supabase" };
 }

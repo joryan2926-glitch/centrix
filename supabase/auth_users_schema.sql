@@ -1,7 +1,7 @@
 create extension if not exists pgcrypto;
 
 do $$ begin
-  create type public.centrix_user_role as enum ('admin', 'manager', 'employee', 'client');
+  create type public.workspace_role as enum ('admin', 'manager', 'employee', 'client');
 exception
   when duplicate_object then null;
 end $$;
@@ -11,7 +11,7 @@ create table if not exists public.users (
   nom text not null default '',
   email text not null unique,
   entreprise text not null default 'Mon entreprise',
-  role public.centrix_user_role not null default 'admin',
+  role public.workspace_role not null default 'admin',
   abonnement text not null default 'starter',
   avatar_url text,
   preferences jsonb not null default '{"notifications": true, "weeklyDigest": true}'::jsonb,
@@ -21,10 +21,29 @@ create table if not exists public.users (
 
 create table if not exists public.workspaces (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null unique references auth.users(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
   slug text not null unique,
   plan text not null default 'starter',
+  logo_url text,
+  settings jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists workspaces_owner_id_unique on public.workspaces(owner_id);
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  workspace_id uuid references public.workspaces(id) on delete set null,
+  full_name text not null default '',
+  email text not null,
+  avatar_url text,
+  phone text,
+  locale text not null default 'fr-FR',
+  timezone text not null default 'Europe/Paris',
+  role public.workspace_role not null default 'admin',
+  preferences jsonb not null default '{"notifications": true, "weeklyDigest": true}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -32,76 +51,67 @@ create table if not exists public.workspaces (
 create table if not exists public.workspace_members (
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  role public.centrix_user_role not null default 'admin',
+  role public.workspace_role not null default 'admin',
   status text not null default 'active' check (status in ('active', 'invited', 'suspended')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (workspace_id, user_id)
 );
 
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create or replace function public.is_workspace_member(target_workspace_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.workspace_members wm
+    where wm.workspace_id = target_workspace_id
+      and wm.user_id = auth.uid()
+      and wm.status = 'active'
+  )
+  or exists (
+    select 1 from public.workspaces w
+    where w.id = target_workspace_id and w.owner_id = auth.uid()
+  );
+$$;
+
 alter table public.users enable row level security;
+alter table public.profiles enable row level security;
 alter table public.workspaces enable row level security;
 alter table public.workspace_members enable row level security;
 
-create policy "users can read own profile"
-  on public.users for select
-  to authenticated
-  using (auth.uid() = id);
+drop policy if exists "users self read" on public.users;
+drop policy if exists "users self insert" on public.users;
+drop policy if exists "users self update" on public.users;
+drop policy if exists "profiles self read" on public.profiles;
+drop policy if exists "profiles self insert" on public.profiles;
+drop policy if exists "profiles self update" on public.profiles;
+drop policy if exists "workspaces member read" on public.workspaces;
+drop policy if exists "workspaces owner write" on public.workspaces;
+drop policy if exists "members workspace read" on public.workspace_members;
+drop policy if exists "members admin write" on public.workspace_members;
 
-create policy "users can update own profile"
-  on public.users for update
-  to authenticated
-  using (auth.uid() = id)
-  with check (auth.uid() = id);
-
-create policy "users can insert own profile"
-  on public.users for insert
-  to authenticated
-  with check (auth.uid() = id);
-
-create policy "workspace members can read workspace"
-  on public.workspaces for select
-  to authenticated
-  using (
-    owner_id = auth.uid()
-    or exists (
-      select 1 from public.workspace_members wm
-      where wm.workspace_id = workspaces.id and wm.user_id = auth.uid()
-    )
-  );
-
-create policy "workspace owners can manage workspace"
-  on public.workspaces for all
-  to authenticated
-  using (owner_id = auth.uid())
-  with check (owner_id = auth.uid());
-
-create policy "workspace members can read members"
-  on public.workspace_members for select
-  to authenticated
-  using (
-    user_id = auth.uid()
-    or exists (
-      select 1 from public.workspaces w
-      where w.id = workspace_members.workspace_id and w.owner_id = auth.uid()
-    )
-  );
-
-create policy "workspace owners can manage members"
-  on public.workspace_members for all
-  to authenticated
-  using (
-    exists (
-      select 1 from public.workspaces w
-      where w.id = workspace_members.workspace_id and w.owner_id = auth.uid()
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.workspaces w
-      where w.id = workspace_members.workspace_id and w.owner_id = auth.uid()
-    )
-  );
+create policy "users self read" on public.users for select to authenticated using (id = auth.uid());
+create policy "users self insert" on public.users for insert to authenticated with check (id = auth.uid());
+create policy "users self update" on public.users for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+create policy "profiles self read" on public.profiles for select to authenticated using (id = auth.uid() or public.is_workspace_member(workspace_id));
+create policy "profiles self insert" on public.profiles for insert to authenticated with check (id = auth.uid());
+create policy "profiles self update" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+create policy "workspaces member read" on public.workspaces for select to authenticated using (owner_id = auth.uid() or public.is_workspace_member(id));
+create policy "workspaces owner write" on public.workspaces for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy "members workspace read" on public.workspace_members for select to authenticated using (user_id = auth.uid() or public.is_workspace_member(workspace_id));
+create policy "members admin write" on public.workspace_members for all to authenticated using (public.is_workspace_member(workspace_id)) with check (public.is_workspace_member(workspace_id));
 
 create or replace function public.handle_new_centrix_user()
 returns trigger
@@ -110,22 +120,23 @@ security definer
 set search_path = public
 as $$
 declare
-  workspace_id uuid;
+  created_workspace_id uuid;
   company_name text;
   display_name text;
+  workspace_slug text;
 begin
   company_name := coalesce(new.raw_user_meta_data->>'company', 'Mon entreprise');
   display_name := coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1), 'Utilisateur CENTRIX');
+  workspace_slug := regexp_replace(lower(company_name), '[^a-z0-9]+', '-', 'g') || '-' || substring(new.id::text, 1, 8);
 
-  insert into public.users (id, nom, email, entreprise, role, abonnement, avatar_url)
+  insert into public.users (id, nom, email, entreprise, abonnement, avatar_url)
   values (
     new.id,
     display_name,
     new.email,
     company_name,
-    coalesce((new.raw_user_meta_data->>'role')::public.centrix_user_role, 'admin'),
     coalesce(new.raw_user_meta_data->>'subscription', 'starter'),
-    new.raw_user_meta_data->>'avatar_url'
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture')
   )
   on conflict (id) do update set
     nom = excluded.nom,
@@ -138,16 +149,32 @@ begin
   values (
     new.id,
     company_name,
-    regexp_replace(lower(company_name), '[^a-z0-9]+', '-', 'g') || '-' || substring(new.id::text, 1, 8),
+    workspace_slug,
     coalesce(new.raw_user_meta_data->>'subscription', 'starter')
   )
   on conflict (owner_id) do update set
     name = excluded.name,
     updated_at = now()
-  returning id into workspace_id;
+  returning id into created_workspace_id;
+
+  insert into public.profiles (id, workspace_id, full_name, email, avatar_url, role)
+  values (
+    new.id,
+    created_workspace_id,
+    display_name,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
+    'admin'
+  )
+  on conflict (id) do update set
+    workspace_id = excluded.workspace_id,
+    full_name = excluded.full_name,
+    email = excluded.email,
+    avatar_url = excluded.avatar_url,
+    updated_at = now();
 
   insert into public.workspace_members (workspace_id, user_id, role, status)
-  values (workspace_id, new.id, 'admin', 'active')
+  values (created_workspace_id, new.id, 'admin', 'active')
   on conflict (workspace_id, user_id) do update set
     role = excluded.role,
     status = excluded.status,
@@ -162,6 +189,35 @@ create trigger on_auth_user_created_centrix
   after insert on auth.users
   for each row execute function public.handle_new_centrix_user();
 
-alter publication supabase_realtime add table public.users;
-alter publication supabase_realtime add table public.workspaces;
-alter publication supabase_realtime add table public.workspace_members;
+drop trigger if exists touch_users_updated_at on public.users;
+create trigger touch_users_updated_at before update on public.users for each row execute function public.touch_updated_at();
+drop trigger if exists touch_profiles_updated_at on public.profiles;
+create trigger touch_profiles_updated_at before update on public.profiles for each row execute function public.touch_updated_at();
+drop trigger if exists touch_workspaces_updated_at on public.workspaces;
+create trigger touch_workspaces_updated_at before update on public.workspaces for each row execute function public.touch_updated_at();
+drop trigger if exists touch_workspace_members_updated_at on public.workspace_members;
+create trigger touch_workspace_members_updated_at before update on public.workspace_members for each row execute function public.touch_updated_at();
+
+do $$
+begin
+  alter publication supabase_realtime add table public.users;
+exception when duplicate_object then null; when others then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.profiles;
+exception when duplicate_object then null; when others then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.workspaces;
+exception when duplicate_object then null; when others then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.workspace_members;
+exception when duplicate_object then null; when others then null;
+end $$;

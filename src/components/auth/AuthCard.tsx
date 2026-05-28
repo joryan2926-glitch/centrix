@@ -25,6 +25,7 @@ export function AuthCard({ mode }: AuthCardProps) {
   const router = useRouter();
   const [toast, setToast] = useState<{ title: string; detail: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -50,7 +51,9 @@ export function AuthCard({ mode }: AuthCardProps) {
   }
 
   async function handleGoogle() {
+    setGoogleLoading(true);
     const result = await googleOAuthAction();
+    setGoogleLoading(false);
     setToast({ title: result.title, detail: result.detail });
     if (result.oauthUrl) {
       window.location.href = result.oauthUrl;
@@ -85,17 +88,17 @@ export function AuthCard({ mode }: AuthCardProps) {
           <div className="mt-8 space-y-4">
             {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Julien Business" /> : null}
             {mode === "register" ? <Field icon={<ShieldCheck size={17} />} label="Entreprise" name="company" placeholder="CENTRIX SAS" /> : null}
-            <Field icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" />
-            {mode !== "forgot" ? <Field icon={<LockKeyhole size={17} />} label="Mot de passe" name="password" placeholder="centrix-premium" type="password" /> : null}
+            <Field autoComplete="email" icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" />
+            {mode !== "forgot" ? <Field autoComplete={mode === "login" ? "current-password" : "new-password"} icon={<LockKeyhole size={17} />} label="Mot de passe" minLength={8} name="password" placeholder="8 caracteres minimum" type="password" /> : null}
           </div>
           <Button className="mt-6 w-full" disabled={loading} variant="primary">
             {loading ? "Traitement..." : copy[mode].cta}
             <ArrowRight size={17} />
           </Button>
           {mode !== "forgot" ? (
-            <Button className="mt-3 w-full" onClick={handleGoogle} type="button">
+            <Button className="mt-3 w-full" disabled={googleLoading} onClick={handleGoogle} type="button">
               <Chrome size={17} />
-              Continuer avec Google
+              {googleLoading ? "Ouverture Google..." : "Continuer avec Google"}
             </Button>
           ) : null}
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-500">
@@ -109,13 +112,13 @@ export function AuthCard({ mode }: AuthCardProps) {
   );
 }
 
-function Field({ icon, label, name, placeholder, type = "text" }: { icon: React.ReactNode; label: string; name: string; placeholder: string; type?: string }) {
+function Field({ autoComplete, icon, label, minLength, name, placeholder, type = "text" }: { autoComplete?: string; icon: React.ReactNode; label: string; minLength?: number; name: string; placeholder: string; type?: string }) {
   return (
     <label className="block text-sm font-semibold text-slate-700">
       {label}
       <span className="mt-2 flex h-11 items-center gap-2 rounded-[12px] border border-slate-200 bg-white px-3 transition focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100">
         <span className="text-slate-400">{icon}</span>
-        <input required className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none" name={name} placeholder={placeholder} type={type} />
+        <input autoComplete={autoComplete} minLength={minLength} required className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none" name={name} placeholder={placeholder} type={type} />
       </span>
     </label>
   );

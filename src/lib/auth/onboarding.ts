@@ -38,6 +38,16 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
 
   if (!workspace?.id) return;
 
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    workspace_id: workspace.id,
+    full_name: displayName,
+    email: user.email ?? "",
+    avatar_url: user.user_metadata?.avatar_url ?? null,
+    role: "admin",
+    updated_at: new Date().toISOString()
+  }, { onConflict: "id" });
+
   await supabase.from("workspace_members").upsert({
     workspace_id: workspace.id,
     user_id: user.id,
