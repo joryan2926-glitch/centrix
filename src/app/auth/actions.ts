@@ -26,6 +26,11 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function safeRedirectPath(path: string | null | undefined) {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/dashboard";
+  return path;
+}
+
 function validatePassword(password: string) {
   if (password.length < 8) return "Le mot de passe doit contenir au moins 8 caracteres.";
   if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return "Ajoutez au moins une lettre et un chiffre.";
@@ -43,7 +48,7 @@ export async function signInAction(formData: FormData): Promise<AuthActionState>
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const redirectTo = String(formData.get("redirectTo") ?? "/dashboard") || "/dashboard";
+  const redirectTo = safeRedirectPath(String(formData.get("redirectTo") ?? "/dashboard"));
 
   if (!isValidEmail(email)) return { ok: false, title: "Email invalide", detail: "Entrez une adresse email valide." };
   if (!password) return { ok: false, title: "Mot de passe requis", detail: "Entrez votre mot de passe CENTRIX." };
@@ -97,7 +102,7 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
   const origin = await getOrigin();
   const email = String(formData.get("email") ?? "").trim();
   if (!isValidEmail(email)) return { ok: false, title: "Email invalide", detail: "Entrez une adresse email valide." };
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/login` });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/auth/callback?next=/reset-password` });
 
   if (error) return { ok: false, title: "Email non envoye", detail: authErrorMessage(error.message) };
   return { ok: true, title: "Email envoye", detail: "Un lien de reinitialisation securise vient d'etre envoye." };
@@ -110,7 +115,10 @@ export async function googleOAuthAction(): Promise<AuthActionState> {
   const origin = await getOrigin();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin}/auth/callback?next=/dashboard` }
+    options: {
+      queryParams: { access_type: "offline", prompt: "select_account" },
+      redirectTo: `${origin}/auth/callback?next=/dashboard`
+    }
   });
 
   if (error || !data.url) return { ok: false, title: "OAuth indisponible", detail: authErrorMessage(error?.message) };

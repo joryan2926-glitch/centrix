@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Chrome, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { CentrixLogo } from "@/components/ui";
-import { googleOAuthAction, resetPasswordAction, signInAction, signUpAction } from "@/app/auth/actions";
+import { googleOAuthAction, resetPasswordAction, signInAction, signUpAction, updatePasswordAction } from "@/app/auth/actions";
 import type { AuthMode } from "@/types/auth";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -18,7 +18,8 @@ type AuthCardProps = {
 const copy = {
   login: { title: "Bienvenue", detail: "Connectez-vous a votre cockpit CENTRIX.", cta: "Entrer dans CENTRIX" },
   register: { title: "Creer un workspace", detail: "Configurez votre plateforme enterprise premium.", cta: "Creer mon compte" },
-  forgot: { title: "Reinitialiser", detail: "Recevez un lien securise de recuperation.", cta: "Envoyer le lien" }
+  forgot: { title: "Reinitialiser", detail: "Recevez un lien securise de recuperation.", cta: "Envoyer le lien" },
+  reset: { title: "Nouveau mot de passe", detail: "Choisissez un mot de passe securise pour votre session.", cta: "Mettre a jour" }
 };
 
 export function AuthCard({ mode }: AuthCardProps) {
@@ -37,14 +38,21 @@ export function AuthCard({ mode }: AuthCardProps) {
         ? await signInAction(formData)
         : mode === "register"
           ? await signUpAction(formData)
-          : await resetPasswordAction(formData);
+          : mode === "reset"
+            ? await updatePasswordAction(formData)
+            : await resetPasswordAction(formData);
 
     setLoading(false);
     setToast({ title: result.title, detail: result.detail });
 
     if (result.ok && result.redirectTo) {
       window.setTimeout(() => {
-        router.push(result.redirectTo ?? "/dashboard");
+        router.push(result.redirectTo ?? (mode === "reset" ? "/dashboard" : "/dashboard"));
+        router.refresh();
+      }, 600);
+    } else if (result.ok && mode === "reset") {
+      window.setTimeout(() => {
+        router.push("/dashboard");
         router.refresh();
       }, 600);
     }
@@ -88,14 +96,14 @@ export function AuthCard({ mode }: AuthCardProps) {
           <div className="mt-8 space-y-4">
             {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Julien Business" /> : null}
             {mode === "register" ? <Field icon={<ShieldCheck size={17} />} label="Entreprise" name="company" placeholder="CENTRIX SAS" /> : null}
-            <Field autoComplete="email" icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" />
-            {mode !== "forgot" ? <Field autoComplete={mode === "login" ? "current-password" : "new-password"} icon={<LockKeyhole size={17} />} label="Mot de passe" minLength={8} name="password" placeholder="8 caracteres minimum" type="password" /> : null}
+            {mode !== "reset" ? <Field autoComplete="email" icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" /> : null}
+            {mode !== "forgot" ? <Field autoComplete={mode === "login" ? "current-password" : "new-password"} icon={<LockKeyhole size={17} />} label={mode === "reset" ? "Nouveau mot de passe" : "Mot de passe"} minLength={8} name="password" placeholder="8 caracteres minimum" type="password" /> : null}
           </div>
           <Button className="mt-6 w-full" disabled={loading} variant="primary">
             {loading ? "Traitement..." : copy[mode].cta}
             <ArrowRight size={17} />
           </Button>
-          {mode !== "forgot" ? (
+          {mode !== "forgot" && mode !== "reset" ? (
             <Button className="mt-3 w-full" disabled={googleLoading} onClick={handleGoogle} type="button">
               <Chrome size={17} />
               {googleLoading ? "Ouverture Google..." : "Continuer avec Google"}
@@ -104,7 +112,7 @@ export function AuthCard({ mode }: AuthCardProps) {
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-500">
             {mode !== "login" ? <Link href="/login" className="hover:text-blue-700">Se connecter</Link> : null}
             {mode !== "register" ? <Link href="/register" className="hover:text-blue-700">Creer un compte</Link> : null}
-            {mode !== "forgot" ? <Link href="/forgot-password" className="hover:text-blue-700">Mot de passe oublie</Link> : null}
+            {mode !== "forgot" && mode !== "reset" ? <Link href="/forgot-password" className="hover:text-blue-700">Mot de passe oublie</Link> : null}
           </div>
         </form>
       </Card>

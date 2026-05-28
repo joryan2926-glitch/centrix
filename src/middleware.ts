@@ -17,11 +17,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  if (isPublicRoute(pathname) || !isProtectedRoute(pathname)) {
+  if (isPublicRoute(pathname) || pathname.includes(".")) {
     return response;
   }
 
   if (user) {
+    return response;
+  }
+
+  const shouldProtect = isProtectedRoute(pathname) || pathname.startsWith("/");
+  if (!shouldProtect) {
     return response;
   }
 

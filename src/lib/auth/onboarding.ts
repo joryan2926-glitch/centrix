@@ -12,6 +12,7 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
 
   const displayName = name || String(user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Utilisateur CENTRIX");
   const companyName = company || String(user.user_metadata?.company ?? "Mon entreprise");
+  const workspaceSlug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "workspace"}-${user.id.slice(0, 8)}`;
 
   await supabase.from("users").upsert({
     id: user.id,
@@ -29,7 +30,7 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
     .upsert({
       owner_id: user.id,
       name: companyName,
-      slug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `workspace-${user.id.slice(0, 8)}`,
+      slug: workspaceSlug,
       plan: "starter",
       updated_at: new Date().toISOString()
     }, { onConflict: "owner_id" })

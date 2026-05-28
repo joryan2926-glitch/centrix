@@ -1,7 +1,8 @@
-export const publicRoutes = ["/", "/login", "/register", "/forgot-password"] as const;
+export const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/auth/callback"] as const;
 
 export const protectedRoutes = [
   "/dashboard",
+  "/admin",
   "/onboarding",
   "/crm",
   "/crm-intelligent",
@@ -37,6 +38,8 @@ export const protectedRoutes = [
   "/entreprise",
   "/juridique",
   "/marketplace",
+  "/services",
+  "/providers",
   "/centrix-academy",
   "/formations",
   "/community",
@@ -49,6 +52,7 @@ export const protectedRoutes = [
   "/api-management",
   "/integrations",
   "/settings",
+  "/platform-settings",
   "/profile",
   "/security",
   "/cybersecurity",

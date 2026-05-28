@@ -86,6 +86,33 @@ as $$
   );
 $$;
 
+create or replace function public.workspace_role_for(target_workspace_id uuid)
+returns public.workspace_role
+language sql
+security definer
+set search_path = public
+as $$
+  select wm.role
+  from public.workspace_members wm
+  where wm.workspace_id = target_workspace_id
+    and wm.user_id = auth.uid()
+    and wm.status = 'active'
+  limit 1;
+$$;
+
+create or replace function public.is_workspace_admin(target_workspace_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.workspaces w
+    where w.id = target_workspace_id and w.owner_id = auth.uid()
+  )
+  or public.workspace_role_for(target_workspace_id) = 'admin';
+$$;
+
 alter table public.users enable row level security;
 alter table public.profiles enable row level security;
 alter table public.workspaces enable row level security;
@@ -111,7 +138,7 @@ create policy "profiles self update" on public.profiles for update to authentica
 create policy "workspaces member read" on public.workspaces for select to authenticated using (owner_id = auth.uid() or public.is_workspace_member(id));
 create policy "workspaces owner write" on public.workspaces for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "members workspace read" on public.workspace_members for select to authenticated using (user_id = auth.uid() or public.is_workspace_member(workspace_id));
-create policy "members admin write" on public.workspace_members for all to authenticated using (public.is_workspace_member(workspace_id)) with check (public.is_workspace_member(workspace_id));
+create policy "members admin write" on public.workspace_members for all to authenticated using (public.is_workspace_admin(workspace_id)) with check (public.is_workspace_admin(workspace_id));
 
 create or replace function public.handle_new_centrix_user()
 returns trigger
@@ -129,12 +156,13 @@ begin
   display_name := coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1), 'Utilisateur CENTRIX');
   workspace_slug := regexp_replace(lower(company_name), '[^a-z0-9]+', '-', 'g') || '-' || substring(new.id::text, 1, 8);
 
-  insert into public.users (id, nom, email, entreprise, abonnement, avatar_url)
+  insert into public.users (id, nom, email, entreprise, role, abonnement, avatar_url)
   values (
     new.id,
     display_name,
     new.email,
     company_name,
+    'admin',
     coalesce(new.raw_user_meta_data->>'subscription', 'starter'),
     coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture')
   )

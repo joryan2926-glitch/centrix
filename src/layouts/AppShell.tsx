@@ -13,6 +13,7 @@ import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigat
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { signOutAction } from "@/app/auth/actions";
+import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/ui/Button";
 
 type AppShellProps = {
@@ -26,7 +27,14 @@ export function AppShell({ children }: AppShellProps) {
   const [open, setOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [signingOut, startSignOut] = useTransition();
-  const isPublicPage = ["/", "/login", "/register", "/forgot-password"].includes(pathname);
+  const { loading: authLoading, profile } = useAuth();
+  const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password"].includes(pathname) || pathname.startsWith("/auth/");
+  const profileInitials = profile?.fullName
+    .split(" ")
+    .map((part) => part.slice(0, 1))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "CX";
 
   useEffect(() => {
     if (isDesktop) {
@@ -191,10 +199,12 @@ export function AppShell({ children }: AppShellProps) {
               <QuickActions />
               <NotificationCenter />
               <Link href="/profile" className="flex h-11 items-center gap-3 rounded-[14px] border border-slate-200 bg-white px-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-blue-300 hover:bg-blue-50">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#0077ff] to-[#6d5dfc] text-xs font-bold text-white">JB</span>
+                <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#0077ff] to-[#6d5dfc] text-xs font-bold text-white">
+                  {profile?.avatarUrl ? <span className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${profile.avatarUrl})` }} /> : profileInitials}
+                </span>
                 <span className="hidden leading-tight sm:block">
-                  <span className="block text-sm font-semibold text-slate-900">Julien</span>
-                  <span className="text-xs text-slate-500">Admin</span>
+                  <span className="block max-w-28 truncate text-sm font-semibold text-slate-900">{authLoading ? "Chargement" : profile?.fullName ?? "CENTRIX"}</span>
+                  <span className="text-xs capitalize text-slate-500">{profile?.role ?? "user"}</span>
                 </span>
                 <ChevronDown size={15} className="hidden text-slate-400 sm:block" />
               </Link>
