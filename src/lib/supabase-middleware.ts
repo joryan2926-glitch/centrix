@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
 import { getSupabaseEnv } from "@/lib/supabase-env";
 
 export async function updateSupabaseSession(request: NextRequest) {
@@ -23,9 +24,6 @@ export async function updateSupabaseSession(request: NextRequest) {
     }
   });
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  return { response, user };
+  void supabase;
+  return { response, user: DEMO_AUTH_USER };
 }

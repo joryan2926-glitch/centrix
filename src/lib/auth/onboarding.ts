@@ -1,17 +1,14 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { DEMO_AUTH_USER, DEMO_USER, DEMO_WORKSPACE } from "@/lib/auth/demo-session";
 
 export async function ensureUserOnboarding(name?: string | null, company?: string | null) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) return;
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = DEMO_AUTH_USER;
 
-  if (!user) return;
-
-  const displayName = name || String(user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Utilisateur CENTRIX");
-  const companyName = company || String(user.user_metadata?.company ?? "Mon entreprise");
+  const displayName = name || DEMO_USER.full_name;
+  const companyName = company || DEMO_WORKSPACE.name;
   const workspaceSlug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "workspace"}-${user.id.slice(0, 8)}`;
 
   await supabase.from("users").upsert({

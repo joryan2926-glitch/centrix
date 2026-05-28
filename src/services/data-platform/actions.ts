@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isAllowedDataTable, type DataTableName } from "@/repositories/supabaseRepository";
 
@@ -15,13 +16,7 @@ async function getServerContext(table: string) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) return { error: "Supabase non configure." };
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Authentification requise." };
-
-  return { supabase, table: table as DataTableName, user };
+  return { supabase, table: table as DataTableName, user: DEMO_AUTH_USER };
 }
 
 export async function createDataPlatformRecord(table: DataTableName, values: Record<string, unknown>, revalidate = "/dashboard"): Promise<ActionState> {

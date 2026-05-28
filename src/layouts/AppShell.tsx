@@ -4,16 +4,15 @@ import { ChevronDown, ChevronRight, LogOut, Menu, Star, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { GlobalSearch } from "@/components/shell/GlobalSearch";
 import { NotificationCenter } from "@/components/shell/NotificationCenter";
 import { QuickActions } from "@/components/shell/QuickActions";
 import { CentrixLogo } from "@/components/ui";
 import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigation";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { DEMO_AUTH_PROFILE } from "@/lib/auth/demo-session";
 import { cn } from "@/lib/utils";
-import { signOutAction } from "@/app/auth/actions";
-import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/ui/Button";
 
 type AppShellProps = {
@@ -26,8 +25,8 @@ export function AppShell({ children }: AppShellProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [open, setOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const [signingOut, startSignOut] = useTransition();
-  const { loading: authLoading, profile } = useAuth();
+  const authLoading = false;
+  const profile = DEMO_AUTH_PROFILE;
   const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password"].includes(pathname) || pathname.startsWith("/auth/");
   const profileInitials = profile?.fullName
     .split(" ")
@@ -210,16 +209,9 @@ export function AppShell({ children }: AppShellProps) {
                 <ChevronDown size={15} className="hidden text-slate-400 sm:block" />
               </Link>
               <Button
-                aria-label="Se deconnecter"
+                aria-label="Retour au dashboard"
                 className="hidden h-10 w-10 px-0 sm:inline-flex"
-                disabled={signingOut}
-                onClick={() => {
-                  startSignOut(async () => {
-                    const result = await signOutAction();
-                    router.push(result.redirectTo ?? "/login");
-                    router.refresh();
-                  });
-                }}
+                onClick={() => router.push("/dashboard")}
                 variant="surface"
               >
                 <LogOut size={17} />
