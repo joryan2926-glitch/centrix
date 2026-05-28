@@ -53,11 +53,12 @@ export function useFinanceData() {
       setData((current) => {
         const next = updater(current);
         saveFinanceData(next);
+        if (mode === "supabase") syncFinanceData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

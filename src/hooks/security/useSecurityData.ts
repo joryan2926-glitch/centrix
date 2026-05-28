@@ -45,10 +45,11 @@ export function useSecurityData() {
     setData((current) => {
       const next = updater(current);
       saveSecurityData(next);
+      if (mode === "supabase") syncSecurityData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncSecurityData(data);

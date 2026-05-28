@@ -60,11 +60,12 @@ export function useAiAutomationData() {
       setData((current) => {
         const next = updater(current);
         saveAiAutomationData(next);
+        if (mode === "supabase") syncAiAutomationData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

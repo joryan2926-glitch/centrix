@@ -90,7 +90,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-100/72">Workspace</p>
-              <p className="mt-1 text-sm font-bold text-white">CENTRIX Scale</p>
+              <p className="mt-1 text-sm font-bold text-white">{authLoading ? "Synchronisation..." : profile?.workspaceName ?? "CENTRIX Scale"}</p>
             </div>
             <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-black text-emerald-200">Live</span>
           </div>
@@ -175,8 +175,8 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         <div className="mt-5 rounded-[18px] border border-blue-300/20 bg-[#0d1b36] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.20)]">
-          <p className="text-sm font-bold text-white">Plan Enterprise</p>
-          <p className="mt-1 text-xs leading-5 text-blue-100/72">Modules metier, IA et donnees consolidees.</p>
+          <p className="text-sm font-bold text-white">{profile?.role === "admin" ? "Plan Enterprise" : "Acces equipe"}</p>
+          <p className="mt-1 text-xs leading-5 text-blue-100/72">{profile?.workspaceName ? `${profile.workspaceName} synchronise avec Supabase Auth.` : "Modules metier, IA et donnees consolidees."}</p>
         </div>
         </div>
       </aside>
@@ -185,6 +185,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <div className="lg:pl-80">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/96 shadow-[0_12px_34px_rgba(15,23,42,0.07)] backdrop-blur-sm">
+          {authLoading ? <div className="absolute inset-x-0 top-0 h-0.5 overflow-hidden bg-blue-50"><span className="block h-full w-1/2 animate-pulse bg-blue-600" /></div> : null}
           <div className="flex h-[72px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <Button aria-label="Ouvrir le menu" className="h-10 w-10 px-0 lg:hidden" onClick={() => setOpen(true)} variant="surface">
               <Menu size={20} />

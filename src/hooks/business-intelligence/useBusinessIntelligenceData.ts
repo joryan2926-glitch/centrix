@@ -45,10 +45,11 @@ export function useBusinessIntelligenceData() {
     setData((current) => {
       const next = updater(current);
       saveBusinessIntelligenceData(next);
+      if (mode === "supabase") syncBusinessIntelligenceData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncBusinessIntelligenceData(data);

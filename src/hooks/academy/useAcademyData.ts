@@ -45,10 +45,11 @@ export function useAcademyData() {
     setData((current) => {
       const next = updater(current);
       saveAcademyData(next);
+      if (mode === "supabase") syncAcademyData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncAcademyData(data);

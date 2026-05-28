@@ -77,6 +77,13 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
             <Field defaultValue={profile.email} disabled label="Email" name="email" />
             <Field defaultValue={profile.entreprise} label="Entreprise" name="entreprise" />
             <Field defaultValue={profile.avatarUrl ?? ""} icon={<Camera size={16} />} label="Avatar URL" name="avatarUrl" />
+            <label className="block text-sm font-semibold text-slate-700">
+              Upload avatar
+              <span className="mt-2 flex h-11 items-center gap-2 rounded-[12px] border border-dashed border-slate-300 bg-white px-3 transition focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100">
+                <Camera size={16} className="text-slate-400" />
+                <input accept="image/png,image/jpeg,image/webp,image/gif" className="min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-blue-700" name="avatarFile" type="file" />
+              </span>
+            </label>
             <label className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white/72 p-4 text-sm font-semibold text-slate-700">
               <input defaultChecked={profile.preferences?.notifications ?? true} name="notifications" type="checkbox" />
               Notifications business

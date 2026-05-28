@@ -45,10 +45,11 @@ export function useProjectsData() {
     setData((current) => {
       const next = updater(current);
       saveProjectsData(next);
+      if (mode === "supabase") syncProjectsData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncProjectsData(data);

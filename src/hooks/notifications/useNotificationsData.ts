@@ -50,11 +50,12 @@ export function useNotificationsData() {
       setData((current) => {
         const next = updater(current);
         saveNotificationsData(next);
+        if (mode === "supabase") syncNotificationsData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

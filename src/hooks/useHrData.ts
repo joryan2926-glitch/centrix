@@ -59,12 +59,13 @@ export function useHrData() {
       setData((current) => {
         const next = updater(current);
         saveHrData(next);
+        if (mode === "supabase") syncHrData(next).then((result) => setMode(result.mode));
         return next;
       });
 
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

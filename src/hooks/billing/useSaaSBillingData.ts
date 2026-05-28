@@ -61,11 +61,12 @@ export function useSaaSBillingData() {
       setData((current) => {
         const next = updater(current);
         saveSaaSBillingData(next);
+        if (mode === "supabase") syncSaaSBillingData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

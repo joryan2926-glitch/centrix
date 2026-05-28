@@ -21,12 +21,18 @@ type AuthContextValue = {
   profile: AuthProfile | null;
   loading: boolean;
   authenticated: boolean;
+  canManageBilling: boolean;
+  canManageWorkspace: boolean;
   isAdmin: boolean;
+  hasRole: (roles: AuthRole | AuthRole[]) => boolean;
   refresh: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   authenticated: false,
+  canManageBilling: false,
+  canManageWorkspace: false,
+  hasRole: () => false,
   isAdmin: false,
   loading: true,
   profile: null,
@@ -100,6 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       authenticated: Boolean(user),
+      canManageBilling: profile?.role === "admin",
+      canManageWorkspace: profile?.role === "admin" || profile?.role === "manager",
+      hasRole: (roles: AuthRole | AuthRole[]) => {
+        const allowedRoles = Array.isArray(roles) ? roles : [roles];
+        return profile?.role ? allowedRoles.includes(profile.role) : false;
+      },
       isAdmin: profile?.role === "admin",
       loading: sessionLoading || profileLoading,
       profile,

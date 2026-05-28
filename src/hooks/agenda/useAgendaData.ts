@@ -49,11 +49,12 @@ export function useAgendaData() {
       setData((current) => {
         const next = updater(current);
         saveAgendaData(next);
+        if (mode === "supabase") syncAgendaData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

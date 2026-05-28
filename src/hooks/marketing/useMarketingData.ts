@@ -53,11 +53,12 @@ export function useMarketingData() {
       setData((current) => {
         const next = updater(current);
         saveMarketingData(next);
+        if (mode === "supabase") syncMarketingData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

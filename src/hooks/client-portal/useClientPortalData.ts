@@ -45,10 +45,11 @@ export function useClientPortalData() {
     setData((current) => {
       const next = updater(current);
       saveClientPortalData(next);
+      if (mode === "supabase") syncClientPortalData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncClientPortalData(data);

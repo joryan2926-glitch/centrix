@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Chrome, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
@@ -27,6 +27,13 @@ export function AuthCard({ mode }: AuthCardProps) {
   const [toast, setToast] = useState<{ title: string; detail: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const error = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("error") : null;
+    if (error === "oauth_callback") {
+      setToast({ title: "Connexion Google interrompue", detail: "La session OAuth n'a pas pu etre finalisee. Reessayez depuis CENTRIX." });
+    }
+  }, []);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);

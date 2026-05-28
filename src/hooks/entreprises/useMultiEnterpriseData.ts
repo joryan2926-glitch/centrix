@@ -60,11 +60,12 @@ export function useMultiEnterpriseData() {
       setData((current) => {
         const next = updater(current);
         saveMultiEnterpriseData(next);
+        if (mode === "supabase") syncMultiEnterpriseData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

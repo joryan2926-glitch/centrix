@@ -40,10 +40,11 @@ export function useMarketplaceData() {
     setData((current) => {
       const next = updater(current);
       saveMarketplaceData(next);
+      if (mode === "supabase") syncMarketplaceData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
   const sync = useCallback(async () => {
     const result = await syncMarketplaceData(data);
     setMode(result.mode);

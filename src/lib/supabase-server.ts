@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/supabase-env";
 
 export async function createServerSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { key, url } = getSupabaseEnv();
 
   if (!url || !key) {
     return null;

@@ -2,6 +2,7 @@ export const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/r
 
 export const protectedRoutes = [
   "/dashboard",
+  "/unauthorized",
   "/admin",
   "/onboarding",
   "/crm",

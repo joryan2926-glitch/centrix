@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "supabase:manifest": "node scripts/supabase-sql-manifest.mjs"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.20",

@@ -68,6 +68,7 @@ export function useCrmData() {
       setData((current) => {
         const next = updater(current);
         saveCrmData(next);
+        if (mode === "supabase") syncCrmData(next).then((result) => setMode(result.mode));
         return next;
       });
 
@@ -75,7 +76,7 @@ export function useCrmData() {
         notify(message.title, message.detail);
       }
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

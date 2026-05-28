@@ -45,10 +45,11 @@ export function useSalesData() {
     setData((current) => {
       const next = updater(current);
       saveSalesData(next);
+      if (mode === "supabase") syncSalesData(next).then((result) => setMode(result.mode));
       return next;
     });
     if (message) notify(message.title, message.detail);
-  }, [notify]);
+  }, [mode, notify]);
 
   const sync = useCallback(async () => {
     const result = await syncSalesData(data);

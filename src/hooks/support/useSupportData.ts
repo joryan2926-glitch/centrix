@@ -60,11 +60,12 @@ export function useSupportData() {
       setData((current) => {
         const next = updater(current);
         saveSupportData(next);
+        if (mode === "supabase") syncSupportData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

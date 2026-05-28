@@ -49,11 +49,12 @@ export function useIntegrationsData() {
       setData((current) => {
         const next = updater(current);
         saveIntegrationsData(next);
+        if (mode === "supabase") syncIntegrationsData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

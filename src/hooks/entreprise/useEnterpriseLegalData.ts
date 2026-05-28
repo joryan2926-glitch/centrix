@@ -61,11 +61,12 @@ export function useEnterpriseLegalData() {
       setData((current) => {
         const next = updater(current);
         saveEnterpriseLegalData(next);
+        if (mode === "supabase") syncEnterpriseLegalData(next).then((result) => setMode(result.mode));
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [notify]
+    [mode, notify]
   );
 
   const sync = useCallback(async () => {

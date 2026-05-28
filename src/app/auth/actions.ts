@@ -44,7 +44,7 @@ async function getOrigin() {
 
 export async function signInAction(formData: FormData): Promise<AuthActionState> {
   const supabase = await createServerSupabaseClient();
-  if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY." };
+  if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY." };
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -146,6 +146,33 @@ export async function updateProfileAction(formData: FormData): Promise<AuthActio
   const nom = String(formData.get("nom") ?? "").trim();
   const entreprise = String(formData.get("entreprise") ?? "").trim();
   const avatarUrl = String(formData.get("avatarUrl") ?? "").trim();
+  const avatarFile = formData.get("avatarFile");
+
+  if (!nom) return { ok: false, title: "Nom requis", detail: "Ajoutez un nom visible sur votre profil." };
+  if (!entreprise) return { ok: false, title: "Entreprise requise", detail: "Ajoutez le nom de votre workspace entreprise." };
+
+  const { data: currentProfile } = await supabase.from("profiles").select("workspace_id, role").eq("id", user.id).maybeSingle<{ workspace_id: string | null; role: string | null }>();
+  let resolvedAvatarUrl = avatarUrl || null;
+
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    if (avatarFile.size > 5 * 1024 * 1024) {
+      return { ok: false, title: "Avatar trop lourd", detail: "Utilisez une image inferieure a 5 Mo." };
+    }
+
+    const extension = avatarFile.name.split(".").pop()?.toLowerCase() || "png";
+    const avatarPath = `${user.id}/avatar-${Date.now()}.${extension}`;
+    const { error: uploadError } = await supabase.storage.from("centrix-avatars").upload(avatarPath, avatarFile, {
+      cacheControl: "3600",
+      contentType: avatarFile.type || "image/png",
+      upsert: true
+    });
+
+    if (uploadError) return { ok: false, title: "Avatar non envoye", detail: uploadError.message };
+
+    const { data: publicAvatar } = supabase.storage.from("centrix-avatars").getPublicUrl(avatarPath);
+    resolvedAvatarUrl = publicAvatar.publicUrl;
+  }
+
   const preferences = {
     notifications: formData.get("notifications") === "on",
     weeklyDigest: formData.get("weeklyDigest") === "on"
@@ -156,7 +183,7 @@ export async function updateProfileAction(formData: FormData): Promise<AuthActio
     nom,
     email: user.email ?? "",
     entreprise,
-    avatar_url: avatarUrl || null,
+    avatar_url: resolvedAvatarUrl,
     preferences,
     updated_at: new Date().toISOString()
   });
@@ -165,15 +192,23 @@ export async function updateProfileAction(formData: FormData): Promise<AuthActio
 
   await supabase.from("profiles").upsert({
     id: user.id,
+    workspace_id: currentProfile?.workspace_id ?? undefined,
     full_name: nom,
     email: user.email ?? "",
-    avatar_url: avatarUrl || null,
-    role: "admin",
+    avatar_url: resolvedAvatarUrl,
+    role: currentProfile?.role ?? "admin",
     preferences,
     updated_at: new Date().toISOString()
   }, { onConflict: "id" });
 
-  await supabase.auth.updateUser({ data: { name: nom, company: entreprise, avatar_url: avatarUrl || null } });
+  if (currentProfile?.workspace_id) {
+    await supabase
+      .from("workspaces")
+      .update({ name: entreprise, updated_at: new Date().toISOString() })
+      .eq("id", currentProfile.workspace_id);
+  }
+
+  await supabase.auth.updateUser({ data: { name: nom, company: entreprise, avatar_url: resolvedAvatarUrl } });
   return { ok: true, title: "Profil mis a jour", detail: "Vos informations utilisateur sont synchronisees." };
 }
 

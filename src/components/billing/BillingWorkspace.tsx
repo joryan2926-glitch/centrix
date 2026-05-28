@@ -78,16 +78,18 @@ export function BillingWorkspace() {
       return;
     }
 
-    setDocuments((current) =>
-      current.map((document) =>
+    setDocuments((current) => {
+      const next = current.map((document) =>
         document.id === selected.id
           ? {
               ...updater(document),
               updatedAt: new Date().toISOString()
             }
           : document
-      )
-    );
+      );
+      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "Sauvegarde locale"));
+      return next;
+    });
   }
 
   function createQuote() {
@@ -112,7 +114,11 @@ export function BillingWorkspace() {
       updatedAt: now.toISOString()
     };
 
-    setDocuments((current) => [document, ...current]);
+    setDocuments((current) => {
+      const next = [document, ...current];
+      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "Sauvegarde locale"));
+      return next;
+    });
     setSelectedId(document.id);
   }
 
