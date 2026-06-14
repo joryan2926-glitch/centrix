@@ -1,22 +1,22 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
 function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
-  const parts = Object.fromEntries(signatureHeader.split(",").map((part) => {
-    const [key, value] = part.split("=");
-    return [key, value];
-  }));
-  const timestamp = parts.t;
-  const signature = parts.v1;
-  if (!timestamp || !signature) return false;
+  const timestamp = signatureHeader.split(",").find((part) => part.startsWith("t="))?.slice(2);
+  const signatures = signatureHeader.split(",").filter((part) => part.startsWith("v1=")).map((part) => part.slice(3));
+  if (!timestamp || !signatures.length) return false;
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
 
   const signedPayload = `${timestamp}.${payload}`;
   const expected = createHmac("sha256", secret).update(signedPayload).digest("hex");
-  const actualBuffer = Buffer.from(signature, "hex");
   const expectedBuffer = Buffer.from(expected, "hex");
-  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
+  return signatures.some((signature) => {
+    const actualBuffer = Buffer.from(signature, "hex");
+    return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +31,16 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Signature Stripe invalide." }, { status: 400 });
   }
 
-  const event = JSON.parse(payload) as { id: string; type: string };
+  let event: { id?: string; type?: string };
+  try {
+    event = JSON.parse(payload) as { id?: string; type?: string };
+  } catch {
+    return Response.json({ error: "Payload Stripe invalide." }, { status: 400 });
+  }
+  if (!event.id || !event.type) {
+    return Response.json({ error: "Evenement Stripe incomplet." }, { status: 400 });
+  }
+
   const handled = [
     "invoice.payment_succeeded",
     "invoice.payment_failed",
@@ -39,6 +48,22 @@ export async function POST(request: NextRequest) {
     "customer.subscription.updated",
     "charge.refunded"
   ].includes(event.type);
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("stripe_events").upsert({
+      id: event.id,
+      stripeEventId: event.id,
+      type: event.type,
+      status: handled ? "processed" : "ignored",
+      payload: event,
+      createdAt: new Date().toISOString()
+    }, { onConflict: "stripeEventId" });
+
+    if (error) {
+      return Response.json({ error: "Evenement Stripe valide mais journalisation impossible." }, { status: 500 });
+    }
+  }
 
   return Response.json({ received: true, handled, eventId: event.id, type: event.type });
 }

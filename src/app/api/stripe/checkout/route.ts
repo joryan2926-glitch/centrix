@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
+import { getTrustedAppOrigin, getTrustedRedirectUrl, requireExternalApiUser, unauthorizedExternalApiResponse } from "@/lib/integrations/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const user = await requireExternalApiUser();
+  if (!user) return unauthorizedExternalApiResponse();
+
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     return Response.json({ error: "STRIPE_SECRET_KEY manquante cote serveur." }, { status: 503 });
@@ -13,16 +17,17 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "priceId Stripe requis." }, { status: 400 });
   }
 
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = getTrustedAppOrigin(request);
   const params = new URLSearchParams({
     mode: "subscription",
     "line_items[0][price]": body.priceId,
     "line_items[0][quantity]": "1",
-    success_url: body.successUrl ?? `${origin}/billing?checkout=success`,
-    cancel_url: body.cancelUrl ?? `${origin}/billing?checkout=cancel`,
+    success_url: getTrustedRedirectUrl(body.successUrl, "/billing?checkout=success", origin),
+    cancel_url: getTrustedRedirectUrl(body.cancelUrl, "/billing?checkout=cancel", origin),
     allow_promotion_codes: "true"
   });
-  if (body.customerEmail) params.set("customer_email", body.customerEmail);
+  const customerEmail = body.customerEmail ?? user.email;
+  if (customerEmail) params.set("customer_email", customerEmail);
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",

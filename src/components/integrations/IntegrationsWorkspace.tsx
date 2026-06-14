@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Activity, AlertTriangle, Braces, Cable, CheckCircle2, Code2, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, Webhook, Zap } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Activity, AlertTriangle, Bot, Braces, Cable, CheckCircle2, Code2, CreditCard, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, Webhook, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { formatIntegrationDate, formatIntegrationNumber, formatResponseTime } from "@/lib/integrations/format";
+import type { ExternalIntegrationsStatus } from "@/lib/integrations/server";
 import { createApiKey, createIntegrationNotification, createWebhook, getIntegrationDashboard, statusTone } from "@/services/integrations/calculations";
 import { useIntegrationsData } from "@/hooks/integrations/useIntegrationsData";
 import type { ExternalIntegration } from "@/types/integrations";
@@ -48,9 +49,17 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
   const [query, setQuery] = useState("");
   const [playgroundLoading, setPlaygroundLoading] = useState(false);
   const [playgroundResponse, setPlaygroundResponse] = useState("{\n  \"ready\": true\n}");
+  const [externalStatus, setExternalStatus] = useState<ExternalIntegrationsStatus | null>(null);
 
   const dashboard = useMemo(() => getIntegrationDashboard(data), [data]);
   const filteredIntegrations = data.integrations.filter((integration) => integration.name.toLowerCase().includes(query.toLowerCase()) || categories[integration.category].toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    fetch("/api/integrations/status")
+      .then(async (response) => response.ok ? response.json() as Promise<ExternalIntegrationsStatus> : null)
+      .then(setExternalStatus)
+      .catch(() => setExternalStatus(null));
+  }, []);
 
   function addApiKey() {
     const key = createApiKey("Nouvelle cle API");
@@ -142,7 +151,7 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
         })}
       </div>
 
-      {view === "dashboard" ? <><IntegrationCharts data={data} /><NotificationGrid notifications={data.notifications} /></> : null}
+      {view === "dashboard" ? <><ExternalStatusGrid status={externalStatus} /><IntegrationCharts data={data} /><NotificationGrid notifications={data.notifications} /></> : null}
 
       {view === "keys" ? (
         <Card className="p-5">
@@ -244,6 +253,46 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
 
       {!data.integrations.length ? <EmptyState icon={<Cable size={20} />} title="Aucune integration" detail="Synchronisez Supabase ou connectez une app." /> : null}
     </div>
+  );
+}
+
+function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | null }) {
+  const providers = [
+    { key: "supabase", label: "Supabase Cloud", icon: <Server size={18} /> },
+    { key: "openai", label: "OpenAI", icon: <Bot size={18} /> },
+    { key: "stripe", label: "Stripe Billing", icon: <CreditCard size={18} /> },
+    { key: "stripeWebhook", label: "Stripe Webhooks", icon: <Webhook size={18} /> },
+    { key: "stripeConnect", label: "Stripe Connect", icon: <PlugZap size={18} /> },
+    { key: "googleOAuth", label: "Google OAuth", icon: <Globe2 size={18} /> }
+  ] as const;
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Etat des connexions externes</h2>
+          <p className="mt-1 text-sm text-slate-400">Diagnostic serveur sans exposition des cles secretes.</p>
+        </div>
+        <Badge tone={status && providers.every(({ key }) => status[key].configured) ? "emerald" : "cyan"}>
+          {status ? `${providers.filter(({ key }) => status[key].configured).length}/${providers.length} actives` : "Verification"}
+        </Badge>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {providers.map(({ key, label, icon }) => {
+          const item = status?.[key];
+          return (
+            <div key={key} className="rounded-[8px] border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className={item?.configured ? "text-emerald-300" : "text-slate-400"}>{icon}</span>
+                <Badge tone={item?.configured ? "emerald" : "rose"}>{item?.configured ? "connecte" : item ? "a configurer" : "verification"}</Badge>
+              </div>
+              <p className="mt-3 font-semibold text-white">{label}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{item?.detail ?? "Lecture de la configuration serveur..."}</p>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { requireExternalApiUser, unauthorizedExternalApiResponse } from "@/lib/integrations/server";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ const systemPrompt =
   "Tu es CENTRIX AI, un copilote business SaaS francophone. Reponds de facon concise, professionnelle, actionnable, avec des recommandations operations, CRM, finance, marketing ou automatisations quand c'est utile.";
 
 export async function POST(request: NextRequest) {
+  const user = await requireExternalApiUser();
+  if (!user) return unauthorizedExternalApiResponse();
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return Response.json({ error: "OPENAI_API_KEY manquante cote serveur." }, { status: 503 });

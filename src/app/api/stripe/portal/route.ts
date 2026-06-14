@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
+import { getTrustedAppOrigin, getTrustedRedirectUrl, requireExternalApiUser, unauthorizedExternalApiResponse } from "@/lib/integrations/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const user = await requireExternalApiUser();
+  if (!user) return unauthorizedExternalApiResponse();
+
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     return Response.json({ error: "STRIPE_SECRET_KEY manquante cote serveur." }, { status: 503 });
@@ -13,10 +17,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "customerId Stripe requis." }, { status: 400 });
   }
 
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = getTrustedAppOrigin(request);
   const params = new URLSearchParams({
     customer: body.customerId,
-    return_url: body.returnUrl ?? `${origin}/billing`
+    return_url: getTrustedRedirectUrl(body.returnUrl, "/billing", origin)
   });
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {

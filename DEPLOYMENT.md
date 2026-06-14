@@ -52,6 +52,13 @@ https://your-centrix-domain.vercel.app/reset-password
 
 Google OAuth doit etre active et configure dans Supabase avant utilisation.
 
+Pour Google OAuth :
+
+1. Creer un client OAuth Web dans Google Cloud.
+2. Ajouter le callback Supabase affiche dans `Auth > Providers > Google`.
+3. Ajouter le Client ID et le Client Secret dans Supabase.
+4. Ajouter `https://app-centrix.fr/auth/callback` aux redirect URLs Supabase.
+
 ## Stripe
 
 Configurer le webhook Stripe vers :
@@ -59,3 +66,15 @@ Configurer le webhook Stripe vers :
 ```text
 https://your-centrix-domain.vercel.app/api/stripe/webhook
 ```
+
+Evenements Stripe recommandes :
+
+```text
+invoice.payment_succeeded
+invoice.payment_failed
+customer.subscription.deleted
+customer.subscription.updated
+charge.refunded
+```
+
+Le module `API & Integrations` expose un diagnostic serveur des connexions actives. Les routes Stripe et OpenAI exigent une session CENTRIX et ne revelent jamais les secrets au navigateur.

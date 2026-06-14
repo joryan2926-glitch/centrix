@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
+import { requireExternalApiUser, unauthorizedExternalApiResponse } from "@/lib/integrations/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const user = await requireExternalApiUser();
+  if (!user) return unauthorizedExternalApiResponse();
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return Response.json({ error: "OPENAI_API_KEY manquante cote serveur." }, { status: 503 });
   const body = await request.json().catch(() => ({}));
