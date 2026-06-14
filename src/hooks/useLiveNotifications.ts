@@ -59,36 +59,35 @@ export function useLiveNotifications() {
   const [loading, setLoading] = useState(Boolean(supabase));
 
   const refresh = useCallback(async () => {
-    if (!supabase || !user) {
+    try {
+      if (!supabase || !user) return;
+
+      const workspace = await resolveWorkspaceContext(supabase);
+      if (!workspace) return;
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("workspace_id", workspace.workspaceId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (!error) {
+        setItems((data ?? []).map((row) => ({
+          body: String(row.body ?? ""),
+          createdAt: String(row.created_at),
+          id: String(row.id),
+          module: String(row.module ?? "system"),
+          readAt: row.read_at ? String(row.read_at) : null,
+          title: String(row.title ?? "Notification"),
+          type: String(row.type ?? "info")
+        })));
+      }
+    } catch (error) {
+      console.warn("[CENTRIX_NOTIFICATIONS_FALLBACK]", error);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const workspace = await resolveWorkspaceContext(supabase);
-    if (!workspace) {
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("workspace_id", workspace.workspaceId)
-      .order("created_at", { ascending: false })
-      .limit(30);
-
-    if (!error) {
-      setItems((data ?? []).map((row) => ({
-        body: String(row.body ?? ""),
-        createdAt: String(row.created_at),
-        id: String(row.id),
-        module: String(row.module ?? "system"),
-        readAt: row.read_at ? String(row.read_at) : null,
-        title: String(row.title ?? "Notification"),
-        type: String(row.type ?? "info")
-      })));
-    }
-    setLoading(false);
   }, [supabase, user]);
 
   useEffect(() => {
@@ -97,12 +96,18 @@ export function useLiveNotifications() {
 
   useEffect(() => {
     if (!supabase || !user) return undefined;
-    const channel = supabase
-      .channel("centrix-live-notifications")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
-      .subscribe();
+    let channel;
+    try {
+      channel = supabase
+        .channel("centrix-live-notifications")
+        .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
+        .subscribe();
+    } catch (error) {
+      console.warn("[CENTRIX_NOTIFICATIONS_REALTIME_DISABLED]", error);
+      return undefined;
+    }
     return () => {
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel).catch(() => undefined);
     };
   }, [refresh, supabase, user]);
 

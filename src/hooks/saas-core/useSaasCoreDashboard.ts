@@ -89,11 +89,19 @@ export function useSaasCoreDashboard() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const result = await loadDataPlatformDashboard();
-    setData(result.data);
-    setSnapshot(result.snapshot);
-    setMode(result.mode);
-    setLoading(false);
+    try {
+      const result = await loadDataPlatformDashboard();
+      setData(result.data);
+      setSnapshot(result.snapshot);
+      setMode(result.mode);
+    } catch (error) {
+      console.warn("[CENTRIX_DASHBOARD_FALLBACK]", error);
+      setData(saasCoreFallbackDashboard);
+      setSnapshot(null);
+      setMode("local");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -104,17 +112,23 @@ export function useSaasCoreDashboard() {
     const supabase = getSupabaseClient();
     if (!supabase || mode !== "supabase") return undefined;
 
-    const channel = supabase
-      .channel("centrix-dashboard-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => void refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => void refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => void refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => void refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
-      .subscribe();
+    let channel;
+    try {
+      channel = supabase
+        .channel("centrix-dashboard-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => void refresh())
+        .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => void refresh())
+        .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => void refresh())
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => void refresh())
+        .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
+        .subscribe();
+    } catch (error) {
+      console.warn("[CENTRIX_DASHBOARD_REALTIME_DISABLED]", error);
+      return undefined;
+    }
 
     return () => {
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel).catch(() => undefined);
     };
   }, [mode, refresh]);
 
