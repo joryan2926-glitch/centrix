@@ -24,7 +24,7 @@ export async function loadSaaSBillingData(): Promise<{ data: SaaSBillingData; mo
     supabase.from("subscription_plans").select("*"),
     supabase.from("billing_customers").select("*"),
     supabase.from("subscriptions").select("*").order("updatedAt", { ascending: false }),
-    supabase.from("invoices").select("*").order("createdAt", { ascending: false }),
+    supabase.from("invoices").select("*").order("created_at", { ascending: false }),
     supabase.from("payments").select("*").order("createdAt", { ascending: false }),
     supabase.from("coupons").select("*"),
     supabase.from("usage_limits").select("*"),

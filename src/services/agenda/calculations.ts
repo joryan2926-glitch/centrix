@@ -73,7 +73,7 @@ export function buildEvent(input: {
   const durationMinutes = Math.max(15, Math.round((new Date(input.end).getTime() - new Date(input.start).getTime()) / 60000));
 
   return {
-    id: `evt-${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     calendarId: input.calendarId,
     title: input.title,
     description: input.description,
@@ -99,7 +99,7 @@ export function duplicateEvent(event: CalendarEvent): CalendarEvent {
 
   return {
     ...event,
-    id: `evt-${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     title: `${event.title} copie`,
     status: "pending",
     start: start.toISOString(),

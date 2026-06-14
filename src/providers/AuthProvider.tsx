@@ -1,8 +1,10 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEMO_AUTH_PROFILE, DEMO_AUTH_USER } from "@/lib/auth/demo-session";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { useSupabaseContext } from "@/providers/SupabaseProvider";
 
 export type AuthRole = "admin" | "manager" | "employee" | "client" | "user";
 
@@ -41,13 +43,69 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const user = DEMO_AUTH_USER;
-  const profile = DEMO_AUTH_PROFILE;
-  const refresh = useCallback(async () => undefined, []);
+  const { loading: supabaseLoading, supabase, user } = useSupabaseContext();
+  const [profile, setProfile] = useState<AuthProfile | null>(DEMO_MODE || !supabase ? DEMO_AUTH_PROFILE : null);
+  const [profileLoading, setProfileLoading] = useState(Boolean(supabase && !DEMO_MODE));
+
+  const loadProfile = useCallback(async () => {
+    if (DEMO_MODE || !supabase) {
+      setProfile(DEMO_AUTH_PROFILE);
+      setProfileLoading(false);
+      return;
+    }
+
+    if (!user) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    setProfileLoading(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, avatar_url, role, workspace_id, workspaces(name)")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      setProfile({
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+        email: user.email ?? "",
+        fullName: user.user_metadata?.name ?? user.email ?? "Utilisateur CENTRIX",
+        id: user.id,
+        role: "user",
+        workspaceId: null,
+        workspaceName: null
+      });
+      setProfileLoading(false);
+      return;
+    }
+
+    const workspace = Array.isArray(data.workspaces) ? data.workspaces[0] : data.workspaces;
+
+    setProfile({
+      avatarUrl: data.avatar_url ?? null,
+      email: data.email ?? user.email ?? "",
+      fullName: data.full_name ?? user.user_metadata?.name ?? "Utilisateur CENTRIX",
+      id: data.id,
+      role: (data.role as AuthRole | null) ?? "user",
+      workspaceId: data.workspace_id ?? null,
+      workspaceName: workspace?.name ?? null
+    });
+    setProfileLoading(false);
+  }, [supabase, user]);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
+  const refresh = useCallback(async () => {
+    await loadProfile();
+  }, [loadProfile]);
 
   const value = useMemo(
     () => ({
-      authenticated: true,
+      authenticated: Boolean(user),
       canManageBilling: profile?.role === "admin",
       canManageWorkspace: profile?.role === "admin" || profile?.role === "manager",
       hasRole: (roles: AuthRole | AuthRole[]) => {
@@ -55,12 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return profile?.role ? allowedRoles.includes(profile.role) : false;
       },
       isAdmin: profile?.role === "admin",
-      loading: false,
+      loading: supabaseLoading || profileLoading,
       profile,
       refresh,
-      user
+      user: user ?? (DEMO_MODE || !supabase ? DEMO_AUTH_USER : null)
     }),
-    [profile, refresh, user]
+    [profile, profileLoading, refresh, supabase, supabaseLoading, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

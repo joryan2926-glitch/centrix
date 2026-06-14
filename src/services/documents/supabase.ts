@@ -22,7 +22,7 @@ export async function loadDocumentsData(): Promise<{ data: DocumentsCloudData; m
   if (!supabase) return { data: readLocal(), mode: "local" };
 
   const [documents, folders, shares, comments, versions, storageUsage, tags, notifications] = await Promise.all([
-    supabase.from("documents").select("*").order("updatedAt", { ascending: false }),
+    supabase.from("documents").select("*").order("updated_at", { ascending: false }),
     supabase.from("folders").select("*").order("updatedAt", { ascending: false }),
     supabase.from("document_shares").select("*").order("createdAt", { ascending: false }),
     supabase.from("document_comments").select("*").order("createdAt", { ascending: false }),

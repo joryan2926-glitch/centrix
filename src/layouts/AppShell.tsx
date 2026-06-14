@@ -10,8 +10,9 @@ import { NotificationCenter } from "@/components/shell/NotificationCenter";
 import { QuickActions } from "@/components/shell/QuickActions";
 import { CentrixLogo } from "@/components/ui";
 import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigation";
+import { signOutAction } from "@/app/auth/actions";
+import { useAuth } from "@/hooks/useAuth";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { DEMO_AUTH_PROFILE } from "@/lib/auth/demo-session";
 import { cn } from "@/lib/utils";
 import { Button } from "@/ui/Button";
 
@@ -25,8 +26,7 @@ export function AppShell({ children }: AppShellProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [open, setOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const authLoading = false;
-  const profile = DEMO_AUTH_PROFILE;
+  const { loading: authLoading, profile } = useAuth();
   const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password"].includes(pathname) || pathname.startsWith("/auth/");
   const profileInitials = profile?.fullName
     .split(" ")
@@ -209,9 +209,13 @@ export function AppShell({ children }: AppShellProps) {
                 <ChevronDown size={15} className="hidden text-slate-400 sm:block" />
               </Link>
               <Button
-                aria-label="Retour au dashboard"
+                aria-label="Se deconnecter"
                 className="hidden h-10 w-10 px-0 sm:inline-flex"
-                onClick={() => router.push("/dashboard")}
+                onClick={async () => {
+                  await signOutAction();
+                  router.push("/login");
+                  router.refresh();
+                }}
                 variant="surface"
               >
                 <LogOut size={17} />

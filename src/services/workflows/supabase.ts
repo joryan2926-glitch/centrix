@@ -18,7 +18,7 @@ export async function loadWorkflowData(): Promise<{ data: WorkflowData; mode: "l
   const supabase = getSupabaseClient();
   if (!supabase) return { data: readLocal(), mode: "local" };
   const [workflows, blocks, connections, runs, templates, tasks, alerts] = await Promise.all([
-    supabase.from("workflows").select("*").order("updatedAt", { ascending: false }),
+    supabase.from("workflows").select("*").order("updated_at", { ascending: false }),
     supabase.from("workflow_blocks").select("*"),
     supabase.from("workflow_connections").select("*"),
     supabase.from("workflow_runs").select("*").order("createdAt", { ascending: false }),

@@ -16,7 +16,8 @@ export const priorityLabels: Record<CrmPriority, string> = {
 };
 
 export function createCrmId(prefix = "crm") {
-  return `${prefix}-${crypto.randomUUID()}`;
+  void prefix;
+  return crypto.randomUUID();
 }
 
 export function formatCrmCurrency(value: number) {

@@ -34,7 +34,7 @@ export function getProjectsDashboard(data: ProjectsData) {
 
 export function createProject(): Project {
   return {
-    id: `proj-${Date.now()}`,
+    id: crypto.randomUUID(),
     title: "Nouveau projet",
     description: "Projet pret a configurer.",
     category: "General",

@@ -104,13 +104,13 @@ function buildActivities(tables: TableResult): PlatformActivity[] {
 }
 
 function buildAnalytics(tables: TableResult): DashboardAnalyticsPoint[] {
-  const explicit = tables.analytics.filter((row) => String(row.metric_key ?? "") === "revenue");
+  const explicit = tables.analytics.filter((row) => String(row.metric ?? "") === "revenue");
   if (explicit.length) {
     return explicit.slice(0, 8).map((row) => ({
-      label: String(row.period ?? row.metric_label ?? "Periode"),
-      revenue: numberValue(row.metric_value) / 1000,
-      expenses: numberValue(row.dimensions && typeof row.dimensions === "object" ? (row.dimensions as Record<string, unknown>).expenses : 0) / 1000,
-      leads: numberValue(row.dimensions && typeof row.dimensions === "object" ? (row.dimensions as Record<string, unknown>).leads : 0)
+      label: String(row.period ?? row.metric ?? "Periode"),
+      revenue: numberValue(row.value) / 1000,
+      expenses: numberValue(row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>).expenses : 0) / 1000,
+      leads: numberValue(row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>).leads : 0)
     }));
   }
 
@@ -216,9 +216,9 @@ export async function loadDataPlatformDashboard(): Promise<{ data: SaasCoreDashb
   const urgentTasks = tables.tasks.filter((task) => String(task.priority ?? "").toLowerCase() === "urgent" || String(task.priority ?? "").toLowerCase() === "high").length;
   const monthlyRevenue = paidRevenue || tables.invoices.reduce((sum, invoice) => sum + numberValue(invoice.total), 0);
   const conversionRate = tables.prospects.length ? (wonProspects / tables.prospects.length) * 100 : Math.min(87, tables.clients.length * 12);
-  const growthRate = tables.analytics.find((row) => String(row.metric_key) === "growth")?.metric_value;
+  const growthRate = tables.analytics.find((row) => String(row.metric) === "growth")?.value;
   const forecastRevenue = monthlyRevenue * 1.18 + tables.quotes.reduce((sum, quote) => sum + numberValue(quote.total), 0) * 0.42;
-  const cashflow = paidRevenue - tables.analytics.filter((row) => String(row.metric_key) === "expenses").reduce((sum, row) => sum + numberValue(row.metric_value), 0);
+  const cashflow = paidRevenue - tables.analytics.filter((row) => String(row.metric) === "expenses").reduce((sum, row) => sum + numberValue(row.value), 0);
   const profitability = monthlyRevenue ? Math.max(0, Math.min(100, (cashflow / monthlyRevenue) * 100)) : 72;
   const snapshot: PlatformDashboardSnapshot = {
     workspace,

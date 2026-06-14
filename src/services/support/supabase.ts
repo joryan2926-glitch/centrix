@@ -21,7 +21,7 @@ export async function loadSupportData(): Promise<{ data: SupportData; mode: "loc
   if (!supabase) return { data: readLocal(), mode: "local" };
 
   const [tickets, messages, comments, agents, categories, articles, feedback, notifications] = await Promise.all([
-    supabase.from("support_tickets").select("*").order("updatedAt", { ascending: false }),
+    supabase.from("support_tickets").select("*").order("updated_at", { ascending: false }),
     supabase.from("support_messages").select("*").order("createdAt", { ascending: true }),
     supabase.from("support_comments").select("*").order("createdAt", { ascending: false }),
     supabase.from("support_agents").select("*"),

@@ -560,7 +560,7 @@ function AdvancedAnalyticsWidget({ data, miniAnalytics, period, setPeriod }: { d
         })}
       </div>
 
-      <div className="h-[390px] px-3 pb-6 sm:px-6">
+      <ClientOnlyChart className="h-[390px] px-3 pb-6 sm:px-6">
         <ResponsiveContainer height="100%" minWidth={0} width="100%">
           <ComposedChart data={data} margin={{ bottom: 8, left: 0, right: 10, top: 22 }}>
             <defs>
@@ -579,7 +579,7 @@ function AdvancedAnalyticsWidget({ data, miniAnalytics, period, setPeriod }: { d
             <Line dataKey="clients" name="Clients" stroke="#06B6D4" strokeWidth={3} type="monotone" />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
+      </ClientOnlyChart>
     </Card>
   );
 }
@@ -748,7 +748,7 @@ function RechartsWidget({ data, subtitle, title, type, valueSuffix }: { data: Ar
         </div>
         <Badge tone="cyan">{valueSuffix}</Badge>
       </div>
-      <div className="mt-5 h-64">
+      <ClientOnlyChart className="mt-5 h-64">
         <ResponsiveContainer height="100%" minWidth={0} width="100%">
           {type === "area" ? (
             <AreaChart data={formatted}>
@@ -768,9 +768,23 @@ function RechartsWidget({ data, subtitle, title, type, valueSuffix }: { data: Ar
             </BarChart>
           )}
         </ResponsiveContainer>
-      </div>
+      </ClientOnlyChart>
     </Card>
   );
+}
+
+function ClientOnlyChart({ children, className }: { children: ReactNode; className: string }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className={className} aria-hidden="true" />;
+  }
+
+  return <div className={className}>{children}</div>;
 }
 
 function WidgetToolbar({ compact, icon, id, moveWidget, title }: { compact?: boolean; icon?: ReactNode; id: DashboardWidgetId; moveWidget: (id: DashboardWidgetId, direction: -1 | 1) => void; title: string }) {

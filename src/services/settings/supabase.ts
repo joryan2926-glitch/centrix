@@ -27,7 +27,7 @@ export async function loadSettingsData(): Promise<{ data: SettingsData; mode: "l
     supabase.from("user_roles").select("*").order("lastLoginAt", { ascending: false }),
     supabase.from("activity_logs").select("*").order("createdAt", { ascending: false }),
     supabase.from("security_logs").select("*").order("createdAt", { ascending: false }),
-    supabase.from("notifications").select("*").order("createdAt", { ascending: false }),
+    supabase.from("notifications").select("*").order("created_at", { ascending: false }),
     supabase.from("module_settings").select("*"),
     supabase.from("billing_history").select("*").order("createdAt", { ascending: false })
   ]);

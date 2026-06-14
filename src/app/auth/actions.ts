@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
 import { ensureUserOnboarding } from "@/lib/auth/onboarding";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
@@ -138,7 +137,9 @@ export async function updateProfileAction(formData: FormData): Promise<AuthActio
   const supabase = await createServerSupabaseClient();
   if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Connexion Supabase requise." };
 
-  const user = DEMO_AUTH_USER;
+  const { data: authData } = await supabase.auth.getUser();
+  const user = authData.user;
+  if (!user) return { ok: false, title: "Session requise", detail: "Reconnectez-vous pour modifier votre profil." };
 
   const nom = String(formData.get("nom") ?? "").trim();
   const entreprise = String(formData.get("entreprise") ?? "").trim();

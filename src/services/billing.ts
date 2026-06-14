@@ -1,7 +1,8 @@
 import type { BillingDocument, BillingLine, BillingNotification, BillingStatus, BillingTotals, FrenchVatRate, SaaSBillingData, SaaSSubscription, SubscriptionPlanCode } from "@/types/billing";
 
 export function createBillingId(prefix = "doc") {
-  return `${prefix}-${crypto.randomUUID()}`;
+  void prefix;
+  return crypto.randomUUID();
 }
 
 export function formatCurrency(value: number) {

@@ -46,7 +46,7 @@ export function createDocumentFromFile(file: File, folderId: string | null, stor
   const now = new Date().toISOString();
 
   return {
-    id: `cloud-doc-${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     folderId,
     name: file.name,
     extension,
@@ -84,7 +84,7 @@ export function duplicateDocument(document: CloudDocument): CloudDocument {
   const now = new Date().toISOString();
   return {
     ...document,
-    id: `cloud-doc-${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     name: `${document.name.replace(/\.[^/.]+$/, "")} copie.${document.extension}`,
     favorite: false,
     shared: false,

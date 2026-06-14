@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { AuthCard } from "@/components/auth/AuthCard";
 
 export default function RegisterPage() {
-  redirect("/dashboard");
+  return <AuthCard mode="register" />;
 }

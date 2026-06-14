@@ -14,53 +14,58 @@ export type LiveNotification = {
   createdAt: string;
 };
 
-const fallbackNotifications: LiveNotification[] = [
+const demoNotifications: LiveNotification[] = [
   {
-    id: "fallback-ai",
-    title: "Insight IA disponible",
-    body: "Le dashboard a detecte une hausse du pipeline commercial.",
-    type: "info",
+    body: "Le chiffre d'affaires progresse de 18,4% sur le mois.",
+    createdAt: new Date().toISOString(),
+    id: "demo-ai",
     module: "analytics",
     readAt: null,
-    createdAt: new Date().toISOString()
+    title: "Insight IA disponible",
+    type: "info"
   },
   {
-    id: "fallback-billing",
-    title: "Facture en attente",
-    body: "Une facture premium attend validation.",
-    type: "warning",
+    body: "3 factures nécessitent une relance dans les prochaines 48h.",
+    createdAt: new Date().toISOString(),
+    id: "demo-billing",
     module: "billing",
     readAt: null,
-    createdAt: new Date().toISOString()
+    title: "Relances facturation",
+    type: "warning"
+  },
+  {
+    body: "5 rendez-vous sont planifiés aujourd'hui dans l'agenda équipe.",
+    createdAt: new Date().toISOString(),
+    id: "demo-agenda",
+    module: "agenda",
+    readAt: null,
+    title: "Agenda chargé",
+    type: "info"
+  },
+  {
+    body: "Le workflow CRM vers facturation a été exécuté avec succès.",
+    createdAt: new Date().toISOString(),
+    id: "demo-workflow",
+    module: "automation",
+    readAt: new Date().toISOString(),
+    title: "Automation exécutée",
+    type: "success"
   }
 ];
 
-function mapNotification(row: Record<string, unknown>): LiveNotification {
-  return {
-    id: String(row.id),
-    title: String(row.title ?? "Notification"),
-    body: String(row.body ?? ""),
-    type: String(row.type ?? "info"),
-    module: String(row.module ?? "system"),
-    readAt: row.read_at ? String(row.read_at) : null,
-    createdAt: String(row.created_at ?? new Date().toISOString())
-  };
-}
-
 export function useLiveNotifications() {
-  const { supabase } = useSupabaseContext();
-  const [items, setItems] = useState<LiveNotification[]>(fallbackNotifications);
+  const { supabase, user } = useSupabaseContext();
+  const [items, setItems] = useState<LiveNotification[]>(demoNotifications);
   const [loading, setLoading] = useState(Boolean(supabase));
 
   const refresh = useCallback(async () => {
-    if (!supabase) {
+    if (!supabase || !user) {
       setLoading(false);
       return;
     }
 
     const workspace = await resolveWorkspaceContext(supabase);
     if (!workspace) {
-      setItems(fallbackNotifications);
       setLoading(false);
       return;
     }
@@ -70,31 +75,36 @@ export function useLiveNotifications() {
       .select("*")
       .eq("workspace_id", workspace.workspaceId)
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(30);
 
-    if (!error && data?.length) {
-      setItems(data.map(mapNotification));
+    if (!error) {
+      setItems((data ?? []).map((row) => ({
+        body: String(row.body ?? ""),
+        createdAt: String(row.created_at),
+        id: String(row.id),
+        module: String(row.module ?? "system"),
+        readAt: row.read_at ? String(row.read_at) : null,
+        title: String(row.title ?? "Notification"),
+        type: String(row.type ?? "info")
+      })));
     }
-
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, user]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   useEffect(() => {
-    if (!supabase) return;
-
+    if (!supabase || !user) return undefined;
     const channel = supabase
       .channel("centrix-live-notifications")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
       .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
-  }, [refresh, supabase]);
+  }, [refresh, supabase, user]);
 
   const unreadCount = useMemo(() => items.filter((item) => !item.readAt).length, [items]);
 

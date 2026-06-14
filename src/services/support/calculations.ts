@@ -39,7 +39,7 @@ export function getSupportDashboard(data: SupportData) {
 export function createTicket(input: Pick<SupportTicket, "title" | "description" | "clientName" | "clientEmail" | "priority" | "categoryId">): SupportTicket {
   const now = new Date().toISOString();
   return {
-    id: `ticket-${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     ...input,
     status: "open",
     assignedAgentId: null,

@@ -1,8 +1,9 @@
 "use client";
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 type SupabaseContextValue = {
@@ -21,8 +22,38 @@ const SupabaseContext = createContext<SupabaseContextValue>({
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
-  const user = DEMO_AUTH_USER;
-  const loading = false;
+  const [user, setUser] = useState<User | null>(DEMO_MODE || !supabase ? DEMO_AUTH_USER : null);
+  const [loading, setLoading] = useState(Boolean(supabase && !DEMO_MODE));
+
+  useEffect(() => {
+    if (DEMO_MODE || !supabase) {
+      setUser(DEMO_AUTH_USER);
+      setLoading(false);
+      return undefined;
+    }
+
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setUser(data.user);
+      setLoading(false);
+    }).catch(() => {
+      if (!mounted) return;
+      setUser(null);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const value = useMemo(() => ({ supabase, user, loading, connected: Boolean(supabase) }), [supabase, user, loading]);
 

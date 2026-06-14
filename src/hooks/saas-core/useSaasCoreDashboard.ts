@@ -4,11 +4,77 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { saasCoreFallbackDashboard } from "@/data/saasCore";
 import { getSupabaseClient } from "@/lib/supabase";
 import { loadDataPlatformDashboard } from "@/services/data-platform/dashboard";
-import { loadSaasCoreDashboard, saveSaasCoreDashboard, syncSaasCoreDashboard } from "@/services/saas-core/supabase";
+import { syncSaasCoreDashboard } from "@/services/saas-core/supabase";
 import type { PlatformDashboardSnapshot } from "@/types/data-platform";
 import type { SaasCoreDashboard } from "@/types/saas-core";
 
 type Toast = { title: string; detail: string };
+
+const demoSnapshot: PlatformDashboardSnapshot = {
+  cashflow: 41800,
+  cashflowSeries: [
+    { label: "Jan", value: 17 },
+    { label: "Fev", value: 21 },
+    { label: "Mar", value: 22 },
+    { label: "Avr", value: 29 },
+    { label: "Mai", value: 33 },
+    { label: "Juin", value: 43 }
+  ],
+  clientsCount: 128,
+  conversionRate: 28.6,
+  forecastRevenue: 118400,
+  forecastSeries: [
+    { label: "Jan", value: 48 },
+    { label: "Fev", value: 54 },
+    { label: "Mar", value: 61 },
+    { label: "Avr", value: 74 },
+    { label: "Mai", value: 88 },
+    { label: "Juin", value: 104 }
+  ],
+  growthRate: 18.4,
+  invoicesPending: 7,
+  invoicesTotal: 84200,
+  leadSeries: [
+    { label: "Jan", value: 74 },
+    { label: "Fev", value: 82 },
+    { label: "Mar", value: 96 },
+    { label: "Avr", value: 118 },
+    { label: "Mai", value: 142 },
+    { label: "Juin", value: 168 }
+  ],
+  meetingsUpcoming: 5,
+  monthlyRevenue: 84200,
+  paidRevenue: 72400,
+  pendingQuotes: 4,
+  profitability: 74,
+  projectsActive: 12,
+  prospectsCount: 46,
+  quotesTotal: 138000,
+  recentActivity: [
+    { id: "demo-act-1", module: "crm", title: "Nouveau client ajoute", detail: "NovaCore a ete ajoute au pipeline commercial.", createdAt: new Date().toISOString() },
+    { id: "demo-act-2", module: "billing", title: "Paiement recu", detail: "Facture premium reglee pour 12 400 EUR.", createdAt: new Date().toISOString() },
+    { id: "demo-act-3", module: "automation", title: "Workflow execute", detail: "Relance automatique envoyee aux devis ouverts.", createdAt: new Date().toISOString() }
+  ],
+  revenueSeries: [
+    { label: "Jan", value: 42 },
+    { label: "Fev", value: 48 },
+    { label: "Mar", value: 51 },
+    { label: "Avr", value: 63 },
+    { label: "Mai", value: 71 },
+    { label: "Juin", value: 84 }
+  ],
+  supportOpen: 6,
+  tasksOpen: 18,
+  unreadNotifications: 5,
+  unpaidInvoices: 3,
+  urgentTasks: 4,
+  workspace: {
+    role: "admin",
+    userId: "admin",
+    workspaceId: "demo",
+    workspaceName: "CENTRIX SAS"
+  }
+};
 
 export function useSaasCoreDashboard() {
   const [data, setData] = useState<SaasCoreDashboard>(saasCoreFallbackDashboard);
@@ -23,59 +89,38 @@ export function useSaasCoreDashboard() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const platformResult = await loadDataPlatformDashboard();
-    if (platformResult.mode === "supabase") {
-      setData(platformResult.data);
-      setSnapshot(platformResult.snapshot);
-      setMode("supabase");
-      return;
-    }
-
-    const legacyResult = await loadSaasCoreDashboard();
-    setData(legacyResult.data);
-    setSnapshot(null);
-    setMode(legacyResult.mode);
+    const result = await loadDataPlatformDashboard();
+    setData(result.data);
+    setSnapshot(result.snapshot);
+    setMode(result.mode);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    void refresh();
   }, [refresh]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
-    if (!supabase) return;
+    if (!supabase || mode !== "supabase") return undefined;
 
     const channel = supabase
-      .channel("centrix-saas-core-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "prospects" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "meetings" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "analytics" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "dashboard_metrics" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "dashboard_analytics" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "module_events" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "module_tasks" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "module_connections" }, () => refresh())
+      .channel("centrix-dashboard-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => void refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => void refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => void refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => void refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void refresh())
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
-  }, [refresh]);
+  }, [mode, refresh]);
 
   const mutate = useCallback(
     (updater: (current: SaasCoreDashboard) => SaasCoreDashboard, message?: Toast) => {
-      setData((current) => {
-        const next = updater(current);
-        saveSaasCoreDashboard(next);
-        return next;
-      });
+      setData((current) => updater(current));
       if (message) notify(message.title, message.detail);
     },
     [notify]
@@ -84,8 +129,20 @@ export function useSaasCoreDashboard() {
   const sync = useCallback(async () => {
     const result = await syncSaasCoreDashboard(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Socle SaaS synchronise" : "Mode local actif", "Dashboard, evenements et connexions modules sont a jour.");
+    notify(result.mode === "supabase" ? "Dashboard synchronise" : "Synchronisation indisponible", result.mode === "supabase" ? "Les widgets CENTRIX sont synchronises avec Supabase." : "Reconnectez-vous pour synchroniser le dashboard.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, snapshot, loading, mode, toast, mutate, refresh, sync }), [data, snapshot, loading, mode, toast, mutate, refresh, sync]);
+  return useMemo(
+    () => ({
+      data,
+      loading,
+      mode,
+      mutate,
+      refresh,
+      snapshot: snapshot ?? demoSnapshot,
+      sync,
+      toast
+    }),
+    [data, loading, mode, mutate, refresh, snapshot, sync, toast]
+  );
 }

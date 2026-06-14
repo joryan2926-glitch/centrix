@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { getSupabaseEnv } from "@/lib/supabase-env";
 
 export async function createServerSupabaseClient() {
+  if (DEMO_MODE) return null;
+
   const { key, url } = getSupabaseEnv();
 
   if (!url || !key) {

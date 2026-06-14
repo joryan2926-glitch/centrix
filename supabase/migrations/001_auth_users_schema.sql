@@ -228,50 +228,34 @@ create trigger touch_workspace_members_updated_at before update on public.worksp
 
 do $$
 begin
-  do $$
-begin
   alter publication supabase_realtime add table public.users;
 exception
   when duplicate_object then null;
   when undefined_object then null;
 end $$;
-exception when duplicate_object then null; when others then null;
-end $$;
 
 do $$
-begin
-  do $$
 begin
   alter publication supabase_realtime add table public.profiles;
 exception
   when duplicate_object then null;
   when undefined_object then null;
 end $$;
-exception when duplicate_object then null; when others then null;
-end $$;
 
 do $$
-begin
-  do $$
 begin
   alter publication supabase_realtime add table public.workspaces;
 exception
   when duplicate_object then null;
   when undefined_object then null;
 end $$;
-exception when duplicate_object then null; when others then null;
-end $$;
 
 do $$
-begin
-  do $$
 begin
   alter publication supabase_realtime add table public.workspace_members;
 exception
   when duplicate_object then null;
   when undefined_object then null;
-end $$;
-exception when duplicate_object then null; when others then null;
 end $$;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

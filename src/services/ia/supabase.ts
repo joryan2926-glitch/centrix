@@ -25,7 +25,7 @@ export async function loadAiAutomationData(): Promise<{ data: AiAutomationData; 
     supabase.from("ai_messages").select("*").order("createdAt", { ascending: true }),
     supabase.from("ai_generations").select("*").order("createdAt", { ascending: false }),
     supabase.from("ai_templates").select("*"),
-    supabase.from("workflows").select("*").order("updatedAt", { ascending: false }),
+    supabase.from("workflows").select("*").order("updated_at", { ascending: false }),
     supabase.from("workflow_steps").select("*").order("order", { ascending: true }),
     supabase.from("automation_logs").select("*").order("createdAt", { ascending: false }),
     supabase.from("ai_notifications").select("*").order("createdAt", { ascending: false })

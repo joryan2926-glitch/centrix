@@ -25,7 +25,7 @@ export function getWorkflowDashboard(data: WorkflowData) {
 
 export function createWorkflow(): Workflow {
   return {
-    id: `wf-${Date.now()}`,
+    id: crypto.randomUUID(),
     name: "Nouveau workflow",
     description: "Scenario no-code pret a configurer.",
     status: "draft",
