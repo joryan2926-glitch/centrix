@@ -78,3 +78,15 @@ charge.refunded
 ```
 
 Le module `API & Integrations` expose un diagnostic serveur des connexions actives. Les routes Stripe et OpenAI exigent une session CENTRIX et ne revelent jamais les secrets au navigateur.
+
+## OpenAI
+
+Configurer uniquement sur le serveur Vercel :
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL=gpt-5.1
+OPENAI_PROJECT_ID
+```
+
+Ne jamais utiliser de variable `NEXT_PUBLIC_*` pour une cle OpenAI. CENTRIX applique une authentification Supabase, un quota par utilisateur, un controle d'origine, une limite de taille, un timeout et `store: false` avant chaque appel OpenAI.
