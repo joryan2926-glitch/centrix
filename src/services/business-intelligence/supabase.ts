@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { businessIntelligenceFallbackData } from "@/data/businessIntelligence";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { BusinessIntelligenceData } from "@/types/business-intelligence";
@@ -53,7 +54,7 @@ export async function syncBusinessIntelligenceData(data: BusinessIntelligenceDat
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.reports.map((row) => supabase.from("business_reports").upsert(row, { onConflict: "id" })),
     ...data.predictiveMetrics.map((row) => supabase.from("predictive_metrics").upsert(row, { onConflict: "id" })),
     ...data.insights.map((row) => supabase.from("ai_insights").upsert(row, { onConflict: "id" })),
@@ -64,5 +65,5 @@ export async function syncBusinessIntelligenceData(data: BusinessIntelligenceDat
     ...data.models.map((row) => supabase.from("predictive_models").upsert(row, { onConflict: "id" })),
     ...data.exports.map((row) => supabase.from("analytics_exports").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

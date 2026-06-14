@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { salesFallbackData } from "@/data/sales";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SalesData } from "@/types/sales";
@@ -40,7 +41,7 @@ export async function syncSalesData(data: SalesData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.leads.map((row) => supabase.from("sales_leads").upsert(row, { onConflict: "id" })),
     ...data.pipeline.map((row) => supabase.from("sales_pipeline").upsert(row, { onConflict: "id" })),
     ...data.opportunities.map((row) => supabase.from("sales_opportunities").upsert(row, { onConflict: "id" })),
@@ -51,5 +52,5 @@ export async function syncSalesData(data: SalesData) {
     ...data.notifications.map((row) => supabase.from("sales_notifications").upsert(row, { onConflict: "id" })),
     ...data.teams.map((row) => supabase.from("sales_teams").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

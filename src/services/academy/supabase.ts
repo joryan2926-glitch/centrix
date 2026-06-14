@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { academyFallbackData } from "@/data/academy";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { AcademyData } from "@/types/academy";
@@ -64,7 +65,7 @@ export async function syncAcademyData(data: AcademyData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.courses.map((row) => supabase.from("courses").upsert(row, { onConflict: "id" })),
     ...data.modules.map((row) => supabase.from("course_modules").upsert(row, { onConflict: "id" })),
     ...data.lessons.map((row) => supabase.from("lessons").upsert(row, { onConflict: "id" })),
@@ -77,5 +78,5 @@ export async function syncAcademyData(data: AcademyData) {
     ...data.studentProgress.map((row) => supabase.from("student_progress").upsert(row, { onConflict: "id" })),
     ...data.notifications.map((row) => supabase.from("academy_notifications").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

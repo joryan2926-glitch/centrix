@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { settingsFallbackData } from "@/data/settings";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SettingsData } from "@/types/settings";
@@ -61,7 +62,7 @@ export async function syncSettingsData(data: SettingsData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.userSettings.map((row) => supabase.from("user_settings").upsert(row, { onConflict: "id" })),
     ...data.companySettings.map((row) => supabase.from("company_settings").upsert(row, { onConflict: "companyId" })),
     ...data.subscriptions.map((row) => supabase.from("subscriptions").upsert(row, { onConflict: "id" })),
@@ -73,5 +74,5 @@ export async function syncSettingsData(data: SettingsData) {
     ...data.billingHistory.map((row) => supabase.from("billing_history").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

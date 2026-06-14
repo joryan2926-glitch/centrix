@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { integrationsFallbackData } from "@/data/integrations";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { IntegrationData } from "@/types/integrations";
@@ -61,7 +62,7 @@ export async function syncIntegrationsData(data: IntegrationData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.apiKeys.map((row) => supabase.from("api_keys").upsert(row, { onConflict: "id" })),
     ...data.apiLogs.map((row) => supabase.from("api_logs").upsert(row, { onConflict: "id" })),
     ...data.webhooks.map((row) => supabase.from("webhooks").upsert(row, { onConflict: "id" })),
@@ -73,5 +74,5 @@ export async function syncIntegrationsData(data: IntegrationData) {
     ...data.notifications.map((row) => supabase.from("integration_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

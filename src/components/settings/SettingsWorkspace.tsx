@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { Activity, Bell, Building2, CreditCard, Database, KeyRound, LockKeyhole, Mail, Palette, Plus, Save, Search, ShieldCheck, SlidersHorizontal, UserCog, UsersRound, WalletCards } from "lucide-react";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { downloadCsvFile } from "@/lib/download";
 import { formatAdminBytes, formatAdminCurrency, formatAdminDate } from "@/lib/settings/format";
 import { createActivity, createAdminNotification, createUserRole, getAdminDashboard, moduleLabels, roleLabels, roleTone, toneForSeverity } from "@/services/settings/calculations";
 import { useSettingsData } from "@/hooks/settings/useSettingsData";
@@ -40,6 +42,7 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
   const [view, setView] = useState<View>(initialView);
   const [query, setQuery] = useState("");
   const [userModalOpen, setUserModalOpen] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [newUser, setNewUser] = useState({ name: "Nouvel utilisateur", email: "user@centrix.local", role: "employee" as AdminRole });
 
   const dashboard = useMemo(() => getAdminDashboard(data), [data]);
@@ -53,6 +56,25 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
       ...current,
       userSettings: current.userSettings.map((item, index) => index === 0 ? { ...item, [field]: value, updatedAt: new Date().toISOString() } : item)
     }));
+  }
+
+  function updateCompany(field: "name" | "legalName" | "vatNumber" | "iban" | "legalAddress" | "theme", value: string) {
+    mutate((current) => ({
+      ...current,
+      companySettings: current.companySettings.map((item, index) => index === 0 ? { ...item, [field]: value, updatedAt: new Date().toISOString() } : item)
+    }));
+  }
+
+  function uploadAvatar(file?: File) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      mutate((current) => ({
+        ...current,
+        userSettings: current.userSettings.map((item, index) => index === 0 ? { ...item, avatarUrl: String(reader.result), updatedAt: new Date().toISOString() } : item)
+      }), { title: "Avatar mis a jour", detail: "Le nouvel avatar est sauvegarde dans votre profil." });
+    };
+    reader.readAsDataURL(file);
   }
 
   function toggleModule(module: ModuleKey) {
@@ -151,8 +173,9 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
         <Card className="p-5">
           <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
             <div className="rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
-              <div className="grid h-24 w-24 place-items-center rounded-[8px] bg-cyan-300/10 text-3xl font-semibold text-cyan-100">{profile.name.slice(0, 1)}</div>
-              <Button className="mt-4"><Palette size={17} /> Upload avatar</Button>
+              {profile.avatarUrl ? <Image alt={profile.name} className="h-24 w-24 rounded-[8px] object-cover" height={96} src={profile.avatarUrl} unoptimized width={96} /> : <div className="grid h-24 w-24 place-items-center rounded-[8px] bg-cyan-300/10 text-3xl font-semibold text-cyan-100">{profile.name.slice(0, 1)}</div>}
+              <input ref={avatarInputRef} accept="image/*" className="hidden" onChange={(event) => uploadAvatar(event.target.files?.[0])} type="file" />
+              <Button className="mt-4" onClick={() => avatarInputRef.current?.click()}><Palette size={17} /> Upload avatar</Button>
               <p className="mt-4 text-sm text-slate-400">2FA future: {profile.twoFactorEnabled ? "active" : "a configurer"}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -222,12 +245,12 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
         <Card className="p-5">
           <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Entreprise" value={company.name} onChange={() => undefined} />
-              <Field label="Raison sociale" value={company.legalName} onChange={() => undefined} />
-              <Field label="TVA" value={company.vatNumber} onChange={() => undefined} />
-              <Field label="IBAN" value={company.iban} onChange={() => undefined} />
-              <Field label="Adresse" value={company.legalAddress} onChange={() => undefined} />
-              <Field label="Theme" value={company.theme} onChange={() => undefined} />
+              <Field label="Entreprise" value={company.name} onChange={(value) => updateCompany("name", value)} />
+              <Field label="Raison sociale" value={company.legalName} onChange={(value) => updateCompany("legalName", value)} />
+              <Field label="TVA" value={company.vatNumber} onChange={(value) => updateCompany("vatNumber", value)} />
+              <Field label="IBAN" value={company.iban} onChange={(value) => updateCompany("iban", value)} />
+              <Field label="Adresse" value={company.legalAddress} onChange={(value) => updateCompany("legalAddress", value)} />
+              <Field label="Theme" value={company.theme} onChange={(value) => updateCompany("theme", value)} />
             </div>
             <div className="rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
               <p className="text-sm font-semibold text-white">Branding workspace</p>
@@ -306,7 +329,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function LogGrid({ title, logs }: { title: string; logs: Array<{ id: string; action: string; target: string; detail: string; severity: "info" | "success" | "warning"; createdAt: string }> }) {
   return (
     <Card className="p-5">
-      <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><Button className="h-9 px-3" variant="ghost">Export logs</Button></div>
+      <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><Button className="h-9 px-3" onClick={() => downloadCsvFile("centrix-logs.csv", [["Action", "Cible", "Detail", "Severite", "Date"], ...logs.map((log) => [log.action, log.target, log.detail, log.severity, log.createdAt])])} variant="ghost">Export logs</Button></div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {logs.map((log) => <div key={log.id} className="rounded-[8px] border border-white/10 bg-white/[0.04] p-4"><Badge tone={toneForSeverity(log.severity)}>{log.action}</Badge><p className="mt-3 font-medium text-white">{log.target}</p><p className="mt-2 text-sm text-slate-400">{log.detail}</p><p className="mt-3 text-xs text-slate-500">{formatAdminDate(log.createdAt)}</p></div>)}
       </div>

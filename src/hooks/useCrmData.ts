@@ -82,7 +82,10 @@ export function useCrmData() {
   const sync = useCallback(async () => {
     const result = await syncCrmData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "CRM synchronise" : "Sauvegarde locale", "Les donnees CRM sont a jour.");
+    notify(
+      result.mode === "supabase" ? "CRM synchronise" : "Synchronisation CRM impossible",
+      "error" in result && result.error ? result.error : result.mode === "supabase" ? "Les donnees CRM sont a jour dans Supabase." : "Les donnees restent disponibles localement."
+    );
   }, [data, notify]);
 
   return useMemo(

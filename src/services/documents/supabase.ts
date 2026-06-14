@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { documentsFallbackData } from "@/data/documents";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { DocumentsCloudData } from "@/types/documents";
@@ -60,7 +61,7 @@ export async function syncDocumentsData(data: DocumentsCloudData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.folders.map((row) => supabase.from("folders").upsert(row, { onConflict: "id" })),
     ...data.documents.map((row) => supabase.from("documents").upsert(row, { onConflict: "id" })),
     ...data.shares.map((row) => supabase.from("document_shares").upsert(row, { onConflict: "id" })),
@@ -71,7 +72,7 @@ export async function syncDocumentsData(data: DocumentsCloudData) {
     ...data.notifications.map((row) => supabase.from("document_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }
 
 export async function uploadDocumentAsset(file: File, folderName = "uploads") {

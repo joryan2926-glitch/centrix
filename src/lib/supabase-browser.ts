@@ -10,7 +10,20 @@ let realtimeChannelSequence = 0;
 
 function createResilientRealtimeChannel(client: SupabaseClient, topic: string, options?: RealtimeChannelOptions) {
   const channel = client.realtime.channel(`${topic}:${++realtimeChannelSequence}`, options);
+  const on = channel.on.bind(channel);
   const subscribe = channel.subscribe.bind(channel);
+
+  channel.on = ((type: unknown, filter: unknown, callback: unknown) => {
+    try {
+      return on(type as never, filter as never, callback as never);
+    } catch (error) {
+      console.warn("[CENTRIX_REALTIME_CALLBACK_FAILED]", {
+        error: error instanceof Error ? error.message : "Unknown realtime error",
+        topic
+      });
+      return channel;
+    }
+  }) as RealtimeChannel["on"];
 
   channel.subscribe = ((callback, timeout) => {
     try {

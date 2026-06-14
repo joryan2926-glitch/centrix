@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { securityFallbackData } from "@/data/security";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SecurityData } from "@/types/security";
@@ -53,7 +54,7 @@ export async function syncSecurityData(data: SecurityData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.logs.map((row) => supabase.from("security_logs").upsert(row, { onConflict: "id" })),
     ...data.sessions.map((row) => supabase.from("user_sessions").upsert(row, { onConflict: "id" })),
     ...data.loginAttempts.map((row) => supabase.from("login_attempts").upsert(row, { onConflict: "id" })),
@@ -64,5 +65,5 @@ export async function syncSecurityData(data: SecurityData) {
     ...data.backups.map((row) => supabase.from("backups").upsert(row, { onConflict: "id" })),
     ...data.gdprRequests.map((row) => supabase.from("gdpr_requests").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

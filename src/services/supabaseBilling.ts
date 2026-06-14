@@ -39,17 +39,18 @@ export async function saveBillingDocuments(documents: BillingDocument[]) {
 
 export async function upsertBillingDocument(document: BillingDocument) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
 
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
+  if (!workspace) return "Workspace introuvable.";
 
   if (document.type === "quote") {
-    await supabase.from("quotes").upsert(toQuoteRow(document, workspace.workspaceId, workspace.userId) as never, { onConflict: "id" });
-    return;
+    const { error } = await supabase.from("quotes").upsert(toQuoteRow(document, workspace.workspaceId, workspace.userId) as never, { onConflict: "id" });
+    return error?.message ?? null;
   }
 
-  await supabase.from("invoices").upsert(toInvoiceRow(document, workspace.workspaceId, workspace.userId) as never, { onConflict: "id" });
+  const { error } = await supabase.from("invoices").upsert(toInvoiceRow(document, workspace.workspaceId, workspace.userId) as never, { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function syncBillingDocuments(documents: BillingDocument[]) {
@@ -61,8 +62,9 @@ export async function syncBillingDocuments(documents: BillingDocument[]) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
 
-  await Promise.all(documents.map((document) => upsertBillingDocument(document)));
-  return { mode: "supabase" as const };
+  const errors = await Promise.all(documents.map((document) => upsertBillingDocument(document)));
+  const error = errors.find(Boolean) ?? null;
+  return { error, mode: error ? "local" as const : "supabase" as const };
 }
 
 function mapRowToDocument(row: Record<string, unknown>, type: BillingDocument["type"]): BillingDocument {

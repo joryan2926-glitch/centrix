@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { multiEnterpriseFallbackData } from "@/data/entreprises";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { MultiEnterpriseData } from "@/types/entreprises";
@@ -59,7 +60,7 @@ export async function syncMultiEnterpriseData(data: MultiEnterpriseData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.companies.map((row) => supabase.from("enterprise_companies").upsert(row, { onConflict: "id" })),
     ...data.workspaces.map((row) => supabase.from("enterprise_workspaces").upsert(row, { onConflict: "id" })),
     ...data.franchises.map((row) => supabase.from("franchise_units").upsert(row, { onConflict: "id" })),
@@ -70,5 +71,5 @@ export async function syncMultiEnterpriseData(data: MultiEnterpriseData) {
     ...data.metrics.map((row) => supabase.from("consolidated_metrics").upsert(row, { onConflict: "month" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

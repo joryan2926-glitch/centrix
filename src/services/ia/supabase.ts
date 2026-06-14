@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { aiAutomationFallbackData } from "@/data/ia";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { AiAutomationData } from "@/types/ia";
@@ -59,7 +60,7 @@ export async function syncAiAutomationData(data: AiAutomationData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.conversations.map((row) => supabase.from("ai_conversations").upsert(row, { onConflict: "id" })),
     ...data.messages.map((row) => supabase.from("ai_messages").upsert(row, { onConflict: "id" })),
     ...data.generations.map((row) => supabase.from("ai_generations").upsert(row, { onConflict: "id" })),
@@ -70,5 +71,5 @@ export async function syncAiAutomationData(data: AiAutomationData) {
     ...data.notifications.map((row) => supabase.from("ai_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

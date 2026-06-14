@@ -83,6 +83,7 @@ export function AgendaWorkspace() {
   const [selectedId, setSelectedId] = useState("evt-demo-novacore");
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(defaultDraft());
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const filteredEvents = useMemo(() => filterEvents(data.events, filters), [data.events, filters]);
   const dashboard = useMemo(() => getAgendaDashboard(data), [data]);
@@ -92,12 +93,53 @@ export function AgendaWorkspace() {
   const selectedReservation = data.reservations.find((reservation) => reservation.eventId === selected?.id);
 
   function openCreate(start?: string, end?: string) {
+    setEditingId(null);
     setDraft(defaultDraft(start, end));
+    setModalOpen(true);
+  }
+
+  function openEdit(event: CalendarEvent) {
+    setEditingId(event.id);
+    setDraft({
+      description: event.description,
+      end: toDateTimeLocal(event.end),
+      location: event.location,
+      participants: event.participants.join(", "),
+      start: toDateTimeLocal(event.start),
+      title: event.title,
+      type: event.type,
+      videoUrl: event.videoUrl
+    });
     setModalOpen(true);
   }
 
   function createEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (editingId) {
+      mutate(
+        (current) => ({
+          ...current,
+          events: current.events.map((item) => item.id === editingId ? {
+            ...item,
+            description: draft.description,
+            durationMinutes: Math.max(15, Math.round((new Date(fromDateTimeLocal(draft.end)).getTime() - new Date(fromDateTimeLocal(draft.start)).getTime()) / 60000)),
+            end: fromDateTimeLocal(draft.end),
+            location: draft.location,
+            participants: draft.participants.split(",").map((participant) => participant.trim()).filter(Boolean),
+            start: fromDateTimeLocal(draft.start),
+            title: draft.title,
+            type: draft.type,
+            updatedAt: new Date().toISOString(),
+            videoUrl: draft.videoUrl
+          } : item)
+        }),
+        { title: "Evenement modifie", detail: `${draft.title} est a jour.` }
+      );
+      setEditingId(null);
+      setModalOpen(false);
+      return;
+    }
+
     const calendar = data.calendars[0];
     const newEvent = buildEvent({
       calendarId: calendar?.id ?? "cal-sales",
@@ -276,7 +318,7 @@ export function AgendaWorkspace() {
           {view === "calendar" ? (
             <div className="grid gap-6 2xl:grid-cols-[1fr_360px]">
               <AgendaCalendar events={filteredEvents} onDateSelect={openCreate} onEventChange={updateEventTime} onEventClick={setSelectedId} />
-              <EventDetail event={selected} comments={selectedComments} reservation={selectedReservation} tasks={selectedTasks} onClone={cloneEvent} onDelete={deleteEvent} onToggleTask={toggleTask} />
+              <EventDetail event={selected} comments={selectedComments} reservation={selectedReservation} tasks={selectedTasks} onClone={cloneEvent} onDelete={deleteEvent} onEdit={openEdit} onToggleTask={toggleTask} />
             </div>
           ) : null}
           {view === "planning" ? <AgendaTimeline events={filteredEvents} onSelect={setSelectedId} /> : null}
@@ -291,7 +333,7 @@ export function AgendaWorkspace() {
   );
 }
 
-function EventDetail({ event, tasks, comments, reservation, onDelete, onClone, onToggleTask }: { event: CalendarEvent | null; tasks: ReturnType<typeof useAgendaData>["data"]["tasks"]; comments: ReturnType<typeof useAgendaData>["data"]["comments"]; reservation?: ReturnType<typeof useAgendaData>["data"]["reservations"][number]; onDelete: (id: string) => void; onClone: (event: CalendarEvent) => void; onToggleTask: (id: string) => void }) {
+function EventDetail({ event, tasks, comments, reservation, onDelete, onClone, onEdit, onToggleTask }: { event: CalendarEvent | null; tasks: ReturnType<typeof useAgendaData>["data"]["tasks"]; comments: ReturnType<typeof useAgendaData>["data"]["comments"]; reservation?: ReturnType<typeof useAgendaData>["data"]["reservations"][number]; onDelete: (id: string) => void; onClone: (event: CalendarEvent) => void; onEdit: (event: CalendarEvent) => void; onToggleTask: (id: string) => void }) {
   if (!event) return <EmptyState icon={<CalendarDays size={18} />} title="Aucun evenement" detail="Creez ou selectionnez un evenement." />;
   return (
     <Card className="p-5">
@@ -307,7 +349,7 @@ function EventDetail({ event, tasks, comments, reservation, onDelete, onClone, o
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         <Button onClick={() => onClone(event)}><Copy size={16} />Dupliquer</Button>
-        <Button><Edit3 size={16} />Editer</Button>
+        <Button onClick={() => onEdit(event)}><Edit3 size={16} />Editer</Button>
         <Button onClick={() => onDelete(event.id)} variant="ghost"><Trash2 size={16} />Supprimer</Button>
       </div>
       <div className="mt-6 grid gap-4">

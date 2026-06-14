@@ -77,9 +77,9 @@ function isLead(selection: CrmSelection | null): selection is { type: "lead"; id
   return selection?.type === "lead";
 }
 
-export function CrmWorkspace() {
+export function CrmWorkspace({ initialView = "pipeline" }: { initialView?: CrmView }) {
   const { data, loading, mode, toast, mutate, sync } = useCrmData();
-  const [view, setView] = useState<CrmView>("pipeline");
+  const [view, setView] = useState<CrmView>(initialView);
   const [selection, setSelection] = useState<CrmSelection | null>({ type: "lead", id: "lead-novacore" });
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   const [leadModalOpen, setLeadModalOpen] = useState(false);

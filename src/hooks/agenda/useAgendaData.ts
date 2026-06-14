@@ -60,7 +60,10 @@ export function useAgendaData() {
   const sync = useCallback(async () => {
     const result = await syncAgendaData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Agenda synchronise" : "Sauvegarde locale", "Les donnees agenda sont a jour.");
+    notify(
+      result.mode === "supabase" ? "Agenda synchronise" : "Synchronisation agenda impossible",
+      "error" in result && result.error ? result.error : result.mode === "supabase" ? "Les donnees agenda sont a jour dans Supabase." : "Les donnees restent disponibles localement."
+    );
   }, [data, notify]);
 
   return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);

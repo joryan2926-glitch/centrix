@@ -9,6 +9,7 @@ import { CentrixLogo, DataTable } from "@/components/ui";
 import { InteractiveChart } from "@/components/saas/InteractiveChart";
 import { useLiveNotifications } from "@/hooks/useLiveNotifications";
 import { useSaasCoreDashboard } from "@/hooks/saas-core/useSaasCoreDashboard";
+import { downloadJsonFile } from "@/lib/download";
 import { dashboardWidgetIds, type DashboardWidgetId, useDashboardStore } from "@/stores/dashboardStore";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -369,7 +370,10 @@ export function DashboardHome() {
                 Analyse IA
                 <Sparkles size={17} />
               </Button>
-              <Button className="border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:text-blue-700">
+              <Button
+                className="border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:text-blue-700"
+                onClick={() => downloadJsonFile(`centrix-rapport-executive-${new Date().toISOString().slice(0, 10)}.json`, { generatedAt: new Date().toISOString(), snapshot })}
+              >
                 Rapport executive
                 <ArrowUpRight size={17} />
               </Button>

@@ -64,42 +64,47 @@ export async function saveCrmData(data: CrmData) {
 
 export async function upsertLead(lead: CrmLead) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
-  await supabase.from("prospects").upsert(toProspectRow(lead, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  if (!workspace) return "Workspace introuvable.";
+  const { error } = await supabase.from("prospects").upsert(toProspectRow(lead, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function upsertClient(client: CrmClient) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
-  await supabase.from("clients").upsert(toClientRow(client, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  if (!workspace) return "Workspace introuvable.";
+  const { error } = await supabase.from("clients").upsert(toClientRow(client, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function insertNote(note: CrmNote) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
-  await supabase.from("messages").upsert(toMessageRow(note, workspace.workspaceId, workspace.userId, "crm-note"), { onConflict: "id" });
+  if (!workspace) return "Workspace introuvable.";
+  const { error } = await supabase.from("messages").upsert(toMessageRow(note, workspace.workspaceId, workspace.userId, "crm-note"), { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function upsertTask(task: CrmTask) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
-  await supabase.from("tasks").upsert(toTaskRow(task, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  if (!workspace) return "Workspace introuvable.";
+  const { error } = await supabase.from("tasks").upsert(toTaskRow(task, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function insertActivity(activity: CrmActivity) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
+  if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return;
-  await supabase.from("messages").upsert(toActivityMessageRow(activity, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  if (!workspace) return "Workspace introuvable.";
+  const { error } = await supabase.from("messages").upsert(toActivityMessageRow(activity, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  return error?.message ?? null;
 }
 
 export async function syncCrmData(data: CrmData) {
@@ -108,7 +113,7 @@ export async function syncCrmData(data: CrmData) {
 
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const errors = await Promise.all([
     ...data.leads.map((lead) => upsertLead(lead)),
     ...data.clients.map((client) => upsertClient(client)),
     ...data.notes.map((note) => insertNote(note)),
@@ -116,7 +121,8 @@ export async function syncCrmData(data: CrmData) {
     ...data.activities.map((activity) => insertActivity(activity))
   ]);
 
-  return { mode: "supabase" as const };
+  const error = errors.find(Boolean) ?? null;
+  return { error, mode: error ? "local" as const : "supabase" as const };
 }
 
 export function mergeCrmData(data: Partial<CrmData>): CrmData {

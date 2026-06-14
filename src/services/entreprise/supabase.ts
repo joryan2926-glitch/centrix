@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { enterpriseLegalFallbackData } from "@/data/entreprise";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { EnterpriseLegalData } from "@/types/entreprise";
@@ -61,7 +62,7 @@ export async function syncEnterpriseLegalData(data: EnterpriseLegalData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.legalForms.map((row) => supabase.from("legal_forms").upsert(row, { onConflict: "id" })),
     ...data.companies.map((row) => supabase.from("companies").upsert(row, { onConflict: "id" })),
     ...data.legalDocuments.map((row) => supabase.from("legal_documents").upsert(row, { onConflict: "id" })),
@@ -73,5 +74,5 @@ export async function syncEnterpriseLegalData(data: EnterpriseLegalData) {
     ...data.legalNotifications.map((row) => supabase.from("legal_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

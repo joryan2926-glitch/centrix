@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { saasBillingFallbackData } from "@/data/billingSaas";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SaaSBillingData } from "@/types/billing";
@@ -61,7 +62,7 @@ export async function syncSaaSBillingData(data: SaaSBillingData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.plans.map((row) => supabase.from("subscription_plans").upsert(row, { onConflict: "id" })),
     ...data.customers.map((row) => supabase.from("billing_customers").upsert(row, { onConflict: "id" })),
     ...data.subscriptions.map((row) => supabase.from("subscriptions").upsert(row, { onConflict: "id" })),
@@ -73,5 +74,5 @@ export async function syncSaaSBillingData(data: SaaSBillingData) {
     ...data.stripeEvents.map((row) => supabase.from("stripe_events").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

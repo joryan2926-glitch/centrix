@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { clientPortalFallbackData } from "@/data/clientPortal";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { ClientPortalData } from "@/types/client-portal";
@@ -39,7 +40,7 @@ export async function syncClientPortalData(data: ClientPortalData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.portals.map((row) => supabase.from("client_portals").upsert(row, { onConflict: "id" })),
     ...data.projects.map((row) => supabase.from("client_projects").upsert(row, { onConflict: "id" })),
     ...data.documents.map((row) => supabase.from("client_documents").upsert(row, { onConflict: "id" })),
@@ -49,5 +50,5 @@ export async function syncClientPortalData(data: ClientPortalData) {
     ...data.signatures.map((row) => supabase.from("client_signatures").upsert(row, { onConflict: "id" })),
     ...data.activityLogs.map((row) => supabase.from("client_activity_logs").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

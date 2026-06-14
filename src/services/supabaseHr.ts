@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { hrFallbackData } from "@/data/hr";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { HrData, HrEmployee } from "@/types/hr";
@@ -62,7 +63,7 @@ export async function syncHrData(data: HrData) {
 
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.employees.map((row) => supabase.from("hr_employees").upsert(row, { onConflict: "id" })),
     ...data.contracts.map((row) => supabase.from("hr_contracts").upsert(row, { onConflict: "id" })),
     ...data.leaves.map((row) => supabase.from("hr_leaves").upsert(row, { onConflict: "id" })),
@@ -73,7 +74,7 @@ export async function syncHrData(data: HrData) {
     ...data.notifications.map((row) => supabase.from("hr_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }
 
 export async function upsertHrEmployee(employee: HrEmployee) {

@@ -2,6 +2,7 @@
 
 import { Paperclip, Trash2 } from "lucide-react";
 import { formatFinanceCurrency, formatFinanceDate } from "@/lib/comptabilite/format";
+import { downloadJsonFile } from "@/lib/download";
 import type { FinanceTransaction } from "@/types/comptabilite";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -66,7 +67,7 @@ export function TransactionsTable({
                     <Button className="h-9 px-3" onClick={() => onValidate(transaction.id)} variant="ghost">
                       Valider
                     </Button>
-                    <Button className="h-9 w-9 px-0" variant="ghost">
+                    <Button aria-label="Télécharger le justificatif" className="h-9 w-9 px-0" onClick={() => downloadJsonFile(`justificatif-${transaction.id}.json`, transaction)} variant="ghost">
                       <Paperclip size={15} />
                     </Button>
                     <Button className="h-9 w-9 px-0" onClick={() => onDelete(transaction.id)} variant="ghost">

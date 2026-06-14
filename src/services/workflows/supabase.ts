@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { workflowFallbackData } from "@/data/workflows";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { WorkflowData } from "@/types/workflows";
@@ -49,7 +50,7 @@ export async function syncWorkflowData(data: WorkflowData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.workflows.map((row) => supabase.from("workflows").upsert(row, { onConflict: "id" })),
     ...data.blocks.map((row) => supabase.from("workflow_blocks").upsert(row, { onConflict: "id" })),
     ...data.connections.map((row) => supabase.from("workflow_connections").upsert(row, { onConflict: "id" })),
@@ -58,5 +59,5 @@ export async function syncWorkflowData(data: WorkflowData) {
     ...data.tasks.map((row) => supabase.from("productivity_tasks").upsert(row, { onConflict: "id" })),
     ...data.alerts.map((row) => supabase.from("workflow_alerts").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

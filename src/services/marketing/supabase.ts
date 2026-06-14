@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { marketingFallbackData } from "@/data/marketing";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { MarketingData } from "@/types/marketing";
@@ -53,7 +54,7 @@ export async function syncMarketingData(data: MarketingData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.accounts.map((row) => supabase.from("marketing_social_accounts").upsert(row, { onConflict: "id" })),
     ...data.posts.map((row) => supabase.from("marketing_posts").upsert(row, { onConflict: "id" })),
     ...data.campaigns.map((row) => supabase.from("marketing_campaigns").upsert(row, { onConflict: "id" })),
@@ -62,5 +63,5 @@ export async function syncMarketingData(data: MarketingData) {
     ...data.reports.map((row) => supabase.from("marketing_reports").upsert(row, { onConflict: "month" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

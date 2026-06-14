@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { financeFallbackData } from "@/data/comptabilite";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { FinanceData } from "@/types/comptabilite";
@@ -57,7 +58,7 @@ export async function syncFinanceData(data: FinanceData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.companies.map((row) => supabase.from("financial_settings").upsert(row, { onConflict: "id" })),
     ...data.transactions.map((row) => supabase.from("transactions").upsert(row, { onConflict: "id" })),
     ...data.transactions.filter((row) => row.type === "expense").map((row) => supabase.from("expenses").upsert(row, { onConflict: "id" })),
@@ -69,5 +70,5 @@ export async function syncFinanceData(data: FinanceData) {
     ...data.categories.map((row) => supabase.from("accounting_categories").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

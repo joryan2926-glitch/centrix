@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { marketplaceFallbackData } from "@/data/marketplace";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { MarketplaceData } from "@/types/marketplace";
@@ -53,7 +54,7 @@ export async function syncMarketplaceData(data: MarketplaceData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
-  await Promise.all([
+  const results = await Promise.all([
     ...data.categories.map((row) => supabase.from("service_categories").upsert(row, { onConflict: "id" })),
     ...data.providers.map((row) => supabase.from("providers").upsert(row, { onConflict: "id" })),
     ...data.services.map((row) => supabase.from("marketplace_services").upsert(row, { onConflict: "id" })),
@@ -64,5 +65,5 @@ export async function syncMarketplaceData(data: MarketplaceData) {
     ...data.notifications.map((row) => supabase.from("marketplace_notifications").upsert(row, { onConflict: "id" })),
     ...data.portfolios.map((row) => supabase.from("provider_portfolios").upsert(row, { onConflict: "id" }))
   ]);
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

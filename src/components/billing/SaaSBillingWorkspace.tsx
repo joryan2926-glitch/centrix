@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { BarChart3, CreditCard, FileText, Gift, KeyRound, Link2, Loader2, Receipt, RefreshCcw, Save, ShieldCheck, Sparkles, TrendingDown, TrendingUp, UsersRound, WalletCards, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatSaasCurrency, formatSaasDate, formatSaasPercent } from "@/lib/billing/format";
+import { downloadJsonFile } from "@/lib/download";
 import { createBillingNotification, getSaaSBillingDashboard, planLabels, subscriptionStatusLabels, subscriptionTone } from "@/services/billing";
 import { useSaaSBillingData } from "@/hooks/billing/useSaaSBillingData";
 import type { SaaSSubscription, SubscriptionPlan } from "@/types/billing";
@@ -230,7 +231,7 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
                 <div className="flex items-center justify-between gap-3"><p className="font-semibold text-white">{invoice.number}</p><Badge tone={invoice.status === "paid" ? "emerald" : invoice.status === "failed" ? "rose" : "cyan"}>{invoice.status}</Badge></div>
                 <p className="mt-3 text-2xl font-semibold text-white">{formatSaasCurrency(invoice.amount)}</p>
                 <p className="mt-1 text-sm text-slate-400">TVA {formatSaasCurrency(invoice.vatAmount)} - echeance {formatSaasDate(invoice.dueAt)}</p>
-                <Button className="mt-4 h-9 px-3" variant="ghost"><FileText size={15} /> Recu PDF futur</Button>
+                <Button className="mt-4 h-9 px-3" onClick={() => downloadJsonFile(`centrix-recu-${invoice.number}.json`, invoice)} variant="ghost"><FileText size={15} /> Télécharger reçu</Button>
               </div>
             ))}
           </div>

@@ -1,3 +1,4 @@
+import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { supportFallbackData } from "@/data/support";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SupportData } from "@/types/support";
@@ -59,7 +60,7 @@ export async function syncSupportData(data: SupportData) {
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.agents.map((row) => supabase.from("support_agents").upsert(row, { onConflict: "id" })),
     ...data.categories.map((row) => supabase.from("support_categories").upsert(row, { onConflict: "id" })),
     ...data.tickets.map((row) => supabase.from("support_tickets").upsert(row, { onConflict: "id" })),
@@ -70,5 +71,5 @@ export async function syncSupportData(data: SupportData) {
     ...data.notifications.map((row) => supabase.from("support_notifications").upsert(row, { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  return getSupabaseSyncResult(results);
 }

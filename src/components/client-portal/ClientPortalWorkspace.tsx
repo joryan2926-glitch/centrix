@@ -3,6 +3,7 @@
 import { Bell, CalendarDays, CreditCard, Download, FileCheck2, FileText, FolderOpen, MessageSquare, Plus, Save, ShieldCheck, Signature, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatClientPortalCurrency, formatClientPortalDate } from "@/lib/client-portal/format";
+import { downloadJsonFile, downloadTextFile } from "@/lib/download";
 import { createClientMessage, getClientPortalDashboard } from "@/services/client-portal/calculations";
 import { useClientPortalData } from "@/hooks/client-portal/useClientPortalData";
 import { ClientPortalKpiCard } from "@/ui/client-portal/ClientPortalKpiCard";
@@ -72,7 +73,7 @@ function Dashboard({ data }: { data: Data }) {
 }
 
 function Billing({ data }: { data: Data }) {
-  return <Card className="p-5"><h2 className="font-black text-slate-950">Facturation & paiements</h2><div className="mt-5 grid gap-3 md:grid-cols-3">{data.invoices.map((invoice) => <Card key={invoice.id} interactive className="p-4"><Badge tone={invoice.status === "paid" ? "emerald" : invoice.status === "overdue" ? "rose" : "cyan"}>{invoice.status}</Badge><p className="mt-3 font-bold text-slate-950">{invoice.number}</p><p className="text-sm text-slate-500">{invoice.title}</p><p className="mt-3 text-2xl font-black text-blue-700">{formatClientPortalCurrency(invoice.amount)}</p><Button className="mt-4 h-9 px-3"><Download size={15} /> PDF</Button></Card>)}</div></Card>;
+  return <Card className="p-5"><h2 className="font-black text-slate-950">Facturation & paiements</h2><div className="mt-5 grid gap-3 md:grid-cols-3">{data.invoices.map((invoice) => <Card key={invoice.id} interactive className="p-4"><Badge tone={invoice.status === "paid" ? "emerald" : invoice.status === "overdue" ? "rose" : "cyan"}>{invoice.status}</Badge><p className="mt-3 font-bold text-slate-950">{invoice.number}</p><p className="text-sm text-slate-500">{invoice.title}</p><p className="mt-3 text-2xl font-black text-blue-700">{formatClientPortalCurrency(invoice.amount)}</p><Button className="mt-4 h-9 px-3" onClick={() => downloadJsonFile(`${invoice.number}.json`, invoice)}><Download size={15} /> Télécharger</Button></Card>)}</div></Card>;
 }
 
 function Projects({ data }: { data: Data }) {
@@ -84,7 +85,7 @@ function Support({ data }: { data: Data }) {
 }
 
 function Documents({ data }: { data: Data }) {
-  return <Card className="p-5"><h2 className="font-black text-slate-950">Documents clients</h2><div className="mt-5 grid gap-3 md:grid-cols-3">{data.documents.map((doc) => <Card key={doc.id} interactive className="p-4"><FileCheck2 className="text-blue-600" size={18} /><p className="mt-3 font-bold text-slate-950">{doc.name}</p><p className="text-sm text-slate-500">{doc.category} - {doc.sizeMb} MB</p><Button className="mt-4 h-9 px-3"><Download size={15} /> Télécharger</Button></Card>)}</div></Card>;
+  return <Card className="p-5"><h2 className="font-black text-slate-950">Documents clients</h2><div className="mt-5 grid gap-3 md:grid-cols-3">{data.documents.map((doc) => <Card key={doc.id} interactive className="p-4"><FileCheck2 className="text-blue-600" size={18} /><p className="mt-3 font-bold text-slate-950">{doc.name}</p><p className="text-sm text-slate-500">{doc.category} - {doc.sizeMb} MB</p><Button className="mt-4 h-9 px-3" onClick={() => downloadTextFile(doc.name, `Document CENTRIX\nCategorie: ${doc.category}\nTaille: ${doc.sizeMb} MB\nIdentifiant: ${doc.id}`)}><Download size={15} /> Télécharger</Button></Card>)}</div></Card>;
 }
 
 function Appointments({ data }: { data: Data }) {

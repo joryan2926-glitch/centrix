@@ -4,6 +4,7 @@ import { Banknote, BookOpenCheck, BriefcaseBusiness, Building2, CheckCircle2, Cl
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { formatLegalCurrency, formatLegalDate } from "@/lib/entreprise/format";
+import { downloadJsonFile } from "@/lib/download";
 import {
   companyStatusLabels,
   createLegalDocument,
@@ -141,6 +142,26 @@ export function EnterpriseLegalWorkspace() {
       }),
       { title: "Document genere", detail: document.title }
     );
+  }
+
+  function uploadDocument(document: LegalDocument) {
+    const input = window.document.createElement("input");
+    input.accept = ".pdf,.doc,.docx,.png,.jpg,.jpeg";
+    input.type = "file";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => mutate(
+        (current) => ({
+          ...current,
+          legalDocuments: current.legalDocuments.map((item) => item.id === document.id ? { ...item, status: "generated", updatedAt: new Date().toISOString(), url: String(reader.result) } : item)
+        }),
+        { title: "Document importe", detail: `${file.name} est rattache au dossier juridique.` }
+      );
+      reader.readAsDataURL(file);
+    };
+    input.click();
   }
 
   function publishAnnouncement() {
@@ -416,8 +437,8 @@ export function EnterpriseLegalWorkspace() {
                   </div>
                   <p className="mt-2 text-xs text-slate-500">{documentTypeLabels[document.type]} - {document.generatedAt ? formatLegalDate(document.generatedAt) : "Non genere"}</p>
                   <div className="mt-4 flex gap-2">
-                    <Button className="h-9 px-3" variant="ghost"><Download size={15} /> PDF</Button>
-                    <Button className="h-9 px-3" variant="ghost"><Upload size={15} /> Upload</Button>
+                    <Button className="h-9 px-3" onClick={() => downloadJsonFile(`centrix-juridique-${document.id}.json`, { company: selectedCompany, document })} variant="ghost"><Download size={15} /> Télécharger</Button>
+                    <Button className="h-9 px-3" onClick={() => uploadDocument(document)} variant="ghost"><Upload size={15} /> Upload</Button>
                   </div>
                 </div>
               )) : <EmptyState icon={<FileText size={20} />} title="Aucun document" detail="Generez les premiers documents du dossier." />}

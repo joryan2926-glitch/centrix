@@ -60,12 +60,13 @@ export async function syncAgendaData(data: AgendaData) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
 
-  await Promise.all([
+  const results = await Promise.all([
     ...data.events.map((row) => supabase.from("meetings").upsert(toMeetingRow(row, workspace.workspaceId, workspace.userId), { onConflict: "id" })),
     ...data.tasks.map((row) => supabase.from("tasks").upsert(toAgendaTaskRow(row, workspace.workspaceId, workspace.userId), { onConflict: "id" }))
   ]);
 
-  return { mode: "supabase" as const };
+  const error = results.find((result) => result.error)?.error?.message ?? null;
+  return { error, mode: error ? "local" as const : "supabase" as const };
 }
 
 function mapMeetingToEvent(row: Record<string, unknown>) {

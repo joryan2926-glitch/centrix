@@ -87,7 +87,7 @@ export function BillingWorkspace() {
             }
           : document
       );
-      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "Sauvegarde locale"));
+      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale"));
       return next;
     });
   }
@@ -116,7 +116,7 @@ export function BillingWorkspace() {
 
     setDocuments((current) => {
       const next = [document, ...current];
-      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "Sauvegarde locale"));
+      syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale"));
       return next;
     });
     setSelectedId(document.id);
@@ -160,7 +160,7 @@ export function BillingWorkspace() {
 
   async function sync() {
     const result = await syncBillingDocuments(documents);
-    setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "Sauvegarde locale");
+    setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale");
   }
 
   if (!selected) {

@@ -21,6 +21,7 @@ import {
   WalletCards
 } from "lucide-react";
 import { formatBiCurrency, formatBiDate, formatBiPercent } from "@/lib/business-intelligence/format";
+import { downloadJsonFile } from "@/lib/download";
 import { createInsight, getBiDashboard, priorityLabels, priorityTone } from "@/services/business-intelligence/calculations";
 import { useBusinessIntelligenceData } from "@/hooks/business-intelligence/useBusinessIntelligenceData";
 import { BiKpiCard } from "@/ui/business-intelligence/BiKpiCard";
@@ -242,7 +243,7 @@ function ReportsView({ data }: { data: BusinessIntelligenceData }) {
                 <td className="py-3 text-slate-600">{report.template}</td>
                 <td className="py-3 text-slate-600">{report.owner}</td>
                 <td className="py-3"><Badge tone={report.status === "published" ? "emerald" : report.status === "scheduled" ? "cyan" : "violet"}>{report.status}</Badge></td>
-                <td className="py-3"><Button className="h-9 px-3" variant="surface"><Download size={15} /> Export</Button></td>
+                <td className="py-3"><Button className="h-9 px-3" onClick={() => downloadJsonFile(`centrix-rapport-${report.id}.json`, report)} variant="surface"><Download size={15} /> Export</Button></td>
               </tr>
             ))}
           </tbody>
