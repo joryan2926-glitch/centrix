@@ -1,5 +1,5 @@
-const CACHE_NAME = "centrix-production-v1";
-const APP_SHELL = ["/", "/dashboard", "/manifest.webmanifest", "/icon.svg"];
+const CACHE_NAME = "centrix-static-v2";
+const APP_SHELL = ["/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -25,15 +25,21 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/api/") || request.mode === "navigate") return;
+
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/images/") ||
+    APP_SHELL.includes(url.pathname);
+  if (!isStaticAsset) return;
 
   event.respondWith(
-    fetch(request)
-      .then((response) => {
+    caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+      if (response.ok) {
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        return response;
-      })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/dashboard")))
+      }
+      return response;
+    }))
   );
 });
