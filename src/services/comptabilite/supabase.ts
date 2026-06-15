@@ -1,6 +1,7 @@
 import { getSupabaseSyncResult } from "@/services/supabaseSync";
 import { financeFallbackData } from "@/data/comptabilite";
 import { getSupabaseClient } from "@/lib/supabase";
+import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { FinanceData } from "@/types/comptabilite";
 
 const storageKey = "centrix-finance-data-v1";
@@ -57,16 +58,18 @@ export async function syncFinanceData(data: FinanceData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
   if (!supabase) return { mode: "local" as const };
+  const workspace = await resolveWorkspaceContext(supabase);
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 
   const results = await Promise.all([
-    ...data.companies.map((row) => supabase.from("financial_settings").upsert(row, { onConflict: "id" })),
-    ...data.transactions.map((row) => supabase.from("transactions").upsert(row, { onConflict: "id" })),
-    ...data.transactions.filter((row) => row.type === "expense").map((row) => supabase.from("expenses").upsert(row, { onConflict: "id" })),
-    ...data.transactions.filter((row) => row.type === "revenue").map((row) => supabase.from("revenues").upsert(row, { onConflict: "id" })),
-    ...data.bankAccounts.map((row) => supabase.from("bank_accounts").upsert(row, { onConflict: "id" })),
-    ...data.accountingEntries.map((row) => supabase.from("accounting_entries").upsert(row, { onConflict: "id" })),
-    ...data.taxRecords.map((row) => supabase.from("tax_records").upsert(row, { onConflict: "id" })),
-    ...data.financialReports.map((row) => supabase.from("financial_reports").upsert(row, { onConflict: "id" })),
+    ...data.companies.map((row) => supabase.from("financial_settings").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.transactions.map((row) => supabase.from("transactions").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.transactions.filter((row) => row.type === "expense").map((row) => supabase.from("expenses").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.transactions.filter((row) => row.type === "revenue").map((row) => supabase.from("revenues").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.bankAccounts.map((row) => supabase.from("bank_accounts").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.accountingEntries.map((row) => supabase.from("accounting_entries").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.taxRecords.map((row) => supabase.from("tax_records").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
+    ...data.financialReports.map((row) => supabase.from("financial_reports").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
     ...data.categories.map((row) => supabase.from("accounting_categories").upsert(row, { onConflict: "id" }))
   ]);
 

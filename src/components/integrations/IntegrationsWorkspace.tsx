@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Activity, AlertTriangle, Bot, Braces, Cable, CheckCircle2, Code2, CreditCard, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, Webhook, Zap } from "lucide-react";
+import { Activity, AlertTriangle, Bot, Braces, Cable, CheckCircle2, Code2, CreditCard, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, WalletCards, Webhook, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatIntegrationDate, formatIntegrationNumber, formatResponseTime } from "@/lib/integrations/format";
 import type { ExternalIntegrationsStatus } from "@/lib/integrations/server";
@@ -263,6 +263,7 @@ function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | n
     { key: "stripe", label: "Stripe Billing", icon: <CreditCard size={18} /> },
     { key: "stripeWebhook", label: "Stripe Webhooks", icon: <Webhook size={18} /> },
     { key: "stripeConnect", label: "Stripe Connect", icon: <PlugZap size={18} /> },
+    { key: "bridge", label: "Bridge Open Banking", icon: <WalletCards size={18} /> },
     { key: "googleOAuth", label: "Google OAuth", icon: <Globe2 size={18} /> }
   ] as const;
 

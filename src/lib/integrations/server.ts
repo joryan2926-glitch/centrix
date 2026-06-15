@@ -13,6 +13,7 @@ export type ExternalIntegrationsStatus = {
   stripe: ExternalIntegrationStatus;
   stripeWebhook: ExternalIntegrationStatus;
   stripeConnect: ExternalIntegrationStatus;
+  bridge: ExternalIntegrationStatus;
   googleOAuth: ExternalIntegrationStatus;
 };
 
@@ -85,6 +86,7 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
   const hasOpenAi = Boolean(process.env.OPENAI_API_KEY);
   const hasStripe = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
+  const hasBridge = Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET);
   const googleOAuth = await getGoogleOAuthStatus();
 
   return {
@@ -107,6 +109,10 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
     stripeConnect: {
       configured: hasStripe,
       detail: hasStripe ? "Onboarding Stripe Connect disponible." : "Stripe Connect requiert STRIPE_SECRET_KEY."
+    },
+    bridge: {
+      configured: hasBridge,
+      detail: hasBridge ? "Open Banking Bridge disponible." : "Ajoutez BRIDGE_CLIENT_ID et BRIDGE_CLIENT_SECRET dans Vercel."
     },
     googleOAuth
   };

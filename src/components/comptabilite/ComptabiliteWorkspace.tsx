@@ -9,7 +9,10 @@ import {
   Download,
   FileSpreadsheet,
   Landmark,
+  Link2,
+  Loader2,
   Plus,
+  RefreshCcw,
   ReceiptText,
   Save,
   Search,
@@ -17,7 +20,7 @@ import {
   WalletCards
 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatFinanceCurrency, formatFinanceDate } from "@/lib/comptabilite/format";
 import { buildTransaction, filterTransactions, getFinanceDashboard } from "@/services/comptabilite/calculations";
 import { useFinanceData } from "@/hooks/comptabilite/useFinanceData";
@@ -67,18 +70,61 @@ const emptyDraft: Draft = {
 };
 
 export function ComptabiliteWorkspace() {
-  const { data, loading, mode, toast, mutate, sync } = useFinanceData();
+  const { data, loading, mode, toast, mutate, notify, refresh, sync } = useFinanceData();
   const [view, setView] = useState<View>("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FinanceFilters>({ query: "", type: "all", status: "all", category: "all" });
+  const [bankingStatus, setBankingStatus] = useState<{ configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null>(null);
+  const [bankingAction, setBankingAction] = useState<"connect" | "sync" | null>(null);
 
   const dashboard = useMemo(() => getFinanceDashboard(data), [data]);
   const transactions = useMemo(() => filterTransactions(data.transactions, filters), [data.transactions, filters]);
   const company = data.companies[0];
   const pageSize = 7;
   const pageCount = Math.max(1, Math.ceil(transactions.length / pageSize));
+
+  useEffect(() => {
+    fetch("/api/banking/bridge/status")
+      .then(async (response) => response.json())
+      .then(setBankingStatus)
+      .catch(() => setBankingStatus({ configured: false, connected: false }));
+
+    const banking = new URLSearchParams(window.location.search).get("banking");
+    if (banking === "connected") notify("Banque connectee", "Les comptes et transactions Bridge ont ete synchronises.");
+    if (banking === "sync-required") notify("Banque connectee", "Lancez une synchronisation pour recuperer les operations.");
+    if (banking === "cancelled") notify("Connexion annulee", "Aucun acces bancaire n'a ete enregistre.");
+  }, [notify]);
+
+  async function connectBank() {
+    setBankingAction("connect");
+    try {
+      const response = await fetch("/api/banking/bridge/connect", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Connexion bancaire indisponible.");
+      window.location.href = payload.url;
+    } catch (error) {
+      notify("Connexion bancaire impossible", error instanceof Error ? error.message : "Configuration Bridge manquante.");
+      setBankingAction(null);
+    }
+  }
+
+  async function syncBank() {
+    setBankingAction("sync");
+    try {
+      const response = await fetch("/api/banking/bridge/sync", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Synchronisation bancaire impossible.");
+      await refresh();
+      setBankingStatus((current) => ({ configured: current?.configured ?? true, connected: true, lastSyncedAt: payload.syncedAt }));
+      notify("Banque synchronisee", `${payload.accounts} compte(s) et ${payload.transactions} transaction(s) actualises.`);
+    } catch (error) {
+      notify("Synchronisation impossible", error instanceof Error ? error.message : "Reessayez dans un instant.");
+    } finally {
+      setBankingAction(null);
+    }
+  }
 
   function createTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -264,7 +310,7 @@ export function ComptabiliteWorkspace() {
             </div>
           ) : null}
           {view === "accounting" ? <AccountingView data={data} dashboard={dashboard} /> : null}
-          {view === "banking" ? <BankingView data={data} /> : null}
+          {view === "banking" ? <BankingView action={bankingAction} data={data} status={bankingStatus} onConnect={connectBank} onSync={syncBank} /> : null}
           {view === "billing" ? <BillingConnectedView dashboard={dashboard} unpaid={dashboard.unpaid} /> : null}
           {view === "settings" ? <SettingsView data={data} /> : null}
         </div>
@@ -326,23 +372,52 @@ function AccountingView({ data, dashboard }: { data: ReturnType<typeof useFinanc
   );
 }
 
-function BankingView({ data }: { data: ReturnType<typeof useFinanceData>["data"] }) {
+function BankingView({ action, data, status, onConnect, onSync }: {
+  action: "connect" | "sync" | null;
+  data: ReturnType<typeof useFinanceData>["data"];
+  status: { configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null;
+  onConnect: () => void;
+  onSync: () => void;
+}) {
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      {data.bankAccounts.map((account) => (
-        <Card key={account.id} className="p-5" interactive>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white">{account.label}</h3>
-              <p className="mt-1 text-sm text-slate-400">{account.bankName}</p>
-            </div>
-            <Badge tone="cyan">CSV pret</Badge>
+    <div className="space-y-4">
+      <Card className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2"><Badge tone={status?.connected ? "emerald" : "cyan"}>{status?.connected ? "Bridge connecte" : "Open Banking DSP2"}</Badge></div>
+            <h2 className="mt-3 text-lg font-semibold text-white">Connexion bancaire securisee</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Bridge heberge l&apos;authentification bancaire. CENTRIX ne stocke jamais vos identifiants de banque.</p>
+            {status?.lastSyncedAt ? <p className="mt-2 text-xs text-slate-500">Derniere synchronisation {formatFinanceDate(status.lastSyncedAt)}</p> : null}
           </div>
-          <p className="mt-5 text-3xl font-semibold text-white">{formatFinanceCurrency(account.balance)}</p>
-          <p className="mt-3 text-sm text-slate-500">{account.iban}</p>
-          <p className="mt-2 text-xs text-slate-500">Derniere sync {formatFinanceDate(account.lastSyncAt)}</p>
-        </Card>
-      ))}
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={action !== null || status?.configured === false} onClick={onConnect} variant="primary">
+              {action === "connect" ? <Loader2 className="animate-spin" size={17} /> : <Link2 size={17} />}
+              Connecter une banque
+            </Button>
+            <Button disabled={action !== null || !status?.connected} onClick={onSync}>
+              {action === "sync" ? <Loader2 className="animate-spin" size={17} /> : <RefreshCcw size={17} />}
+              Synchroniser
+            </Button>
+          </div>
+        </div>
+        {status?.configured === false ? <p className="mt-4 rounded-[8px] border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">Ajoutez BRIDGE_CLIENT_ID et BRIDGE_CLIENT_SECRET dans Vercel pour activer la connexion reelle.</p> : null}
+      </Card>
+      <div className="grid gap-4 xl:grid-cols-2">
+        {data.bankAccounts.map((account) => (
+          <Card key={account.id} className="p-5" interactive>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{account.label}</h3>
+                <p className="mt-1 text-sm text-slate-400">{account.bankName}</p>
+              </div>
+              <Badge tone="emerald">Synchronise</Badge>
+            </div>
+            <p className="mt-5 text-3xl font-semibold text-white">{formatFinanceCurrency(account.balance)}</p>
+            <p className="mt-3 text-sm text-slate-500">{account.iban || "IBAN masque par la banque"}</p>
+            <p className="mt-2 text-xs text-slate-500">Derniere sync {formatFinanceDate(account.lastSyncAt)}</p>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

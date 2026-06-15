@@ -67,5 +67,5 @@ export function useFinanceData() {
     notify(result.mode === "supabase" ? "Finance synchronisee" : "Sauvegarde locale", "Les donnees comptables sont a jour.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync }), [data, loading, mode, toast, mutate, sync]);
+  return useMemo(() => ({ data, loading, mode, toast, mutate, notify, refresh, sync }), [data, loading, mode, toast, mutate, notify, refresh, sync]);
 }
