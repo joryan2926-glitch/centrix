@@ -6,7 +6,7 @@ import { DEMO_AUTH_PROFILE, DEMO_AUTH_USER } from "@/lib/auth/demo-session";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
 
-export type AuthRole = "admin" | "manager" | "employee" | "client" | "user";
+export type AuthRole = "super_admin" | "admin" | "manager" | "employee" | "client" | "user";
 
 export type AuthProfile = {
   id: string;
@@ -106,13 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       authenticated: Boolean(user),
-      canManageBilling: profile?.role === "admin",
-      canManageWorkspace: profile?.role === "admin" || profile?.role === "manager",
+      canManageBilling: profile?.role === "super_admin" || profile?.role === "admin",
+      canManageWorkspace: profile?.role === "super_admin" || profile?.role === "admin" || profile?.role === "manager",
       hasRole: (roles: AuthRole | AuthRole[]) => {
         const allowedRoles = Array.isArray(roles) ? roles : [roles];
         return profile?.role ? allowedRoles.includes(profile.role) : false;
       },
-      isAdmin: profile?.role === "admin",
+      isAdmin: profile?.role === "super_admin" || profile?.role === "admin",
       loading: supabaseLoading || profileLoading,
       profile,
       refresh,

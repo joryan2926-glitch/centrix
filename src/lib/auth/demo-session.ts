@@ -31,13 +31,13 @@ export const DEMO_AUTH_PROFILE: AuthProfile = {
   email: DEMO_USER.email,
   fullName: DEMO_USER.full_name,
   id: DEMO_USER.id,
-  role: "admin",
+  role: "super_admin",
   workspaceId: DEMO_WORKSPACE.id,
   workspaceName: DEMO_WORKSPACE.name
 };
 
 export const DEMO_WORKSPACE_CONTEXT: WorkspaceContext = {
-  role: "admin",
+  role: "super_admin",
   userId: DEMO_USER.id,
   workspaceId: DEMO_WORKSPACE.id,
   workspaceName: DEMO_WORKSPACE.name

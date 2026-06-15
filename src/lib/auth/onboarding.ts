@@ -11,13 +11,15 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
   const displayName = name || user.user_metadata?.name || user.email?.split("@")[0] || "Utilisateur CENTRIX";
   const companyName = company || user.user_metadata?.company || "Mon entreprise";
   const workspaceSlug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "workspace"}-${user.id.slice(0, 8)}`;
+  const { data: ownedWorkspace } = await supabase.from("workspaces").select("id").eq("owner_id", user.id).maybeSingle();
+  const role = ownedWorkspace ? "super_admin" : "admin";
 
   await supabase.from("users").upsert({
     id: user.id,
     nom: displayName,
     email: user.email ?? "",
     entreprise: companyName,
-    role: "admin",
+    role,
     abonnement: "starter",
     avatar_url: user.user_metadata?.avatar_url ?? null,
     updated_at: new Date().toISOString()
@@ -43,14 +45,14 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
     full_name: displayName,
     email: user.email ?? "",
     avatar_url: user.user_metadata?.avatar_url ?? null,
-    role: "admin",
+    role: "super_admin",
     updated_at: new Date().toISOString()
   }, { onConflict: "id" });
 
   await supabase.from("workspace_members").upsert({
     workspace_id: workspace.id,
     user_id: user.id,
-    role: "admin",
+    role: "super_admin",
     status: "active",
     updated_at: new Date().toISOString()
   }, { onConflict: "workspace_id,user_id" });

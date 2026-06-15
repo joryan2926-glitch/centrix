@@ -7,7 +7,7 @@ export type PermissionSet = Pick<ModulePermission, "can_read" | "can_create" | "
 export async function loadCurrentPermissions(supabase: SupabaseClient, moduleKey: string): Promise<{ permissions: PermissionSet; role: string; error: string | null }> {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", permissions: denyAll, role: "user" };
-  if (workspace.role === "admin") return { error: null, permissions: allowAll, role: workspace.role };
+  if (workspace.role === "super_admin" || workspace.role === "admin") return { error: null, permissions: allowAll, role: workspace.role };
 
   const { data, error } = await supabase
     .from("module_permissions")
@@ -53,7 +53,7 @@ export const allowAll: PermissionSet = { can_create: true, can_delete: true, can
 export const denyAll: PermissionSet = { can_create: false, can_delete: false, can_export: false, can_manage: false, can_read: false, can_update: false };
 
 export function defaultsForRole(role: string): PermissionSet {
-  if (role === "admin") return allowAll;
+  if (role === "super_admin" || role === "admin") return allowAll;
   if (role === "manager") return { ...allowAll, can_manage: false };
   if (role === "employee") return { ...denyAll, can_create: true, can_read: true, can_update: true };
   if (role === "client") return { ...denyAll, can_read: true };

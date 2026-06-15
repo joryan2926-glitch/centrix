@@ -3,6 +3,7 @@ import { operationalModules } from "@/data/operations";
 const coreModules = {
   academy: "Academy",
   agenda: "Agenda",
+  ai: "IA CENTRIX",
   analytics: "Analytics",
   billing: "Facturation",
   clients: "Clients",

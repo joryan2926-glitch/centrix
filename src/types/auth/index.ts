@@ -8,7 +8,7 @@ export type AuthFormValues = {
 
 export type AuthProvider = "google";
 
-export type UserRole = "admin" | "manager" | "employee" | "client";
+export type UserRole = "super_admin" | "admin" | "manager" | "employee" | "client";
 
 export type CentrixUser = {
   id: string;

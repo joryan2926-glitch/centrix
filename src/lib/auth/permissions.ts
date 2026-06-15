@@ -1,6 +1,7 @@
 import type { AuthRole } from "@/providers/AuthProvider";
 
 export const roleRank: Record<AuthRole, number> = {
+  super_admin: 5,
   admin: 4,
   manager: 3,
   employee: 2,
@@ -17,5 +18,5 @@ export function canManageWorkspace(role: AuthRole | null | undefined) {
 }
 
 export function canManageBilling(role: AuthRole | null | undefined) {
-  return role === "admin";
+  return role === "super_admin" || role === "admin";
 }
