@@ -21,6 +21,10 @@ function googleMeetingId(workspaceId: string, eventId: string) {
 }
 
 export async function POST() {
+  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+    return connectorError("Google Calendar est temporairement desactive.", 503);
+  }
+
   const context = await getConnectorContext();
   if (!context) return connectorError("Session et workspace CENTRIX requis.", 401);
 

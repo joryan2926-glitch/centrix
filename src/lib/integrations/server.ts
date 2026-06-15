@@ -62,6 +62,10 @@ export function getTrustedRedirectUrl(candidate: string | undefined, fallback: s
 }
 
 async function getGoogleOAuthStatus(): Promise<ExternalIntegrationStatus> {
+  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+    return { configured: false, detail: "Google OAuth est temporairement desactive dans CENTRIX." };
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { configured: false, detail: "Supabase doit etre configure avant Google OAuth." };

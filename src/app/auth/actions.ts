@@ -117,6 +117,10 @@ export async function googleCalendarOAuthAction(): Promise<AuthActionState> {
 }
 
 async function startGoogleOAuth(next: string, forceCalendarConsent: boolean): Promise<AuthActionState> {
+  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+    return { ok: false, title: "Google desactive", detail: "Google OAuth est temporairement desactive dans CENTRIX." };
+  }
+
   const supabase = await createServerSupabaseClient();
   if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Ajoutez les variables d'environnement Supabase." };
 

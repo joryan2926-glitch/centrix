@@ -11,6 +11,8 @@ import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Toast } from "@/ui/Toast";
 
+const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+
 type AuthCardProps = {
   mode: AuthMode;
 };
@@ -110,7 +112,7 @@ export function AuthCard({ mode }: AuthCardProps) {
             {loading ? "Traitement..." : copy[mode].cta}
             <ArrowRight size={17} />
           </Button>
-          {mode !== "forgot" && mode !== "reset" ? (
+          {googleAuthEnabled && mode !== "forgot" && mode !== "reset" ? (
             <Button className="mt-3 w-full" disabled={googleLoading} onClick={handleGoogle} type="button">
               <Chrome size={17} />
               {googleLoading ? "Ouverture Google..." : "Continuer avec Google"}

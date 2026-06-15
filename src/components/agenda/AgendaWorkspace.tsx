@@ -40,6 +40,7 @@ const AgendaCalendar = dynamic(() => import("@/components/agenda/AgendaCalendar"
   loading: () => <Skeleton className="h-[680px]" />,
   ssr: false
 });
+const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
 const views = [
   { id: "calendar", label: "Calendrier", icon: CalendarDays },
@@ -287,8 +288,8 @@ export function AgendaWorkspace() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => openCreate()} variant="primary"><Plus size={17} />Evenement</Button>
-          <Button onClick={connectGoogleCalendar}><CalendarCheck size={17} />Autoriser Google Calendar</Button>
-          <Button onClick={syncGoogleCalendar}><CalendarSync size={17} />Google Calendar</Button>
+          {googleAuthEnabled ? <Button onClick={connectGoogleCalendar}><CalendarCheck size={17} />Autoriser Google Calendar</Button> : null}
+          {googleAuthEnabled ? <Button onClick={syncGoogleCalendar}><CalendarSync size={17} />Google Calendar</Button> : null}
           <Button onClick={sync}><Save size={17} />{mode === "supabase" ? "Sync Supabase" : "Sauver local"}</Button>
         </div>
       </section>
