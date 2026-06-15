@@ -66,5 +66,5 @@ export function useAgendaData() {
     );
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);
+  return useMemo(() => ({ data, loading, mode, toast, mutate, refresh, sync, notify }), [data, loading, mode, toast, mutate, refresh, sync, notify]);
 }

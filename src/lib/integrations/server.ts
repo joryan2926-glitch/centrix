@@ -15,6 +15,10 @@ export type ExternalIntegrationsStatus = {
   stripeConnect: ExternalIntegrationStatus;
   bridge: ExternalIntegrationStatus;
   googleOAuth: ExternalIntegrationStatus;
+  googleCalendar: ExternalIntegrationStatus;
+  emailing: ExternalIntegrationStatus;
+  sms: ExternalIntegrationStatus;
+  signatures: ExternalIntegrationStatus;
 };
 
 export async function requireExternalApiUser() {
@@ -87,6 +91,9 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
   const hasStripe = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const hasBridge = Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET);
+  const hasEmailing = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+  const hasSms = Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
+  const hasSignatures = Boolean(process.env.DOCUSIGN_ACCOUNT_ID && process.env.DOCUSIGN_ACCESS_TOKEN);
   const googleOAuth = await getGoogleOAuthStatus();
 
   return {
@@ -114,6 +121,22 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
       configured: hasBridge,
       detail: hasBridge ? "Open Banking Bridge disponible." : "Ajoutez BRIDGE_CLIENT_ID et BRIDGE_CLIENT_SECRET dans Vercel."
     },
-    googleOAuth
+    googleOAuth,
+    googleCalendar: {
+      configured: googleOAuth.configured,
+      detail: googleOAuth.configured ? "Synchronisation Calendar disponible apres autorisation du scope Google Calendar." : "Google OAuth requis."
+    },
+    emailing: {
+      configured: hasEmailing,
+      detail: hasEmailing ? "Envoi transactionnel Resend disponible." : "Ajoutez RESEND_API_KEY et EMAIL_FROM dans Vercel."
+    },
+    sms: {
+      configured: hasSms,
+      detail: hasSms ? "Envoi SMS Twilio disponible." : "Ajoutez les variables Twilio dans Vercel."
+    },
+    signatures: {
+      configured: hasSignatures,
+      detail: hasSignatures ? "Enveloppes DocuSign disponibles." : "Ajoutez DOCUSIGN_ACCOUNT_ID et DOCUSIGN_ACCESS_TOKEN dans Vercel."
+    }
   };
 }

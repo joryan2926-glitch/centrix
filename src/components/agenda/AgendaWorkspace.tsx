@@ -5,6 +5,7 @@ import {
   BellRing,
   CalendarCheck,
   CalendarDays,
+  CalendarSync,
   CheckCircle2,
   Clock3,
   Copy,
@@ -77,7 +78,7 @@ function defaultDraft(start?: string, end?: string): Draft {
 }
 
 export function AgendaWorkspace() {
-  const { data, loading, mode, toast, mutate, sync, notify } = useAgendaData();
+  const { data, loading, mode, toast, mutate, refresh, sync, notify } = useAgendaData();
   const [view, setView] = useState<View>("calendar");
   const [filters, setFilters] = useState<AgendaFilters>({ query: "", status: "all", type: "all" });
   const [selectedId, setSelectedId] = useState("evt-demo-novacore");
@@ -234,6 +235,18 @@ export function AgendaWorkspace() {
     }));
   }
 
+  async function syncGoogleCalendar() {
+    notify("Google Calendar", "Synchronisation en cours...");
+    const response = await fetch("/api/integrations/google-calendar/sync", { method: "POST" });
+    const payload = await response.json().catch(() => ({})) as { imported?: number; error?: string };
+    if (!response.ok) {
+      notify("Google Calendar indisponible", payload.error ?? "Reconnectez votre compte Google.");
+      return;
+    }
+    await refresh();
+    notify("Google Calendar synchronise", `${payload.imported ?? 0} evenement(s) importe(s).`);
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl space-y-6 animate-fade-in">
@@ -263,6 +276,7 @@ export function AgendaWorkspace() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => openCreate()} variant="primary"><Plus size={17} />Evenement</Button>
+          <Button onClick={syncGoogleCalendar}><CalendarSync size={17} />Google Calendar</Button>
           <Button onClick={sync}><Save size={17} />{mode === "supabase" ? "Sync Supabase" : "Sauver local"}</Button>
         </div>
       </section>

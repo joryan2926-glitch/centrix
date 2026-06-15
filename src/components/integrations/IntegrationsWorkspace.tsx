@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Activity, AlertTriangle, Bot, Braces, Cable, CheckCircle2, Code2, CreditCard, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, WalletCards, Webhook, Zap } from "lucide-react";
+import { Activity, AlertTriangle, Bot, Braces, Cable, CalendarSync, CheckCircle2, Code2, CreditCard, FileJson, Globe2, KeyRound, Loader2, LockKeyhole, Mail, MessageSquareText, PenLine, PlugZap, Plus, RefreshCcw, Save, Search, Server, ShieldCheck, Terminal, WalletCards, Webhook, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatIntegrationDate, formatIntegrationNumber, formatResponseTime } from "@/lib/integrations/format";
 import type { ExternalIntegrationsStatus } from "@/lib/integrations/server";
@@ -151,7 +151,7 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
         })}
       </div>
 
-      {view === "dashboard" ? <><ExternalStatusGrid status={externalStatus} /><IntegrationCharts data={data} /><NotificationGrid notifications={data.notifications} /></> : null}
+      {view === "dashboard" ? <><ExternalStatusGrid status={externalStatus} /><ExternalActions notify={notify} /><IntegrationCharts data={data} /><NotificationGrid notifications={data.notifications} /></> : null}
 
       {view === "keys" ? (
         <Card className="p-5">
@@ -264,7 +264,11 @@ function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | n
     { key: "stripeWebhook", label: "Stripe Webhooks", icon: <Webhook size={18} /> },
     { key: "stripeConnect", label: "Stripe Connect", icon: <PlugZap size={18} /> },
     { key: "bridge", label: "Bridge Open Banking", icon: <WalletCards size={18} /> },
-    { key: "googleOAuth", label: "Google OAuth", icon: <Globe2 size={18} /> }
+    { key: "googleOAuth", label: "Google OAuth", icon: <Globe2 size={18} /> },
+    { key: "googleCalendar", label: "Google Calendar", icon: <CalendarSync size={18} /> },
+    { key: "emailing", label: "Emailing Resend", icon: <Mail size={18} /> },
+    { key: "sms", label: "SMS Twilio", icon: <MessageSquareText size={18} /> },
+    { key: "signatures", label: "Signatures DocuSign", icon: <PenLine size={18} /> }
   ] as const;
 
   return (
@@ -292,6 +296,43 @@ function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | n
             </div>
           );
         })}
+      </div>
+    </Card>
+  );
+}
+
+function ExternalActions({ notify }: { notify: (title: string, detail: string) => void }) {
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState<"email" | "sms" | null>(null);
+
+  async function send(kind: "email" | "sms") {
+    setBusy(kind);
+    const response = await fetch(`/api/integrations/${kind}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(kind === "email"
+        ? { to: email, subject: "Bienvenue dans CENTRIX", text: "Votre integration emailing CENTRIX est operationnelle." }
+        : { to: phone, message: "CENTRIX : votre integration SMS est operationnelle." })
+    });
+    const payload = await response.json().catch(() => ({})) as { error?: string };
+    setBusy(null);
+    notify(response.ok ? `${kind === "email" ? "Email" : "SMS"} envoye` : "Envoi impossible", payload.error ?? "Le connecteur externe a repondu correctement.");
+  }
+
+  return (
+    <Card className="p-5">
+      <h2 className="text-lg font-semibold text-white">Tester les connecteurs</h2>
+      <p className="mt-1 text-sm text-slate-400">Envois reels securises via les routes serveur CENTRIX.</p>
+      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        <div className="flex gap-2 rounded-[8px] border border-white/10 bg-white/[0.04] p-3">
+          <input className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500" placeholder="email@entreprise.fr" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <Button disabled={!email || busy !== null} onClick={() => send("email")}>{busy === "email" ? <Loader2 className="animate-spin" size={16} /> : <Mail size={16} />} Email test</Button>
+        </div>
+        <div className="flex gap-2 rounded-[8px] border border-white/10 bg-white/[0.04] p-3">
+          <input className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500" placeholder="+33600000000" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} />
+          <Button disabled={!phone || busy !== null} onClick={() => send("sms")}>{busy === "sms" ? <Loader2 className="animate-spin" size={16} /> : <MessageSquareText size={16} />} SMS test</Button>
+        </div>
       </div>
     </Card>
   );

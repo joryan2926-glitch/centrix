@@ -27,7 +27,7 @@ const views = [
 type View = (typeof views)[number]["id"];
 
 export function DocumentsWorkspace() {
-  const { data, loading, mode, toast, uploadProgress, mutate, uploadFiles, sync } = useDocumentsData();
+  const { data, loading, mode, toast, uploadProgress, mutate, uploadFiles, sync, notify } = useDocumentsData();
   const [view, setView] = useState<View>("grid");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<DocumentCategory | "all">("all");
@@ -115,6 +115,29 @@ export function DocumentsWorkspace() {
         documents: current.documents.map((document) => (document.id === documentId ? { ...document, name: nextName, updatedAt: new Date().toISOString() } : document))
       }),
       { title: "Document renomme", detail: nextName }
+    );
+  }
+
+  async function sendForSignature(documentId: string) {
+    const signerEmail = window.prompt("Email du signataire");
+    if (!signerEmail) return;
+    const signerName = window.prompt("Nom du signataire");
+    if (!signerName) return;
+
+    notify("Signature electronique", "Creation de l'enveloppe DocuSign...");
+    const response = await fetch("/api/integrations/signatures/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ documentId, signerEmail, signerName })
+    });
+    const payload = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) {
+      notify("Signature non envoyee", payload.error ?? "DocuSign est indisponible.");
+      return;
+    }
+    mutate(
+      (current) => ({ ...current, documents: current.documents.map((document) => document.id === documentId ? { ...document, signatureStatus: "pending" } : document) }),
+      { title: "Signature envoyee", detail: `Une demande a ete envoyee a ${signerEmail}.` }
     );
   }
 
@@ -275,7 +298,8 @@ export function DocumentsWorkspace() {
                     <p className="font-medium text-white">{document.name}</p>
                     <Badge tone={document.signatureStatus === "signed" ? "emerald" : document.signatureStatus === "rejected" ? "rose" : "cyan"}>{document.signatureStatus}</Badge>
                   </div>
-                  <p className="mt-2 text-sm text-slate-400">Workflow signature electronique pret pour integration DocuSign future.</p>
+                  <p className="mt-2 text-sm text-slate-400">Workflow de signature electronique DocuSign securise.</p>
+                  <Button className="mt-4" onClick={() => sendForSignature(document.id)}><FileSignature size={16} /> Envoyer a signer</Button>
                 </div>
               ))}
             </div>
@@ -309,6 +333,9 @@ export function DocumentsWorkspace() {
                 <Badge tone={documentTone(selectedDocument)}>{categoryLabels[selectedDocument.category]}</Badge>
               </div>
               <PreviewBox document={selectedDocument} />
+              <Button className="mt-4 w-full" onClick={() => sendForSignature(selectedDocument.id)} variant="primary">
+                <FileSignature size={16} /> Envoyer a signer
+              </Button>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Metric label="Taille" value={formatBytes(selectedDocument.size)} />
                 <Metric label="OCR" value={selectedDocument.ocrStatus} />

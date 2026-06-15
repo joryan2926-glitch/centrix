@@ -117,6 +117,7 @@ export async function googleOAuthAction(): Promise<AuthActionState> {
     provider: "google",
     options: {
       queryParams: { access_type: "offline", prompt: "select_account" },
+      scopes: "openid email profile https://www.googleapis.com/auth/calendar.events",
       redirectTo: `${origin}/auth/callback?next=/dashboard`
     }
   });
