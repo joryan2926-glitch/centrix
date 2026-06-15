@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { BarChart3, CreditCard, FileText, Gift, KeyRound, Link2, Loader2, Receipt, RefreshCcw, Save, ShieldCheck, Sparkles, TrendingDown, TrendingUp, UsersRound, WalletCards, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatSaasCurrency, formatSaasDate, formatSaasPercent } from "@/lib/billing/format";
 import { downloadJsonFile } from "@/lib/download";
 import { createBillingNotification, getSaaSBillingDashboard, planLabels, subscriptionStatusLabels, subscriptionTone } from "@/services/billing";
@@ -35,7 +36,9 @@ const views = [
 type View = (typeof views)[number]["id"];
 
 export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialView?: View }) {
-  const { data, loading, mode, toast, mutate, sync, notify } = useSaaSBillingData();
+  const { data, loading, mode, toast, mutate, sync, notify, refresh } = useSaaSBillingData();
+  const searchParams = useSearchParams();
+  const confirmedSession = useRef<string | null>(null);
   const [view, setView] = useState<View>(initialView);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(data.subscriptions[0]?.id ?? "");
@@ -43,6 +46,26 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
   const dashboard = useMemo(() => getSaaSBillingDashboard(data), [data]);
   const selectedSubscription = data.subscriptions.find((subscription) => subscription.id === selectedSubscriptionId) ?? data.subscriptions[0] ?? null;
   const selectedCustomer = data.customers.find((customer) => customer.id === selectedSubscription?.customerId) ?? null;
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (searchParams.get("checkout") !== "success" || !sessionId || confirmedSession.current === sessionId) return;
+    confirmedSession.current = sessionId;
+    setLoadingAction("confirm-checkout");
+    fetch("/api/stripe/checkout/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId })
+    })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error ?? "Synchronisation Stripe impossible.");
+        await refresh();
+        notify("Abonnement active", `Le plan ${payload.plan} est synchronise avec CENTRIX.`);
+      })
+      .catch((error) => notify("Retour Stripe incomplet", error instanceof Error ? error.message : "Synchronisation impossible."))
+      .finally(() => setLoadingAction(null));
+  }, [notify, refresh, searchParams]);
 
   async function startCheckout(plan: SubscriptionPlan) {
     if (!plan.stripePriceId) {

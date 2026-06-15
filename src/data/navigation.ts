@@ -131,7 +131,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
       { label: "Parametres", href: "/settings", icon: Settings },
       { label: "Utilisateurs", href: "/operations/users", icon: Users },
       { label: "Roles", href: "/operations/roles", icon: UserCog },
-      { label: "Permissions", href: "/operations/permissions", icon: Scale },
+      { label: "Permissions", href: "/permissions", icon: Scale },
       { label: "Facturation abonnement", href: "/billing", icon: BadgeDollarSign },
       { label: "Integrations", href: "/integrations", icon: GitBranch },
       { label: "API", href: "/api-management", icon: Code2 }

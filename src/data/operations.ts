@@ -1,4 +1,5 @@
 import type { OperationalModuleConfig } from "@/types/operations";
+import { getOperationSpecialization } from "@/data/operationSpecializations";
 
 function moduleConfig(
   key: string,
@@ -9,7 +10,7 @@ function moduleConfig(
   recordTypes: readonly string[],
   suggestions: readonly string[]
 ): OperationalModuleConfig {
-  return { key, title, eyebrow, description, recordLabel, recordTypes, suggestions };
+  return { key, title, eyebrow, description, recordLabel, recordTypes, suggestions, specialization: getOperationSpecialization(key) };
 }
 
 export const operationalModules = {

@@ -75,5 +75,5 @@ export function useSaaSBillingData() {
     notify(result.mode === "supabase" ? "Billing synchronise" : "Sauvegarde locale", "Les donnees abonnements et Stripe sont a jour.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);
+  return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify, refresh }), [data, loading, mode, toast, mutate, sync, notify, refresh]);
 }

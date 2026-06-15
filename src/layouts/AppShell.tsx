@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GlobalSearch } from "@/components/shell/GlobalSearch";
+import { RoutePermissionGuard } from "@/components/auth/RoutePermissionGuard";
 import { NotificationCenter } from "@/components/shell/NotificationCenter";
 import { QuickActions } from "@/components/shell/QuickActions";
 import { CentrixLogo } from "@/components/ui";
@@ -226,7 +227,7 @@ export function AppShell({ children }: AppShellProps) {
 
         <main className="centrix-content mobile-safe px-4 pb-28 pt-7 sm:px-6 lg:px-8 xl:px-10 lg:pb-12">
           <motion.div key={pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
-            {children}
+            <RoutePermissionGuard>{children}</RoutePermissionGuard>
           </motion.div>
         </main>
       </div>

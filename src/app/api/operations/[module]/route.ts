@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const statuses: OperationalStatus[] = ["draft", "active", "pending", "completed", "archived"];
 const priorities: OperationalPriority[] = ["low", "medium", "high", "critical"];
 
-function parseDraft(value: unknown, defaultType: string): OperationalRecordDraft | null {
+function parseDraft(value: unknown, defaultType: string, allowedMetadataKeys: readonly string[]): OperationalRecordDraft | null {
   if (!value || typeof value !== "object") return null;
   const body = value as Record<string, unknown>;
   const title = typeof body.title === "string" ? body.title.trim().slice(0, 180) : "";
@@ -18,6 +18,7 @@ function parseDraft(value: unknown, defaultType: string): OperationalRecordDraft
     amount: Math.max(0, Number(body.amount ?? 0) || 0),
     description: typeof body.description === "string" ? body.description.trim().slice(0, 5_000) : "",
     due_at: typeof body.due_at === "string" && body.due_at ? body.due_at.slice(0, 10) : null,
+    metadata: sanitizeMetadata(body.metadata, allowedMetadataKeys),
     owner_name: typeof body.owner_name === "string" ? body.owner_name.trim().slice(0, 160) : "",
     priority: priorities.includes(body.priority as OperationalPriority) ? body.priority as OperationalPriority : "medium",
     record_type: typeof body.record_type === "string" && body.record_type.trim() ? body.record_type.trim().slice(0, 120) : defaultType,
@@ -25,6 +26,12 @@ function parseDraft(value: unknown, defaultType: string): OperationalRecordDraft
     tags: Array.isArray(body.tags) ? body.tags.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim().slice(0, 60)).filter(Boolean).slice(0, 20) : [],
     title
   };
+}
+
+function sanitizeMetadata(value: unknown, allowedKeys: readonly string[]) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const input = value as Record<string, unknown>;
+  return Object.fromEntries(allowedKeys.map((key) => [key, input[key]]).filter(([, item]) => ["string", "number", "boolean"].includes(typeof item)));
 }
 
 async function context(moduleKey: string) {
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { module } = await params;
   const { config, error, supabase } = await context(module);
   if (error || !supabase || !config) return error;
-  const draft = parseDraft(await request.json().catch(() => null), config.recordTypes[0] ?? "General");
+  const draft = parseDraft(await request.json().catch(() => null), config.recordTypes[0] ?? "General", config.specialization.fields.map((field) => field.key));
   if (!draft) return Response.json({ error: "Donnees invalides." }, { status: 400 });
   const result = await createOperationalRecord(supabase, module, draft);
   return result.error ? Response.json({ error: result.error }, { status: 403 }) : Response.json(result.data, { status: 201 });
@@ -60,7 +67,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (error || !supabase || !config) return error;
   const body = await request.json().catch(() => null) as { id?: unknown; record?: unknown } | null;
   const id = typeof body?.id === "string" ? body.id : "";
-  const draft = parseDraft(body?.record, config.recordTypes[0] ?? "General");
+  const draft = parseDraft(body?.record, config.recordTypes[0] ?? "General", config.specialization.fields.map((field) => field.key));
   if (!id || !draft) return Response.json({ error: "Donnees invalides." }, { status: 400 });
   const result = await updateOperationalRecord(supabase, module, id, draft);
   return result.error ? Response.json({ error: result.error }, { status: 403 }) : Response.json(result.data);

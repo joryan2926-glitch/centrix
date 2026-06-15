@@ -1,0 +1,47 @@
+const routePermissions: Array<[string, string]> = [
+  ["/permissions", "settings"],
+  ["/settings", "settings"],
+  ["/admin", "settings"],
+  ["/platform-settings", "settings"],
+  ["/crm", "crm"],
+  ["/pipeline", "crm"],
+  ["/clients", "clients"],
+  ["/sales", "crm"],
+  ["/facturation", "billing"],
+  ["/billing", "billing"],
+  ["/subscriptions", "billing"],
+  ["/comptabilite", "finance"],
+  ["/finance", "finance"],
+  ["/accounting", "finance"],
+  ["/projects", "projects"],
+  ["/tasks", "projects"],
+  ["/rh", "hr"],
+  ["/hr", "hr"],
+  ["/agenda", "agenda"],
+  ["/reservations", "agenda"],
+  ["/marketing", "marketing"],
+  ["/reseaux-sociaux", "marketing"],
+  ["/social-media", "marketing"],
+  ["/documents", "documents"],
+  ["/support", "support"],
+  ["/marketplace", "marketplace"],
+  ["/services", "marketplace"],
+  ["/providers", "marketplace"],
+  ["/centrix-academy", "academy"],
+  ["/formations", "academy"],
+  ["/security", "security"],
+  ["/cybersecurity", "security"],
+  ["/integrations", "integrations"],
+  ["/api-management", "integrations"],
+  ["/automatisations", "workflows"],
+  ["/workflows", "workflows"],
+  ["/analytics", "analytics"],
+  ["/business-intelligence", "analytics"],
+  ["/predictive-ai", "analytics"],
+  ["/notifications", "notifications"]
+];
+
+export function getRouteModuleKey(pathname: string) {
+  if (pathname.startsWith("/operations/")) return pathname.split("/")[2] || null;
+  return routePermissions.find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1] ?? null;
+}

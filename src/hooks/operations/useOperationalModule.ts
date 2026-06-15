@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
-import { createOperationalRecord, deleteOperationalRecord, loadOperationalModule, updateOperationalRecord } from "@/services/operations/supabase";
+import { createOperationalRecord, deleteOperationalRecord, executeOperationalAction, loadOperationalModule, updateOperationalRecord } from "@/services/operations/supabase";
 import type { OperationalHistory, OperationalRecord, OperationalRecordDraft } from "@/types/operations";
 
 const storagePrefix = "centrix-operational-";
@@ -98,5 +98,17 @@ export function useOperationalModule(moduleKey: string) {
     notify("Element supprime.");
   }, [mode, moduleKey, notify, records, refresh, supabase]);
 
-  return useMemo(() => ({ create, history, loading, message, mode, records, refresh, remove, update }), [create, history, loading, message, mode, records, refresh, remove, update]);
+  const runAction = useCallback(async (action: string) => {
+    if (supabase && mode === "supabase") {
+      const result = await executeOperationalAction(supabase, moduleKey, action);
+      if (result.error) {
+        notify(result.error);
+        return;
+      }
+      await refresh();
+    }
+    notify(`${action} lance.`);
+  }, [mode, moduleKey, notify, refresh, supabase]);
+
+  return useMemo(() => ({ create, history, loading, message, mode, records, refresh, remove, runAction, update }), [create, history, loading, message, mode, records, refresh, remove, runAction, update]);
 }

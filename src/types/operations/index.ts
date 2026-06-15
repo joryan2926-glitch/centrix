@@ -31,6 +31,23 @@ export type OperationalHistory = {
   created_at: string;
 };
 
+export type ModuleAction = "read" | "create" | "update" | "delete" | "export" | "manage";
+
+export type ModulePermission = {
+  id: string;
+  workspace_id: string;
+  module_key: string;
+  role: "admin" | "manager" | "employee" | "client";
+  can_read: boolean;
+  can_create: boolean;
+  can_update: boolean;
+  can_delete: boolean;
+  can_export: boolean;
+  can_manage: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type OperationalModuleConfig = {
   key: string;
   title: string;
@@ -39,9 +56,30 @@ export type OperationalModuleConfig = {
   recordLabel: string;
   recordTypes: readonly string[];
   suggestions: readonly string[];
+  specialization: OperationalSpecialization;
+};
+
+export type OperationalField = {
+  key: string;
+  label: string;
+  type: "text" | "number" | "date" | "select" | "boolean" | "textarea";
+  options?: readonly string[];
+  placeholder?: string;
+  required?: boolean;
+  suffix?: string;
+};
+
+export type OperationalSpecialization = {
+  fields: readonly OperationalField[];
+  stages: readonly string[];
+  metricLabels: readonly [string, string, string, string];
+  amountLabel: string;
+  ownerLabel: string;
+  dueLabel: string;
+  quickActions: readonly string[];
 };
 
 export type OperationalRecordDraft = Pick<
   OperationalRecord,
-  "title" | "description" | "record_type" | "status" | "priority" | "amount" | "owner_name" | "due_at" | "tags"
+  "title" | "description" | "record_type" | "status" | "priority" | "amount" | "owner_name" | "due_at" | "tags" | "metadata"
 >;
