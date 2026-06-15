@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
+import { googleCalendarOAuthAction } from "@/app/auth/actions";
 import { fromDateTimeLocal, formatAgendaDate, formatAgendaTime, toDateTimeLocal } from "@/lib/agenda/format";
 import { buildEvent, duplicateEvent, eventStatusLabels, eventTypeLabels, filterEvents, getAgendaDashboard, hasReservationConflict, priorityTone, statusTone } from "@/services/agenda/calculations";
 import { useAgendaData } from "@/hooks/agenda/useAgendaData";
@@ -247,6 +248,16 @@ export function AgendaWorkspace() {
     notify("Google Calendar synchronise", `${payload.imported ?? 0} evenement(s) importe(s).`);
   }
 
+  async function connectGoogleCalendar() {
+    notify("Google Calendar", "Ouverture du consentement Google...");
+    const result = await googleCalendarOAuthAction();
+    if (!result.oauthUrl) {
+      notify(result.title, result.detail);
+      return;
+    }
+    window.location.href = result.oauthUrl;
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl space-y-6 animate-fade-in">
@@ -276,6 +287,7 @@ export function AgendaWorkspace() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => openCreate()} variant="primary"><Plus size={17} />Evenement</Button>
+          <Button onClick={connectGoogleCalendar}><CalendarCheck size={17} />Autoriser Google Calendar</Button>
           <Button onClick={syncGoogleCalendar}><CalendarSync size={17} />Google Calendar</Button>
           <Button onClick={sync}><Save size={17} />{mode === "supabase" ? "Sync Supabase" : "Sauver local"}</Button>
         </div>

@@ -109,6 +109,14 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
 }
 
 export async function googleOAuthAction(): Promise<AuthActionState> {
+  return startGoogleOAuth("/dashboard", false);
+}
+
+export async function googleCalendarOAuthAction(): Promise<AuthActionState> {
+  return startGoogleOAuth("/agenda?google=connected", true);
+}
+
+async function startGoogleOAuth(next: string, forceCalendarConsent: boolean): Promise<AuthActionState> {
   const supabase = await createServerSupabaseClient();
   if (!supabase) return { ok: false, title: "Supabase manquant", detail: "Ajoutez les variables d'environnement Supabase." };
 
@@ -116,14 +124,23 @@ export async function googleOAuthAction(): Promise<AuthActionState> {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      queryParams: { access_type: "offline", prompt: "select_account" },
+      queryParams: {
+        access_type: "offline",
+        include_granted_scopes: "true",
+        prompt: forceCalendarConsent ? "consent select_account" : "select_account"
+      },
       scopes: "openid email profile https://www.googleapis.com/auth/calendar.events",
-      redirectTo: `${origin}/auth/callback?next=/dashboard`
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`
     }
   });
 
   if (error || !data.url) return { ok: false, title: "OAuth indisponible", detail: authErrorMessage(error?.message) };
-  return { ok: true, title: "Redirection Google", detail: "Ouverture de Google OAuth.", oauthUrl: data.url };
+  return {
+    ok: true,
+    title: forceCalendarConsent ? "Autorisation Calendar" : "Redirection Google",
+    detail: forceCalendarConsent ? "Google va demander l'autorisation d'acceder au calendrier." : "Ouverture de Google OAuth.",
+    oauthUrl: data.url
+  };
 }
 
 export async function signOutAction(): Promise<AuthActionState> {
