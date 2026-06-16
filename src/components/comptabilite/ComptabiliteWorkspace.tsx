@@ -22,7 +22,8 @@ import {
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { formatFinanceCurrency, formatFinanceDate } from "@/lib/comptabilite/format";
-import { buildTransaction, filterTransactions, getFinanceDashboard } from "@/services/comptabilite/calculations";
+import { buildTransaction, calculateVat, filterTransactions, getFinanceDashboard } from "@/services/comptabilite/calculations";
+import { deleteFinanceTransaction, upsertFinanceTransaction } from "@/services/comptabilite/supabase";
 import { useFinanceData } from "@/hooks/comptabilite/useFinanceData";
 import type { FinanceCategoryKey, FinanceFilters, FinanceTransactionType } from "@/types/comptabilite";
 import { FinanceKpiCard } from "@/ui/comptabilite/FinanceKpiCard";
@@ -74,6 +75,7 @@ export function ComptabiliteWorkspace() {
   const [view, setView] = useState<View>("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FinanceFilters>({ query: "", type: "all", status: "all", category: "all" });
   const [bankingStatus, setBankingStatus] = useState<{ configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null>(null);
@@ -126,9 +128,29 @@ export function ComptabiliteWorkspace() {
     }
   }
 
-  function createTransaction(event: FormEvent<HTMLFormElement>) {
+  function openCreateTransaction() {
+    setEditingTransactionId(null);
+    setDraft(emptyDraft);
+    setModalOpen(true);
+  }
+
+  function openEditTransaction(transaction: typeof data.transactions[number]) {
+    setEditingTransactionId(transaction.id);
+    setDraft({
+      amount: transaction.amountExcludingTax,
+      category: transaction.category,
+      counterparty: transaction.counterparty,
+      label: transaction.label,
+      type: transaction.type,
+      vatRate: transaction.vatRate
+    });
+    setModalOpen(true);
+  }
+
+  async function submitTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const transaction = buildTransaction({
+    const existing = editingTransactionId ? data.transactions.find((item) => item.id === editingTransactionId) : null;
+    const transaction = existing ? updateTransactionFromDraft(existing, draft) : buildTransaction({
       label: draft.label,
       counterparty: draft.counterparty,
       type: draft.type,
@@ -140,36 +162,60 @@ export function ComptabiliteWorkspace() {
     });
 
     mutate(
-      (current) => ({ ...current, transactions: [transaction, ...current.transactions] }),
-      { title: "Transaction importee", detail: `${transaction.label} est ajoutee en attente.` }
+      (current) => ({
+        ...current,
+        transactions: existing
+          ? current.transactions.map((item) => item.id === existing.id ? transaction : item)
+          : [transaction, ...current.transactions]
+      }),
+      { title: existing ? "Transaction modifiee" : "Transaction importee", detail: existing ? `${transaction.label} est mis a jour.` : `${transaction.label} est ajoutee en attente.` }
     );
+    if (mode === "supabase") {
+      const result = await upsertFinanceTransaction(transaction);
+      if (result.error) notify("Sauvegarde Supabase impossible", result.error);
+      else await refresh();
+    }
     setModalOpen(false);
+    setEditingTransactionId(null);
   }
 
-  function validateTransaction(id: string) {
+  async function validateTransaction(id: string) {
+    const nextTransaction = data.transactions.find((transaction) => transaction.id === id);
+    if (!nextTransaction) return;
+    const validated = {
+      ...nextTransaction,
+      status: "validated" as const,
+      updatedAt: new Date().toISOString(),
+      history: [{ at: new Date().toISOString(), label: "Transaction validee" }, ...nextTransaction.history]
+    };
     mutate(
       (current) => ({
         ...current,
         transactions: current.transactions.map((transaction) =>
           transaction.id === id
-            ? {
-                ...transaction,
-                status: "validated",
-                updatedAt: new Date().toISOString(),
-                history: [{ at: new Date().toISOString(), label: "Transaction validee" }, ...transaction.history]
-              }
+            ? validated
             : transaction
         )
       }),
       { title: "Transaction validee", detail: "Le journal comptable est pret a etre exporte." }
     );
+    if (mode === "supabase") {
+      const result = await upsertFinanceTransaction(validated);
+      if (result.error) notify("Validation Supabase impossible", result.error);
+      else await refresh();
+    }
   }
 
-  function deleteTransaction(id: string) {
+  async function deleteTransaction(id: string) {
     mutate(
       (current) => ({ ...current, transactions: current.transactions.filter((transaction) => transaction.id !== id) }),
       { title: "Transaction supprimee", detail: "La ligne a ete retiree du journal." }
     );
+    if (mode === "supabase") {
+      const result = await deleteFinanceTransaction(id);
+      if (result.error) notify("Suppression Supabase impossible", result.error);
+      else await refresh();
+    }
   }
 
   function exportAccounting() {
@@ -226,7 +272,7 @@ export function ComptabiliteWorkspace() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setModalOpen(true)} variant="primary">
+          <Button onClick={openCreateTransaction} variant="primary">
             <Plus size={17} />
             Import manuel
           </Button>
@@ -299,7 +345,7 @@ export function ComptabiliteWorkspace() {
           {view === "transactions" ? (
             <div className="space-y-3">
               {transactions.length ? (
-                <TransactionsTable transactions={transactions} page={page} pageSize={pageSize} onDelete={deleteTransaction} onValidate={validateTransaction} />
+                <TransactionsTable transactions={transactions} page={page} pageSize={pageSize} onDelete={deleteTransaction} onEdit={openEditTransaction} onValidate={validateTransaction} />
               ) : (
                 <EmptyState icon={<ReceiptText size={18} />} title="Aucune transaction" detail="Importez une transaction ou ajustez les filtres." />
               )}
@@ -316,7 +362,17 @@ export function ComptabiliteWorkspace() {
         </div>
       </section>
 
-      <TransactionModal draft={draft} open={modalOpen} setDraft={setDraft} onClose={() => setModalOpen(false)} onSubmit={createTransaction} />
+      <TransactionModal
+        draft={draft}
+        editing={Boolean(editingTransactionId)}
+        open={modalOpen}
+        setDraft={setDraft}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingTransactionId(null);
+        }}
+        onSubmit={submitTransaction}
+      />
     </div>
   );
 }
@@ -451,6 +507,24 @@ function SettingsView({ data }: { data: ReturnType<typeof useFinanceData>["data"
   );
 }
 
+function updateTransactionFromDraft(transaction: ReturnType<typeof useFinanceData>["data"]["transactions"][number], draft: Draft) {
+  const now = new Date().toISOString();
+  const vatAmount = calculateVat(Number(draft.amount), Number(draft.vatRate));
+  return {
+    ...transaction,
+    amountExcludingTax: Number(draft.amount),
+    amountIncludingTax: Number(draft.amount) + vatAmount,
+    category: draft.category,
+    counterparty: draft.counterparty,
+    history: [{ at: now, label: "Transaction modifiee" }, ...transaction.history],
+    label: draft.label,
+    type: draft.type,
+    updatedAt: now,
+    vatAmount,
+    vatRate: Number(draft.vatRate)
+  };
+}
+
 function Line({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return <div className="flex justify-between border-b border-white/10 pb-3"><span className="text-slate-400">{label}</span><strong className={strong ? "text-cyan-100" : "text-white"}>{value}</strong></div>;
 }
@@ -459,9 +533,9 @@ function Info({ label, value }: { label: string; value: string }) {
   return <div className="rounded-[8px] border border-white/10 bg-white/[0.045] p-4"><p className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</p><p className="mt-2 text-sm font-semibold text-white">{value}</p></div>;
 }
 
-function TransactionModal({ open, draft, setDraft, onSubmit, onClose }: { open: boolean; draft: Draft; setDraft: (draft: Draft) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
+function TransactionModal({ open, draft, editing, setDraft, onSubmit, onClose }: { open: boolean; draft: Draft; editing: boolean; setDraft: (draft: Draft) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
   return (
-    <Modal open={open} title="Import manuel transaction" onClose={onClose}>
+    <Modal open={open} title={editing ? "Modifier la transaction" : "Import manuel transaction"} onClose={onClose}>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input label="Libelle" value={draft.label} onChange={(value) => setDraft({ ...draft, label: value })} />
@@ -473,7 +547,7 @@ function TransactionModal({ open, draft, setDraft, onSubmit, onClose }: { open: 
         </div>
         <div className="flex justify-end gap-2">
           <Button onClick={onClose} type="button" variant="ghost">Annuler</Button>
-          <Button type="submit" variant="primary">Importer</Button>
+          <Button type="submit" variant="primary">{editing ? "Enregistrer" : "Importer"}</Button>
         </div>
       </form>
     </Modal>

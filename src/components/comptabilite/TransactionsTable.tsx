@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Trash2 } from "lucide-react";
+import { Paperclip, Pencil, Trash2 } from "lucide-react";
 import { formatFinanceCurrency, formatFinanceDate } from "@/lib/comptabilite/format";
 import { downloadJsonFile } from "@/lib/download";
 import type { FinanceTransaction } from "@/types/comptabilite";
@@ -19,12 +19,14 @@ export function TransactionsTable({
   page,
   pageSize,
   onDelete,
+  onEdit,
   onValidate
 }: {
   transactions: FinanceTransaction[];
   page: number;
   pageSize: number;
   onDelete: (id: string) => void;
+  onEdit: (transaction: FinanceTransaction) => void;
   onValidate: (id: string) => void;
 }) {
   const visible = transactions.slice((page - 1) * pageSize, page * pageSize);
@@ -66,6 +68,9 @@ export function TransactionsTable({
                   <div className="flex gap-2">
                     <Button className="h-9 px-3" onClick={() => onValidate(transaction.id)} variant="ghost">
                       Valider
+                    </Button>
+                    <Button aria-label="Modifier" className="h-9 w-9 px-0" onClick={() => onEdit(transaction)} variant="ghost">
+                      <Pencil size={15} />
                     </Button>
                     <Button aria-label="Télécharger le justificatif" className="h-9 w-9 px-0" onClick={() => downloadJsonFile(`justificatif-${transaction.id}.json`, transaction)} variant="ghost">
                       <Paperclip size={15} />
