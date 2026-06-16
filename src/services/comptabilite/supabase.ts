@@ -46,10 +46,10 @@ export async function loadFinanceData(): Promise<{ data: FinanceData; mode: "loc
   return {
     data: {
       companies: companies.data?.length ? companies.data : financeFallbackData.companies,
-      transactions: transactions.data ?? [],
-      bankAccounts: bankAccounts.data ?? [],
-      accountingEntries: accountingEntries.data ?? [],
-      taxRecords: taxRecords.data ?? [],
+      transactions: transactions.data?.length ? transactions.data : financeFallbackData.transactions,
+      bankAccounts: bankAccounts.data?.length ? bankAccounts.data : financeFallbackData.bankAccounts,
+      accountingEntries: accountingEntries.data?.length ? accountingEntries.data : financeFallbackData.accountingEntries,
+      taxRecords: taxRecords.data?.length ? taxRecords.data : financeFallbackData.taxRecords,
       financialReports: financialReports.data?.length ? financialReports.data : financeFallbackData.financialReports,
       categories: categories.data?.length ? categories.data : financeFallbackData.categories
     },
@@ -129,6 +129,11 @@ async function ensureFinanceBootstrap(workspaceId: string) {
   if (!supabase) return;
   await Promise.all([
     ...financeFallbackData.companies.map((row) => supabase.from("financial_settings").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
+    ...financeFallbackData.bankAccounts.map((row) => supabase.from("bank_accounts").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
+    ...financeFallbackData.transactions.map((row) => supabase.from("transactions").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
+    ...financeFallbackData.accountingEntries.map((row) => supabase.from("accounting_entries").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
+    ...financeFallbackData.taxRecords.map((row) => supabase.from("tax_records").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
+    ...financeFallbackData.financialReports.map((row) => supabase.from("financial_reports").upsert({ ...row, workspace_id: workspaceId }, { onConflict: "id" })),
     ...financeFallbackData.categories.map((row) => supabase.from("accounting_categories").upsert(row, { onConflict: "id" }))
   ]);
 }

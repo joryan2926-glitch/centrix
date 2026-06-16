@@ -33,15 +33,19 @@ export function useFinanceData() {
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
-    const channel = supabase
-      .channel("centrix-finance-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "accounting_entries" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "tax_records" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "financial_reports" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "financial_settings" }, () => refresh())
-      .subscribe();
+    const channel = supabase.channel("centrix-finance-realtime");
+    try {
+      ["transactions", "bank_accounts", "accounting_entries", "tax_records", "financial_reports", "financial_settings", "bridge_connections"].forEach((table) => {
+        channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
+      });
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
 
     return () => {
       supabase.removeChannel(channel);

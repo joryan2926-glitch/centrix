@@ -25,7 +25,7 @@ import { formatFinanceCurrency, formatFinanceDate } from "@/lib/comptabilite/for
 import { buildTransaction, calculateVat, filterTransactions, getFinanceDashboard } from "@/services/comptabilite/calculations";
 import { deleteFinanceTransaction, upsertFinanceTransaction } from "@/services/comptabilite/supabase";
 import { useFinanceData } from "@/hooks/comptabilite/useFinanceData";
-import type { FinanceCategoryKey, FinanceFilters, FinanceTransactionType } from "@/types/comptabilite";
+import type { BankAccount, FinanceCategoryKey, FinanceFilters, FinanceTransactionType } from "@/types/comptabilite";
 import { FinanceKpiCard } from "@/ui/comptabilite/FinanceKpiCard";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -126,6 +126,23 @@ export function ComptabiliteWorkspace() {
     } finally {
       setBankingAction(null);
     }
+  }
+
+  function addManualBankAccount() {
+    const now = new Date().toISOString();
+    const account: BankAccount = {
+      id: `bank-${crypto.randomUUID()}`,
+      companyId: company?.id ?? "company-centrix",
+      bankName: "Banque manuelle",
+      label: `Compte ${data.bankAccounts.length + 1}`,
+      iban: "IBAN a completer",
+      balance: 0,
+      lastSyncAt: now
+    };
+    mutate(
+      (current) => ({ ...current, bankAccounts: [account, ...current.bankAccounts] }),
+      { title: "Compte bancaire ajoute", detail: "Le compte manuel est disponible dans la tresorerie." }
+    );
   }
 
   function openCreateTransaction() {
@@ -356,7 +373,7 @@ export function ComptabiliteWorkspace() {
             </div>
           ) : null}
           {view === "accounting" ? <AccountingView data={data} dashboard={dashboard} /> : null}
-          {view === "banking" ? <BankingView action={bankingAction} data={data} status={bankingStatus} onConnect={connectBank} onSync={syncBank} /> : null}
+          {view === "banking" ? <BankingView action={bankingAction} data={data} status={bankingStatus} onAddManualAccount={addManualBankAccount} onConnect={connectBank} onSync={syncBank} /> : null}
           {view === "billing" ? <BillingConnectedView dashboard={dashboard} unpaid={dashboard.unpaid} /> : null}
           {view === "settings" ? <SettingsView data={data} /> : null}
         </div>
@@ -428,10 +445,11 @@ function AccountingView({ data, dashboard }: { data: ReturnType<typeof useFinanc
   );
 }
 
-function BankingView({ action, data, status, onConnect, onSync }: {
+function BankingView({ action, data, status, onAddManualAccount, onConnect, onSync }: {
   action: "connect" | "sync" | null;
   data: ReturnType<typeof useFinanceData>["data"];
   status: { configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null;
+  onAddManualAccount: () => void;
   onConnect: () => void;
   onSync: () => void;
 }) {
@@ -446,6 +464,10 @@ function BankingView({ action, data, status, onConnect, onSync }: {
             {status?.lastSyncedAt ? <p className="mt-2 text-xs text-slate-500">Derniere synchronisation {formatFinanceDate(status.lastSyncedAt)}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={onAddManualAccount}>
+              <Plus size={17} />
+              Compte manuel
+            </Button>
             <Button disabled={action !== null || status?.configured === false} onClick={onConnect} variant="primary">
               {action === "connect" ? <Loader2 className="animate-spin" size={17} /> : <Link2 size={17} />}
               Connecter une banque
