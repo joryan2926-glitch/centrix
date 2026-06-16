@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { permissionCatalog } from "@/data/permissionCatalog";
 import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
-import { applyPermissionTemplate, defaultsForRole, loadPermissionMatrix, saveModulePermission, type PermissionSet } from "@/services/permissions/supabase";
+import { applyPermissionTemplate, configurablePermissionRoles, defaultsForRole, loadPermissionMatrix, saveModulePermission, type ConfigurablePermissionRole, type PermissionSet } from "@/services/permissions/supabase";
 import type { ModulePermission } from "@/types/operations";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -13,7 +13,12 @@ import { Card } from "@/ui/Card";
 import { Skeleton } from "@/ui/Skeleton";
 import { Toast } from "@/ui/Toast";
 
-const roles = ["manager", "employee", "client"] as const;
+const roleLabels: Record<ConfigurablePermissionRole, string> = {
+  client: "Client",
+  employee: "Employe",
+  manager: "Manager",
+  user: "User"
+};
 const actions = [
   ["can_read", "Lecture"],
   ["can_create", "Creation"],
@@ -51,11 +56,11 @@ export function PermissionsMatrix() {
 
   const map = useMemo(() => new Map(permissions.map((permission) => [`${permission.module_key}:${permission.role}`, permission])), [permissions]);
 
-  function value(moduleKey: string, role: typeof roles[number]): PermissionSet {
+  function value(moduleKey: string, role: ConfigurablePermissionRole): PermissionSet {
     return map.get(`${moduleKey}:${role}`) ?? defaultsForRole(role);
   }
 
-  async function toggle(moduleKey: string, role: typeof roles[number], action: keyof PermissionSet) {
+  async function toggle(moduleKey: string, role: ConfigurablePermissionRole, action: keyof PermissionSet) {
     if (!supabase || !canManageWorkspace) return;
     const next = { ...value(moduleKey, role), [action]: !value(moduleKey, role)[action] };
     setSaving(true);
@@ -100,14 +105,14 @@ export function PermissionsMatrix() {
             <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
               <tr>
                 <th className="sticky left-0 z-20 bg-slate-50 px-5 py-4">Module</th>
-                {roles.flatMap((role) => actions.map(([, label]) => <th className="px-3 py-4 text-center" key={`${role}-${label}`}><span className="block text-slate-900">{role}</span><span className="mt-1 block text-[10px] text-slate-400">{label}</span></th>))}
+                {configurablePermissionRoles.flatMap((role) => actions.map(([, label]) => <th className="px-3 py-4 text-center" key={`${role}-${label}`}><span className="block text-slate-900">{roleLabels[role]}</span><span className="mt-1 block text-[10px] text-slate-400">{label}</span></th>))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {moduleKeys.map((moduleKey) => (
                 <tr className="hover:bg-blue-50/50" key={moduleKey}>
                   <td className="sticky left-0 bg-white px-5 py-4"><p className="font-black text-slate-950">{permissionCatalog[moduleKey]}</p><p className="mt-1 text-xs font-semibold text-slate-500">{moduleKey}</p></td>
-                  {roles.flatMap((role) => actions.map(([action]) => {
+                  {configurablePermissionRoles.flatMap((role) => actions.map(([action]) => {
                     const enabled = value(moduleKey, role)[action];
                     return <td className="px-3 py-4 text-center" key={`${moduleKey}-${role}-${action}`}><button aria-label={`${moduleKey} ${role} ${action}`} className={`mx-auto grid h-8 w-8 place-items-center rounded-[10px] border transition ${enabled ? "border-blue-200 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-300"} ${canManageWorkspace ? "hover:scale-105" : "cursor-not-allowed opacity-60"}`} disabled={!canManageWorkspace || saving} onClick={() => void toggle(moduleKey, role, action)} type="button">{enabled ? <Check size={15} /> : <X size={15} />}</button></td>;
                   }))}

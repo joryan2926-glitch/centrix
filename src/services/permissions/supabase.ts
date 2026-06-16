@@ -3,6 +3,9 @@ import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { ModulePermission } from "@/types/operations";
 
 export type PermissionSet = Pick<ModulePermission, "can_read" | "can_create" | "can_update" | "can_delete" | "can_export" | "can_manage">;
+export type ConfigurablePermissionRole = "manager" | "employee" | "user" | "client";
+
+export const configurablePermissionRoles: readonly ConfigurablePermissionRole[] = ["manager", "employee", "user", "client"];
 
 export async function loadCurrentPermissions(supabase: SupabaseClient, moduleKey: string): Promise<{ permissions: PermissionSet; role: string; error: string | null }> {
   const workspace = await resolveWorkspaceContext(supabase);
@@ -39,7 +42,7 @@ export async function saveModulePermission(supabase: SupabaseClient, permission:
 export async function applyPermissionTemplate(supabase: SupabaseClient, modules: readonly string[], template: "balanced" | "restricted" | "collaborative") {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable." };
-  const rows = modules.flatMap((module_key) => (["manager", "employee", "client"] as const).map((role) => ({
+  const rows = modules.flatMap((module_key) => configurablePermissionRoles.map((role) => ({
     ...templatePermission(template, role),
     module_key,
     role,
@@ -56,12 +59,13 @@ export function defaultsForRole(role: string): PermissionSet {
   if (role === "super_admin" || role === "admin") return allowAll;
   if (role === "manager") return { ...allowAll, can_manage: false };
   if (role === "employee") return { ...denyAll, can_create: true, can_read: true, can_update: true };
+  if (role === "user") return { ...denyAll, can_create: true, can_read: true };
   if (role === "client") return { ...denyAll, can_read: true };
   return denyAll;
 }
 
 function templatePermission(template: "balanced" | "restricted" | "collaborative", role: string): PermissionSet {
-  if (template === "restricted") return role === "manager" ? { ...denyAll, can_export: true, can_read: true } : { ...denyAll, can_read: role === "employee" };
+  if (template === "restricted") return role === "manager" ? { ...denyAll, can_export: true, can_read: true } : { ...denyAll, can_read: role === "employee" || role === "user" };
   if (template === "collaborative") return role === "client" ? { ...denyAll, can_read: true } : { ...allowAll, can_delete: role === "manager", can_manage: false };
   return defaultsForRole(role);
 }
