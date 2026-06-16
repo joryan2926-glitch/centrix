@@ -123,6 +123,13 @@ export function AuthCard({ mode }: AuthCardProps) {
             {mode !== "register" ? <Link href="/register" className="hover:text-blue-700">Creer un compte</Link> : null}
             {mode !== "forgot" && mode !== "reset" ? <Link href="/forgot-password" className="hover:text-blue-700">Mot de passe oublie</Link> : null}
           </div>
+          <div className="mt-8 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-5 text-xs font-bold text-slate-400">
+            <Link href="/mentions-legales" className="hover:text-blue-700">Mentions legales</Link>
+            <Link href="/confidentialite" className="hover:text-blue-700">Confidentialite</Link>
+            <Link href="/conditions-utilisation" className="hover:text-blue-700">CGU</Link>
+            <Link href="/conditions-vente" className="hover:text-blue-700">CGV</Link>
+            <Link href="/cookies" className="hover:text-blue-700">Cookies</Link>
+          </div>
         </form>
       </Card>
     </main>

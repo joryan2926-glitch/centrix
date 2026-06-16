@@ -28,7 +28,7 @@ export function AppShell({ children }: AppShellProps) {
   const [open, setOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { loading: authLoading, profile } = useAuth();
-  const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password"].includes(pathname) || pathname.startsWith("/auth/");
+  const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/conditions-vente", "/cookies"].includes(pathname) || pathname.startsWith("/auth/");
   const profileInitials = profile?.fullName
     .split(" ")
     .map((part) => part.slice(0, 1))

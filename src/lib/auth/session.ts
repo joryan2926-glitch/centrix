@@ -1,4 +1,4 @@
-export const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/auth/callback"] as const;
+export const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/auth/callback", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/conditions-vente", "/cookies"] as const;
 
 export const protectedRoutes = [
   "/dashboard",
