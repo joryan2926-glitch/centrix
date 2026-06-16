@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { projectsFallbackData } from "@/data/projects";
 import { getSupabaseClient } from "@/lib/supabase";
-import { loadProjectsData, saveProjectsData, syncProjectsData } from "@/services/projects/supabase";
+import { deleteProjectFromSupabase, deleteTaskFromSupabase, loadProjectsData, saveProjectsData, syncProjectsData } from "@/services/projects/supabase";
 import type { ProjectsData } from "@/types/projects";
 
 type Toast = { title: string; detail: string };
@@ -35,7 +35,9 @@ export function useProjectsData() {
     if (!supabase) return;
     const channel = supabase.channel("centrix-projects-realtime");
     tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh()));
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setMode("local");
+    });
     return () => {
       supabase.removeChannel(channel);
     };
@@ -57,5 +59,15 @@ export function useProjectsData() {
     notify(result.mode === "supabase" ? "Projets synchronises" : "Sauvegarde locale", "Projets, taches et activite sont a jour.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);
+  const deleteProject = useCallback(async (projectId: string) => {
+    const result = await deleteProjectFromSupabase(projectId);
+    setMode(result.mode);
+  }, []);
+
+  const deleteTask = useCallback(async (taskId: string) => {
+    const result = await deleteTaskFromSupabase(taskId);
+    setMode(result.mode);
+  }, []);
+
+  return useMemo(() => ({ data, deleteProject, deleteTask, loading, mode, toast, mutate, sync, notify }), [data, deleteProject, deleteTask, loading, mode, toast, mutate, sync, notify]);
 }

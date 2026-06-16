@@ -1,4 +1,4 @@
-import type { Project, ProjectStatus, ProjectsData, TaskStatus } from "@/types/projects";
+import type { Project, ProjectStatus, ProjectTask, ProjectsData, TaskStatus } from "@/types/projects";
 
 export const statusLabels: Record<ProjectStatus, string> = {
   planned: "planifie",
@@ -46,5 +46,21 @@ export function createProject(): Project {
     owner: "Equipe",
     deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
     archived: false
+  };
+}
+
+export function createTask(projectId: string): ProjectTask {
+  return {
+    actualHours: 0,
+    assignee: "Equipe",
+    description: "Nouvelle tache projet.",
+    dueAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+    estimateHours: 4,
+    id: crypto.randomUUID(),
+    priority: "medium",
+    projectId,
+    recurring: false,
+    status: "todo",
+    title: "Nouvelle tache"
   };
 }
