@@ -13,7 +13,7 @@ function readLocal(): HrData {
 }
 
 function writeLocal(data: HrData) {
-  window.localStorage.setItem(storageKey, JSON.stringify(data));
+  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
 }
 
 export async function loadHrData(): Promise<{ data: HrData; mode: "local" | "supabase" }> {
@@ -81,4 +81,11 @@ export async function upsertHrEmployee(employee: HrEmployee) {
   const supabase = getSupabaseClient();
   if (!supabase) return;
   await supabase.from("hr_employees").upsert(employee, { onConflict: "id" });
+}
+
+export async function deleteHrEmployee(employeeId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { mode: "local" as const };
+  const { error } = await supabase.from("hr_employees").delete().eq("id", employeeId);
+  return { mode: error ? "local" as const : "supabase" as const };
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hrFallbackData } from "@/data/hr";
 import { getSupabaseClient } from "@/lib/supabase";
-import { loadHrData, saveHrData, syncHrData } from "@/services/supabaseHr";
+import { deleteHrEmployee, loadHrData, saveHrData, syncHrData } from "@/services/supabaseHr";
 import type { HrData } from "@/types/hr";
 
 type ToastState = {
@@ -47,7 +47,9 @@ export function useHrData() {
       .on("postgres_changes", { event: "*", schema: "public", table: "hr_documents" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "hr_schedule" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "hr_notifications" }, () => refresh())
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setMode("local");
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -74,5 +76,10 @@ export function useHrData() {
     notify(result.mode === "supabase" ? "RH synchronise" : "Sauvegarde locale", "Les donnees RH sont a jour.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);
+  const removeEmployee = useCallback(async (employeeId: string) => {
+    const result = await deleteHrEmployee(employeeId);
+    setMode(result.mode);
+  }, []);
+
+  return useMemo(() => ({ data, loading, mode, toast, mutate, notify, removeEmployee, sync }), [data, loading, mode, toast, mutate, notify, removeEmployee, sync]);
 }

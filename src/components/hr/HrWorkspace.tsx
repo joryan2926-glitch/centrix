@@ -11,6 +11,7 @@ import {
   Save,
   Search,
   ShieldCheck,
+  Trash2,
   UserRound,
   UsersRound,
   WalletCards
@@ -67,7 +68,7 @@ const emptyDraft: EmployeeDraft = {
 };
 
 export function HrWorkspace() {
-  const { data, loading, mode, toast, mutate, sync } = useHrData();
+  const { data, loading, mode, toast, mutate, removeEmployee, sync } = useHrData();
   const [view, setView] = useState<HrView>("employees");
   const [selectedId, setSelectedId] = useState("emp-lea");
   const [modalOpen, setModalOpen] = useState(false);
@@ -144,6 +145,104 @@ export function HrWorkspace() {
       }),
       { title: "Conge approuve", detail: "La demande est maintenant validee." }
     );
+  }
+
+  function updateEmployee(employeeId: string, patch: Partial<HrEmployee>) {
+    mutate((current) => ({
+      ...current,
+      employees: current.employees.map((employee) => employee.id === employeeId ? { ...employee, ...patch, updatedAt: new Date().toISOString() } : employee)
+    }));
+  }
+
+  async function removeSelectedEmployee(employeeId: string) {
+    if (!window.confirm("Supprimer cet employe et ses donnees RH liees ?")) return;
+    await removeEmployee(employeeId);
+    mutate((current) => ({
+      ...current,
+      absences: current.absences.filter((item) => item.employeeId !== employeeId),
+      contracts: current.contracts.filter((item) => item.employeeId !== employeeId),
+      documents: current.documents.filter((item) => item.employeeId !== employeeId),
+      employees: current.employees.filter((item) => item.id !== employeeId),
+      leaves: current.leaves.filter((item) => item.employeeId !== employeeId),
+      notifications: [createNotification("Employe supprime", "La fiche RH et les donnees liees ont ete retirees.", "warning"), ...current.notifications],
+      salaries: current.salaries.filter((item) => item.employeeId !== employeeId),
+      schedule: current.schedule.filter((item) => item.employeeId !== employeeId)
+    }), { title: "Employe supprime", detail: "La base RH est mise a jour." });
+    setSelectedId("");
+  }
+
+  function addLeave(employeeId: string) {
+    mutate((current) => ({
+      ...current,
+      leaves: [{
+        createdAt: new Date().toISOString(),
+        days: 1,
+        employeeId,
+        endDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        id: createHrId("leave"),
+        startDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        status: "pending",
+        type: "paid"
+      }, ...current.leaves],
+      notifications: [createNotification("Conge cree", "Nouvelle demande de conge ajoutee.", "info"), ...current.notifications]
+    }), { title: "Conge ajoute", detail: "La demande est en attente de validation." });
+  }
+
+  function addAbsence(employeeId: string) {
+    mutate((current) => ({
+      ...current,
+      absences: [{
+        createdAt: new Date().toISOString(),
+        date: new Date().toISOString().slice(0, 10),
+        employeeId,
+        id: createHrId("absence"),
+        justified: false,
+        reason: "Absence a justifier"
+      }, ...current.absences]
+    }), { title: "Absence ajoutee", detail: "Le suivi absence est mis a jour." });
+  }
+
+  function addDocument(employeeId: string) {
+    mutate((current) => ({
+      ...current,
+      documents: [{
+        category: "contract",
+        createdAt: new Date().toISOString(),
+        employeeId,
+        id: createHrId("doc"),
+        title: "Nouveau document RH",
+        url: "#"
+      }, ...current.documents]
+    }), { title: "Document ajoute", detail: "Le document est rattache a la fiche employe." });
+  }
+
+  function addSchedule(employeeId: string) {
+    mutate((current) => ({
+      ...current,
+      schedule: [{
+        createdAt: new Date().toISOString(),
+        date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        employeeId,
+        id: createHrId("schedule"),
+        kind: "meeting",
+        label: "Point RH"
+      }, ...current.schedule]
+    }), { title: "Planning ajoute", detail: "Un evenement RH est planifie." });
+  }
+
+  function addSalary(employeeId: string) {
+    mutate((current) => ({
+      ...current,
+      salaries: [{
+        bonus: 0,
+        createdAt: new Date().toISOString(),
+        currency: "EUR",
+        effectiveDate: new Date().toISOString().slice(0, 10),
+        employeeId,
+        grossAnnual: 45000,
+        id: createHrId("salary")
+      }, ...current.salaries]
+    }), { title: "Salaire ajoute", detail: "La variable salariale est creee." });
   }
 
   if (loading) {
@@ -273,12 +372,19 @@ export function HrWorkspace() {
           {view === "payroll" ? <PayrollView data={data} /> : null}
 
           <EmployeeDetail
+            addAbsence={addAbsence}
+            addDocument={addDocument}
+            addLeave={addLeave}
+            addSalary={addSalary}
+            addSchedule={addSchedule}
             absences={selectedAbsences}
             contracts={selectedContracts}
             documents={selectedDocuments}
             employee={selected}
             leaves={selectedLeaves}
+            removeEmployee={removeSelectedEmployee}
             salaries={selectedSalaries}
+            updateEmployee={updateEmployee}
           />
         </div>
       </section>
@@ -404,19 +510,33 @@ function PayrollView({ data }: { data: ReturnType<typeof useHrData>["data"] }) {
 }
 
 function EmployeeDetail({
+  addAbsence,
+  addDocument,
+  addLeave,
+  addSalary,
+  addSchedule,
   employee,
   contracts,
   leaves,
   absences,
   salaries,
-  documents
+  documents,
+  removeEmployee,
+  updateEmployee
 }: {
+  addAbsence: (employeeId: string) => void;
+  addDocument: (employeeId: string) => void;
+  addLeave: (employeeId: string) => void;
+  addSalary: (employeeId: string) => void;
+  addSchedule: (employeeId: string) => void;
   employee: HrEmployee | null;
   contracts: ReturnType<typeof useHrData>["data"]["contracts"];
   leaves: ReturnType<typeof useHrData>["data"]["leaves"];
   absences: ReturnType<typeof useHrData>["data"]["absences"];
   salaries: ReturnType<typeof useHrData>["data"]["salaries"];
   documents: ReturnType<typeof useHrData>["data"]["documents"];
+  removeEmployee: (employeeId: string) => void;
+  updateEmployee: (employeeId: string, patch: Partial<HrEmployee>) => void;
 }) {
   if (!employee) {
     return <EmptyState icon={<UserRound size={18} />} title="Aucune fiche selectionnee" detail="Selectionnez un employe." />;
@@ -436,11 +556,35 @@ function EmployeeDetail({
               <div className="mt-3"><Badge tone={statusTone(employee.status)}>{employeeStatusLabels[employee.status]}</Badge></div>
             </div>
           </div>
-          <div className="mt-5 space-y-2 text-sm text-slate-300">
-            <p>Email: {employee.email}</p>
-            <p>Telephone: {employee.phone}</p>
-            <p>Manager: {employee.manager}</p>
-            <p>Debut: {formatHrDate(employee.startDate)}</p>
+          <div className="mt-5 grid gap-3">
+            <Input label="Prenom" value={employee.firstName} onChange={(value) => updateEmployee(employee.id, { firstName: value, avatarInitials: `${value[0] ?? "?"}${employee.lastName[0] ?? "?"}`.toUpperCase() })} />
+            <Input label="Nom" value={employee.lastName} onChange={(value) => updateEmployee(employee.id, { lastName: value, avatarInitials: `${employee.firstName[0] ?? "?"}${value[0] ?? "?"}`.toUpperCase() })} />
+            <Input label="Email" value={employee.email} onChange={(value) => updateEmployee(employee.id, { email: value })} />
+            <Input label="Telephone" value={employee.phone} onChange={(value) => updateEmployee(employee.id, { phone: value })} />
+            <Input label="Role" value={employee.role} onChange={(value) => updateEmployee(employee.id, { role: value })} />
+            <Input label="Manager" value={employee.manager} onChange={(value) => updateEmployee(employee.id, { manager: value })} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-xs text-slate-500">Departement</span>
+                <select className="h-10 w-full rounded-[8px] border border-white/10 bg-slate-950 px-3 text-sm text-white outline-none" value={employee.department} onChange={(event) => updateEmployee(employee.id, { department: event.target.value as HrDepartment })}>
+                  {Object.entries(departmentLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                </select>
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs text-slate-500">Statut</span>
+                <select className="h-10 w-full rounded-[8px] border border-white/10 bg-slate-950 px-3 text-sm text-white outline-none" value={employee.status} onChange={(event) => updateEmployee(employee.id, { status: event.target.value as HrEmployee["status"] })}>
+                  {Object.entries(employeeStatusLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={() => addLeave(employee.id)} type="button" variant="surface">Congé</Button>
+            <Button onClick={() => addAbsence(employee.id)} type="button" variant="surface">Absence</Button>
+            <Button onClick={() => addSchedule(employee.id)} type="button" variant="surface">Planning</Button>
+            <Button onClick={() => addDocument(employee.id)} type="button" variant="surface">Document</Button>
+            <Button onClick={() => addSalary(employee.id)} type="button" variant="surface">Salaire</Button>
+            <Button onClick={() => removeEmployee(employee.id)} type="button" variant="ghost"><Trash2 size={16} /> Supprimer</Button>
           </div>
         </div>
 
