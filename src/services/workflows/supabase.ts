@@ -30,12 +30,12 @@ export async function loadWorkflowData(): Promise<{ data: WorkflowData; mode: "l
   if (!workspace) return { data: readLocal(), mode: "local" };
   const [workflows, blocks, connections, runs, templates, tasks, alerts] = await Promise.all([
     supabase.from("workflows").select("*").eq("workspace_id", workspace.workspaceId).order("updated_at", { ascending: false }),
-    supabase.from("workflow_blocks").select("*"),
-    supabase.from("workflow_connections").select("*"),
-    supabase.from("workflow_runs").select("*").order("createdAt", { ascending: false }),
-    supabase.from("workflow_templates").select("*"),
+    supabase.from("workflow_blocks").select("*").eq("workspace_id", workspace.workspaceId),
+    supabase.from("workflow_connections").select("*").eq("workspace_id", workspace.workspaceId),
+    supabase.from("workflow_runs").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
+    supabase.from("workflow_templates").select("*").eq("workspace_id", workspace.workspaceId),
     supabase.from("productivity_tasks").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
-    supabase.from("workflow_alerts").select("*").order("createdAt", { ascending: false })
+    supabase.from("workflow_alerts").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false })
   ]);
   if ([workflows, blocks, connections, runs, templates, tasks, alerts].some((result) => result.error)) return { data: readLocal(), mode: "local" };
   const workflowRows = (workflows.data ?? []).filter((row) => !row.metadata?.module || row.metadata.module === "workflows");
@@ -66,14 +66,15 @@ export async function syncWorkflowData(data: WorkflowData) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
   const validWorkflowIds = new Set(normalized.workflows.filter((row) => isUuid(row.id)).map((row) => row.id));
+  const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
   const results = await Promise.all([
     ...normalized.workflows.filter((row) => validWorkflowIds.has(row.id)).map((row) => supabase.from("workflows").upsert(toWorkflowRow(row, workspace.workspaceId, workspace.userId), { onConflict: "id" })),
-    ...normalized.blocks.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_blocks").upsert(row, { onConflict: "id" })),
-    ...normalized.connections.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_connections").upsert(row, { onConflict: "id" })),
-    ...normalized.runs.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_runs").upsert(row, { onConflict: "id" })),
-    ...normalized.templates.map((row) => supabase.from("workflow_templates").upsert(row, { onConflict: "id" })),
+    ...normalized.blocks.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_blocks").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.connections.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_connections").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.runs.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_runs").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.templates.map((row) => supabase.from("workflow_templates").upsert(withWorkspace(row), { onConflict: "id" })),
     ...normalized.tasks.map((row) => supabase.from("productivity_tasks").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
-    ...normalized.alerts.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_alerts").upsert(row, { onConflict: "id" }))
+    ...normalized.alerts.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_alerts").upsert(withWorkspace(row), { onConflict: "id" }))
   ]);
   return getSupabaseSyncResult(results);
 }

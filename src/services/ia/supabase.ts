@@ -31,14 +31,14 @@ export async function loadAiAutomationData(): Promise<{ data: AiAutomationData; 
   if (!workspace) return { data: readLocal(), mode: "local" };
 
   const [conversations, messages, generations, templates, workflows, workflowSteps, automationLogs, notifications] = await Promise.all([
-    supabase.from("ai_conversations").select("*").order("updatedAt", { ascending: false }),
-    supabase.from("ai_messages").select("*").order("createdAt", { ascending: true }),
-    supabase.from("ai_generations").select("*").order("createdAt", { ascending: false }),
-    supabase.from("ai_templates").select("*"),
+    supabase.from("ai_conversations").select("*").eq("workspace_id", workspace.workspaceId).order("updatedAt", { ascending: false }),
+    supabase.from("ai_messages").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: true }),
+    supabase.from("ai_generations").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
+    supabase.from("ai_templates").select("*").eq("workspace_id", workspace.workspaceId),
     supabase.from("workflows").select("*").eq("workspace_id", workspace.workspaceId).order("updated_at", { ascending: false }),
-    supabase.from("workflow_steps").select("*").order("order", { ascending: true }),
-    supabase.from("automation_logs").select("*").order("createdAt", { ascending: false }),
-    supabase.from("ai_notifications").select("*").order("createdAt", { ascending: false })
+    supabase.from("workflow_steps").select("*").eq("workspace_id", workspace.workspaceId).order("order", { ascending: true }),
+    supabase.from("automation_logs").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
+    supabase.from("ai_notifications").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false })
   ]);
 
   if ([conversations, messages, generations, templates, workflows, workflowSteps, automationLogs, notifications].some((result) => result.error)) {
@@ -74,16 +74,17 @@ export async function syncAiAutomationData(data: AiAutomationData) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
   const validWorkflowIds = new Set(normalized.workflows.filter((row) => isUuid(row.id)).map((row) => row.id));
+  const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
 
   const results = await Promise.all([
-    ...normalized.conversations.map((row) => supabase.from("ai_conversations").upsert(row, { onConflict: "id" })),
-    ...normalized.messages.map((row) => supabase.from("ai_messages").upsert(row, { onConflict: "id" })),
-    ...normalized.generations.map((row) => supabase.from("ai_generations").upsert(row, { onConflict: "id" })),
-    ...normalized.templates.map((row) => supabase.from("ai_templates").upsert(row, { onConflict: "id" })),
+    ...normalized.conversations.map((row) => supabase.from("ai_conversations").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.messages.map((row) => supabase.from("ai_messages").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.generations.map((row) => supabase.from("ai_generations").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.templates.map((row) => supabase.from("ai_templates").upsert(withWorkspace(row), { onConflict: "id" })),
     ...normalized.workflows.filter((row) => validWorkflowIds.has(row.id)).map((row) => supabase.from("workflows").upsert(toWorkflowRow(row, workspace.workspaceId, workspace.userId), { onConflict: "id" })),
-    ...normalized.workflowSteps.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_steps").upsert(row, { onConflict: "id" })),
-    ...normalized.automationLogs.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("automation_logs").upsert(row, { onConflict: "id" })),
-    ...normalized.notifications.map((row) => supabase.from("ai_notifications").upsert(row, { onConflict: "id" }))
+    ...normalized.workflowSteps.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("workflow_steps").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.automationLogs.filter((row) => validWorkflowIds.has(row.workflowId)).map((row) => supabase.from("automation_logs").upsert(withWorkspace(row), { onConflict: "id" })),
+    ...normalized.notifications.map((row) => supabase.from("ai_notifications").upsert(withWorkspace(row), { onConflict: "id" }))
   ]);
 
   return getSupabaseSyncResult(results);
