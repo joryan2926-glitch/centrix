@@ -23,13 +23,14 @@ export async function loadMarketingData(): Promise<{ data: MarketingData; mode: 
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { data: readLocal(), mode: "local" };
 
-  const [accounts, posts, campaigns, media, activities, reports] = await Promise.all([
+  const [accounts, posts, campaigns, media, activities, reports, publicationLogs] = await Promise.all([
     supabase.from("marketing_social_accounts").select("*").eq("workspace_id", workspace.workspaceId),
     supabase.from("marketing_posts").select("*").eq("workspace_id", workspace.workspaceId).order("scheduledAt", { ascending: true }),
     supabase.from("marketing_campaigns").select("*").eq("workspace_id", workspace.workspaceId).order("startsAt", { ascending: false }),
     supabase.from("marketing_media_assets").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
     supabase.from("marketing_activities").select("*").eq("workspace_id", workspace.workspaceId).order("createdAt", { ascending: false }),
-    supabase.from("marketing_reports").select("*").eq("workspace_id", workspace.workspaceId)
+    supabase.from("marketing_reports").select("*").eq("workspace_id", workspace.workspaceId),
+    supabase.from("social_publication_logs").select("*").eq("workspace_id", workspace.workspaceId).order("created_at", { ascending: false }).limit(60)
   ]);
 
   if ([accounts, posts, campaigns, media, activities, reports].some((result) => result.error)) {
@@ -47,7 +48,18 @@ export async function loadMarketingData(): Promise<{ data: MarketingData; mode: 
       campaigns: campaigns.data?.length ? campaigns.data : marketingFallbackData.campaigns,
       media: media.data?.length ? media.data : marketingFallbackData.media,
       activities: activities.data?.length ? activities.data : marketingFallbackData.activities,
-      reports: reports.data?.length ? reports.data : marketingFallbackData.reports
+      reports: reports.data?.length ? reports.data : marketingFallbackData.reports,
+      publicationLogs: publicationLogs.error ? [] : (publicationLogs.data ?? []).map((row) => ({
+        accountId: row.account_id ?? null,
+        createdAt: row.created_at,
+        errorMessage: row.error_message ?? null,
+        externalId: row.external_id ?? null,
+        id: row.id,
+        network: row.network,
+        postId: row.post_id,
+        publishedAt: row.published_at ?? null,
+        status: row.status
+      }))
     },
     mode: "supabase"
   };
@@ -66,12 +78,8 @@ export async function syncMarketingData(data: MarketingData) {
   const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
 
   const results = await Promise.all([
-    ...data.accounts.map((row) => supabase.from("marketing_social_accounts").upsert(withWorkspace({ ...row, provider_account_id: row.providerAccountId ?? null }), { onConflict: "id" })),
-    ...data.posts.map((row) => {
-      const payload = { ...row };
-      delete payload.publicationError;
-      return supabase.from("marketing_posts").upsert(withWorkspace(payload), { onConflict: "id" });
-    }),
+    ...data.accounts.map((row) => supabase.from("marketing_social_accounts").upsert(toAccountRow(row, workspace.workspaceId), { onConflict: "id" })),
+    ...data.posts.map((row) => supabase.from("marketing_posts").upsert(toPostRow(row, workspace.workspaceId), { onConflict: "id" })),
     ...data.campaigns.map((row) => supabase.from("marketing_campaigns").upsert(withWorkspace(row), { onConflict: "id" })),
     ...data.media.map((row) => supabase.from("marketing_media_assets").upsert(withWorkspace(row), { onConflict: "id" })),
     ...data.activities.map((row) => supabase.from("marketing_activities").upsert(withWorkspace(row), { onConflict: "id" })),
@@ -132,11 +140,40 @@ async function ensureMarketingBootstrap(workspaceId: string) {
 }
 
 function toPostRow(post: SocialPost, workspaceId: string) {
-  const payload = { ...post };
-  delete payload.publicationError;
-  return { ...payload, publication_error: post.publicationError ?? null, workspace_id: workspaceId };
+  return {
+    accountIds: post.accountIds,
+    campaignId: post.campaignId,
+    category: post.category,
+    content: post.content,
+    createdAt: post.createdAt,
+    hashtags: post.hashtags,
+    id: post.id,
+    mediaUrls: post.mediaUrls,
+    mentions: post.mentions,
+    metrics: post.metrics,
+    publication_error: post.publicationError ?? null,
+    publishedAt: post.publishedAt,
+    scheduledAt: post.scheduledAt,
+    status: post.status,
+    title: post.title,
+    updatedAt: post.updatedAt,
+    workspace_id: workspaceId
+  };
 }
 
 function toAccountRow(account: SocialAccount, workspaceId: string) {
-  return { ...account, provider_account_id: account.providerAccountId ?? null, workspace_id: workspaceId };
+  return {
+    color: account.color,
+    connected: account.connected,
+    createdAt: account.createdAt,
+    displayName: account.displayName,
+    engagementRate: account.engagementRate,
+    followers: account.followers,
+    handle: account.handle,
+    id: account.id,
+    network: account.network,
+    provider_account_id: account.providerAccountId ?? null,
+    reach: account.reach,
+    workspace_id: workspaceId
+  };
 }

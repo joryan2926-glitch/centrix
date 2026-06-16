@@ -41,6 +41,7 @@ export function useMarketingData() {
       .on("postgres_changes", { event: "*", schema: "public", table: "marketing_media_assets" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "marketing_activities" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "marketing_reports" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "social_publication_logs" }, () => refresh())
       .subscribe();
 
     return () => {

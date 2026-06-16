@@ -1,5 +1,5 @@
 import { MarketingWorkspace } from "@/components/marketing/MarketingWorkspace";
 
 export default function SocialMediaPage() {
-  return <MarketingWorkspace />;
+  return <MarketingWorkspace initialView="posts" />;
 }

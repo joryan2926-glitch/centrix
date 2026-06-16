@@ -56,9 +56,9 @@ const defaultDraft: Draft = {
   category: "brand"
 };
 
-export function MarketingWorkspace() {
+export function MarketingWorkspace({ initialView = "dashboard" }: { initialView?: View } = {}) {
   const { data, loading, mode, toast, mutate, notify, refresh, sync } = useMarketingData();
-  const [view, setView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>(initialView);
   const [modalOpen, setModalOpen] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(defaultDraft);
@@ -67,6 +67,7 @@ export function MarketingWorkspace() {
   const [filters, setFilters] = useState<MarketingFilters>({ query: "", network: "all", status: "all" });
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [providers, setProviders] = useState<ProviderStatus[]>([]);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/social/status")
@@ -79,13 +80,46 @@ export function MarketingWorkspace() {
   const posts = useMemo(() => filterPosts(data.posts, filters, data.accounts), [data.posts, data.accounts, filters]);
   const selectedPost = data.posts.find((post) => post.id === selectedPostId) ?? data.posts[0] ?? null;
 
+  function openCreatePost() {
+    setEditingPostId(null);
+    setDraft({ ...defaultDraft, accountIds: data.accounts.slice(0, 1).map((account) => account.id) });
+    setModalOpen(true);
+  }
+
+  function openEditPost(post: SocialPost) {
+    setEditingPostId(post.id);
+    setDraft({
+      accountIds: post.accountIds,
+      category: post.category,
+      content: post.content,
+      hashtags: post.hashtags.join(","),
+      mentions: post.mentions.join(","),
+      scheduledAt: post.scheduledAt.slice(0, 16),
+      title: post.title
+    });
+    setModalOpen(true);
+  }
+
   async function createPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft.accountIds.length) {
       notify("Compte requis", "Selectionnez au moins un reseau destinataire.");
       return;
     }
-    const post = buildPost({
+    const existing = editingPostId ? data.posts.find((item) => item.id === editingPostId) : null;
+    const post = existing ? {
+      ...existing,
+      accountIds: draft.accountIds,
+      category: draft.category,
+      content: draft.content,
+      hashtags: draft.hashtags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      mentions: draft.mentions.split(",").map((mention) => mention.trim()).filter(Boolean),
+      publishedAt: null,
+      scheduledAt: new Date(draft.scheduledAt).toISOString(),
+      status: "scheduled" as const,
+      title: draft.title,
+      updatedAt: new Date().toISOString()
+    } : buildPost({
       campaignId: data.campaigns[0]?.id ?? null,
       accountIds: draft.accountIds,
       title: draft.title,
@@ -96,14 +130,14 @@ export function MarketingWorkspace() {
       category: draft.category
     });
 
-    const activity = { id: `act-${crypto.randomUUID()}`, title: "Post programme", detail: `${post.title} est programme.`, tone: "success" as const, createdAt: new Date().toISOString() };
+    const activity = { id: `act-${crypto.randomUUID()}`, title: existing ? "Post modifie" : "Post programme", detail: existing ? `${post.title} est mis a jour.` : `${post.title} est programme.`, tone: "success" as const, createdAt: new Date().toISOString() };
     mutate(
       (current) => ({
         ...current,
-        posts: [post, ...current.posts],
+        posts: existing ? current.posts.map((item) => item.id === existing.id ? post : item) : [post, ...current.posts],
         activities: [activity, ...current.activities]
       }),
-      { title: "Post programme", detail: `${post.title} est ajoute au calendrier editorial.` }
+      { title: existing ? "Post modifie" : "Post programme", detail: existing ? `${post.title} est mis a jour.` : `${post.title} est ajoute au calendrier editorial.` }
     );
     if (mode === "supabase") {
       const result = await upsertMarketingPost(post, activity);
@@ -112,6 +146,7 @@ export function MarketingWorkspace() {
     }
     setSelectedPostId(post.id);
     setModalOpen(false);
+    setEditingPostId(null);
   }
 
   async function createAccount(event: FormEvent<HTMLFormElement>) {
@@ -207,7 +242,7 @@ export function MarketingWorkspace() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setAccountModalOpen(true)}><Link2 size={17} />Compte social</Button>
-          <Button onClick={() => setModalOpen(true)} variant="primary"><Plus size={17} />Publication</Button>
+          <Button onClick={openCreatePost} variant="primary"><Plus size={17} />Publication</Button>
           <Button onClick={sync}><Save size={17} />{mode === "supabase" ? "Sync Supabase" : "Sauver local"}</Button>
         </div>
       </section>
@@ -257,14 +292,14 @@ export function MarketingWorkspace() {
 
           {view === "dashboard" ? <MarketingCharts data={data} /> : null}
           {view === "calendar" ? <EditorialCalendar posts={posts} onSelect={setSelectedPostId} /> : null}
-          {view === "posts" ? <PostsView data={data} posts={posts} publishingId={publishingId} selectedPost={selectedPost} onDelete={removePost} onPublish={publishNow} onSelect={setSelectedPostId} /> : null}
+          {view === "posts" ? <PostsView data={data} posts={posts} publishingId={publishingId} selectedPost={selectedPost} onDelete={removePost} onEdit={openEditPost} onPublish={publishNow} onSelect={setSelectedPostId} /> : null}
           {view === "campaigns" ? <CampaignsView data={data} /> : null}
           {view === "networks" ? <NetworksView data={data} providers={providers} /> : null}
           {view === "media" ? <MediaView data={data} /> : null}
         </div>
       </section>
 
-      <PostModal accounts={data.accounts} draft={draft} open={modalOpen} setDraft={setDraft} onClose={() => setModalOpen(false)} onSubmit={createPost} />
+      <PostModal accounts={data.accounts} draft={draft} editing={Boolean(editingPostId)} open={modalOpen} setDraft={setDraft} onClose={() => { setModalOpen(false); setEditingPostId(null); }} onSubmit={createPost} />
       <AccountModal draft={accountDraft} open={accountModalOpen} setDraft={setAccountDraft} onClose={() => setAccountModalOpen(false)} onSubmit={createAccount} />
     </div>
   );
@@ -298,7 +333,7 @@ function EditorialCalendar({ posts, onSelect }: { posts: ReturnType<typeof filte
   );
 }
 
-function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublish, onDelete }: { data: ReturnType<typeof useMarketingData>["data"]; posts: ReturnType<typeof filterPosts>; publishingId: string | null; selectedPost: ReturnType<typeof useMarketingData>["data"]["posts"][number] | null; onSelect: (id: string) => void; onPublish: (id: string) => void; onDelete: (id: string) => void }) {
+function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublish, onDelete, onEdit }: { data: ReturnType<typeof useMarketingData>["data"]; posts: ReturnType<typeof filterPosts>; publishingId: string | null; selectedPost: ReturnType<typeof useMarketingData>["data"]["posts"][number] | null; onSelect: (id: string) => void; onPublish: (id: string) => void; onDelete: (id: string) => void; onEdit: (post: SocialPost) => void }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="grid gap-4 md:grid-cols-2">
@@ -311,9 +346,14 @@ function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublis
             <p className="mt-4 text-sm leading-6 text-slate-300">{selectedPost.content}</p>
             <div className="mt-5 rounded-[8px] border border-white/10 bg-white/[0.045] p-4"><p className="text-xs uppercase tracking-[0.16em] text-slate-500">Apercu publication</p><p className="mt-3 text-sm text-white">{selectedPost.content}</p><div className="mt-3 flex flex-wrap gap-2 text-xs text-cyan-100">{selectedPost.hashtags.map((tag) => <span key={tag}>#{tag}</span>)}</div></div>
             {selectedPost.publicationError ? <p className="mt-4 rounded-[8px] border border-rose-300/20 bg-rose-400/10 p-3 text-sm text-rose-100">{selectedPost.publicationError}</p> : null}
+            <PublicationLogs logs={data.publicationLogs.filter((log) => log.postId === selectedPost.id)} />
             <Button className="mt-5 w-full" disabled={publishingId === selectedPost.id || selectedPost.status === "published"} onClick={() => onPublish(selectedPost.id)} variant="primary">
               {publishingId === selectedPost.id ? <Loader2 className="animate-spin" size={17} /> : <Megaphone size={17} />}
               {selectedPost.status === "published" ? "Publication envoyee" : publishingId === selectedPost.id ? "Publication..." : "Publier maintenant"}
+            </Button>
+            <Button className="mt-2 w-full" onClick={() => onEdit(selectedPost)} variant="ghost">
+              <Edit3 size={17} />
+              Modifier le post
             </Button>
             <Button className="mt-2 w-full text-rose-200" onClick={() => onDelete(selectedPost.id)} variant="ghost">
               <Trash2 size={17} />
@@ -334,6 +374,28 @@ function CampaignsView({ data }: { data: ReturnType<typeof useMarketingData>["da
           <div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-semibold text-white">{campaign.name}</h3><p className="mt-1 text-sm text-slate-400">{campaign.objective}</p></div><Badge tone={campaign.status === "active" ? "emerald" : "violet"}>{campaign.status}</Badge></div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3"><Metric label="Budget" value={formatMarketingCurrency(campaign.budget)} /><Metric label="Leads" value={formatMarketingNumber(campaign.leads)} /><Metric label="ROI" value={`${campaignRoi(campaign.spent, campaign.revenue).toFixed(0)}%`} /></div>
         </Card>
+      ))}
+    </div>
+  );
+}
+
+function PublicationLogs({ logs }: { logs: ReturnType<typeof useMarketingData>["data"]["publicationLogs"] }) {
+  if (!logs.length) {
+    return <p className="mt-4 rounded-[8px] border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400">Aucun log de publication pour ce post.</p>;
+  }
+
+  return (
+    <div className="mt-4 space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Historique publication</p>
+      {logs.slice(0, 4).map((log) => (
+        <div className="rounded-[8px] border border-white/10 bg-white/[0.04] p-3 text-sm" key={log.id}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold text-white">{networkLabels[log.network]}</span>
+            <Badge tone={log.status === "published" ? "emerald" : "rose"}>{log.status === "published" ? "Publie" : "Echec"}</Badge>
+          </div>
+          {log.errorMessage ? <p className="mt-2 text-rose-100">{log.errorMessage}</p> : null}
+          <p className="mt-2 text-xs text-slate-500">{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(log.createdAt))}</p>
+        </div>
       ))}
     </div>
   );
@@ -362,9 +424,9 @@ function Metric({ label, value }: { label: string; value: string }) {
   return <div className="rounded-[8px] bg-white/[0.045] p-3"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 font-semibold text-white">{value}</p></div>;
 }
 
-function PostModal({ accounts, open, draft, setDraft, onSubmit, onClose }: { accounts: ReturnType<typeof useMarketingData>["data"]["accounts"]; open: boolean; draft: Draft; setDraft: (draft: Draft) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
+function PostModal({ accounts, open, editing, draft, setDraft, onSubmit, onClose }: { accounts: ReturnType<typeof useMarketingData>["data"]["accounts"]; open: boolean; editing: boolean; draft: Draft; setDraft: (draft: Draft) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
   return (
-    <Modal open={open} title="Creer une publication" onClose={onClose}>
+    <Modal open={open} title={editing ? "Modifier une publication" : "Creer une publication"} onClose={onClose}>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input label="Titre" value={draft.title} onChange={(value) => setDraft({ ...draft, title: value })} />
@@ -388,7 +450,7 @@ function PostModal({ accounts, open, draft, setDraft, onSubmit, onClose }: { acc
             ))}
           </div>
         </fieldset>
-        <div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="ghost">Annuler</Button><Button type="submit" variant="primary">Programmer</Button></div>
+        <div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="ghost">Annuler</Button><Button type="submit" variant="primary">{editing ? "Enregistrer" : "Programmer"}</Button></div>
       </form>
     </Modal>
   );

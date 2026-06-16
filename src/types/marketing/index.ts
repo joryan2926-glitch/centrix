@@ -81,6 +81,18 @@ export type MarketingReportPoint = {
   leads: number;
 };
 
+export type SocialPublicationLog = {
+  id: string;
+  postId: string;
+  accountId: string | null;
+  network: SocialNetwork;
+  status: "published" | "failed";
+  externalId: string | null;
+  errorMessage: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+};
+
 export type MarketingData = {
   accounts: SocialAccount[];
   posts: SocialPost[];
@@ -88,6 +100,7 @@ export type MarketingData = {
   media: MediaAsset[];
   activities: MarketingActivity[];
   reports: MarketingReportPoint[];
+  publicationLogs: SocialPublicationLog[];
 };
 
 export type MarketingFilters = {

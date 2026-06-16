@@ -61,5 +61,6 @@ export const marketingFallbackData: MarketingData = {
     { month: "Mar", reach: 112000, engagement: 6200, clicks: 1740, leads: 260 },
     { month: "Avr", reach: 138000, engagement: 7900, clicks: 2210, leads: 318 },
     { month: "Mai", reach: 184000, engagement: 10400, clicks: 3080, leads: 416 }
-  ]
+  ],
+  publicationLogs: []
 };
