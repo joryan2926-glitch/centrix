@@ -7,6 +7,7 @@ import { loadNotificationsData, saveNotificationsData, syncNotificationsData } f
 import type { NotificationsData } from "@/types/notifications";
 
 type Toast = { title: string; detail: string };
+const realtimeTables = ["realtime_notifications", "notification_preferences", "notification_rules", "collaboration_conversations", "collaboration_messages", "user_presence", "shared_files"];
 
 export function useNotificationsData() {
   const [data, setData] = useState<NotificationsData>(notificationsFallbackData);
@@ -33,12 +34,19 @@ export function useNotificationsData() {
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
-    const channel = supabase
-      .channel("centrix-notifications-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "realtime_notifications" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notification_preferences" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notification_rules" }, () => refresh())
-      .subscribe();
+    const channel = supabase.channel("centrix-notifications-realtime");
+    try {
+      realtimeTables.forEach((table) => {
+        channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
+      });
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
 
     return () => {
       supabase.removeChannel(channel);

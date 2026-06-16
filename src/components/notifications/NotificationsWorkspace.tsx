@@ -1,9 +1,9 @@
 "use client";
 
-import { Activity, BellRing, CheckCheck, Clock3, Radio, Search, Settings2, ShieldAlert, Sparkles, Zap } from "lucide-react";
+import { Activity, BellRing, CheckCheck, Clock3, MessageCircle, Paperclip, Radio, Search, Settings2, ShieldAlert, Sparkles, Users2, Zap } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatNotificationDate } from "@/lib/notifications/format";
-import { createNotification, getNotificationsDashboard, moduleLabels, severityLabels, severityTone } from "@/services/notifications/calculations";
+import { createCollaborationMessage, createNotification, createSharedFile, getNotificationsDashboard, moduleLabels, severityLabels, severityTone } from "@/services/notifications/calculations";
 import { useNotificationsData } from "@/hooks/notifications/useNotificationsData";
 import type { NotificationModule, NotificationSeverity, RealtimeNotification } from "@/types/notifications";
 import { NotificationKpiCard } from "@/ui/notifications/NotificationKpiCard";
@@ -17,6 +17,7 @@ import { Toast } from "@/ui/Toast";
 const views = [
   { id: "dashboard", label: "Dashboard", icon: Activity },
   { id: "alerts", label: "Alertes", icon: BellRing },
+  { id: "collaboration", label: "Collaboration", icon: MessageCircle },
   { id: "rules", label: "Automations", icon: Zap },
   { id: "preferences", label: "Preferences", icon: Settings2 }
 ] as const;
@@ -30,7 +31,9 @@ export function NotificationsWorkspace() {
   const [view, setView] = useState<View>("dashboard");
   const [query, setQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState<"all" | NotificationModule>("all");
+  const [selectedConversationId, setSelectedConversationId] = useState(data.conversations[0]?.id ?? "");
   const dashboard = useMemo(() => getNotificationsDashboard(data), [data]);
+  const selectedConversation = data.conversations.find((item) => item.id === selectedConversationId) ?? data.conversations[0] ?? null;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -63,6 +66,38 @@ export function NotificationsWorkspace() {
         ]
       }),
       { title: "Alerte creee", detail: "La notification realtime est disponible dans le dashboard." }
+    );
+  };
+
+  const sendCollaborationMessage = () => {
+    const conversation = selectedConversation;
+    if (!conversation) return;
+    const message = createCollaborationMessage(conversation.id);
+    mutate(
+      (current) => ({
+        ...current,
+        messages: [...current.messages, message],
+        conversations: current.conversations.map((item) => item.id === conversation.id ? { ...item, unreadCount: 0, updatedAt: message.createdAt } : item),
+        notifications: [
+          createNotification({ title: "Nouveau message equipe", detail: `${message.author} a ajoute une mise a jour dans ${conversation.name}.`, module: conversation.module, severity: "info" }),
+          ...current.notifications
+        ]
+      }),
+      { title: "Message envoye", detail: "La conversation collaborative est synchronisee." }
+    );
+  };
+
+  const shareCollaborationFile = () => {
+    const conversation = selectedConversation;
+    if (!conversation) return;
+    const file = createSharedFile(conversation.id);
+    mutate(
+      (current) => ({
+        ...current,
+        sharedFiles: [file, ...current.sharedFiles],
+        messages: [...current.messages, { ...createCollaborationMessage(conversation.id, `${file.name} partage avec l'equipe.`), attachmentName: file.name }]
+      }),
+      { title: "Fichier partage", detail: `${file.name} est rattache a la conversation.` }
     );
   };
 
@@ -115,6 +150,15 @@ export function NotificationsWorkspace() {
       {!loading && view === "dashboard" ? <DashboardView dashboard={dashboard} notifications={data.notifications} markAllRead={markAllRead} /> : null}
       {!loading && view === "alerts" ? (
         <AlertsView filtered={filtered} query={query} moduleFilter={moduleFilter} setQuery={setQuery} setModuleFilter={setModuleFilter} markAllRead={markAllRead} />
+      ) : null}
+      {!loading && view === "collaboration" ? (
+        <CollaborationView
+          data={data}
+          selectedConversationId={selectedConversation?.id ?? ""}
+          setSelectedConversationId={setSelectedConversationId}
+          onSendMessage={sendCollaborationMessage}
+          onShareFile={shareCollaborationFile}
+        />
       ) : null}
       {!loading && view === "rules" ? (
         <Card className="p-5">
@@ -183,7 +227,8 @@ function DashboardView({ dashboard, notifications, markAllRead }: { dashboard: R
         <NotificationKpiCard icon={<Clock3 size={20} />} label="Rappels" value={dashboard.reminders} detail="Actions planifiees" />
         <NotificationKpiCard icon={<Zap size={20} />} label="Automations" value={dashboard.activeRules} detail="Regles actives" />
         <NotificationKpiCard icon={<Radio size={20} />} label="Canaux realtime" value={dashboard.realtimeChannels} detail="Dashboard + push" />
-        <NotificationKpiCard icon={<Activity size={20} />} label="Alertes business" value={dashboard.businessAlerts} detail="CRM, support, finance" />
+        <NotificationKpiCard icon={<Users2 size={20} />} label="Connectes" value={dashboard.onlineUsers} detail="Presence equipe" />
+        <NotificationKpiCard icon={<MessageCircle size={20} />} label="Messages non lus" value={dashboard.unreadMessages} detail="Collaboration" />
       </div>
 
       <Card className="p-5">
@@ -200,6 +245,98 @@ function DashboardView({ dashboard, notifications, markAllRead }: { dashboard: R
         <NotificationList notifications={recent} />
       </Card>
     </div>
+  );
+}
+
+function CollaborationView({
+  data,
+  selectedConversationId,
+  setSelectedConversationId,
+  onSendMessage,
+  onShareFile
+}: {
+  data: ReturnType<typeof useNotificationsData>["data"];
+  selectedConversationId: string;
+  setSelectedConversationId: (value: string) => void;
+  onSendMessage: () => void;
+  onShareFile: () => void;
+}) {
+  const conversation = data.conversations.find((item) => item.id === selectedConversationId) ?? data.conversations[0] ?? null;
+  const messages = conversation ? data.messages.filter((item) => item.conversationId === conversation.id) : [];
+  const files = conversation ? data.sharedFiles.filter((item) => item.conversationId === conversation.id) : data.sharedFiles;
+
+  return (
+    <section className="grid gap-4 xl:grid-cols-[320px_1fr]">
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-slate-950">Conversations</h2>
+          <Badge tone="cyan">{data.conversations.length}</Badge>
+        </div>
+        <div className="mt-4 space-y-2">
+          {data.conversations.map((item) => (
+            <button key={item.id} className={`w-full rounded-[14px] border p-3 text-left transition ${conversation?.id === item.id ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white hover:bg-slate-50"}`} onClick={() => setSelectedConversationId(item.id)}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-slate-950">{item.name}</p>
+                {item.unreadCount ? <Badge tone="rose">{item.unreadCount}</Badge> : null}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">{item.type} - {moduleLabels[item.module]}</p>
+            </button>
+          ))}
+        </div>
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <p className="text-sm font-semibold text-slate-950">Presence equipe</p>
+          <div className="mt-3 space-y-2">
+            {data.presence.map((user) => (
+              <div key={user.id} className="flex items-center justify-between rounded-[12px] bg-slate-50 px-3 py-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{user.name}</p>
+                  <p className="text-xs text-slate-500">{user.role}</p>
+                </div>
+                <span className={`h-2.5 w-2.5 rounded-full ${user.status === "online" ? "bg-emerald-500" : user.status === "away" ? "bg-amber-400" : "bg-slate-300"}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">{conversation?.name ?? "Collaboration"}</h2>
+            <p className="mt-1 text-sm text-slate-500">Messages temps reel, fichiers partages et decisions equipe.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={onShareFile}><Paperclip size={16} /> Partager fichier</Button>
+            <Button onClick={onSendMessage} variant="primary"><MessageCircle size={16} /> Envoyer message</Button>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_260px]">
+          <div className="space-y-3">
+            {messages.map((message) => (
+              <div key={message.id} className={`rounded-[16px] border p-4 ${message.role === "admin" ? "border-blue-100 bg-blue-50" : "border-slate-200 bg-white"}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-slate-950">{message.author}</p>
+                  <span className="text-xs text-slate-400">{formatNotificationDate(message.createdAt)}</span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{message.content}</p>
+                {message.attachmentName ? <Badge tone="violet">{message.attachmentName}</Badge> : null}
+              </div>
+            ))}
+          </div>
+          <div className="rounded-[16px] border border-slate-200 bg-slate-50 p-4">
+            <p className="font-semibold text-slate-950">Fichiers partages</p>
+            <div className="mt-3 space-y-2">
+              {files.map((file) => (
+                <div key={file.id} className="rounded-[12px] bg-white p-3">
+                  <p className="text-sm font-semibold text-slate-950">{file.name}</p>
+                  <p className="text-xs text-slate-500">{file.fileType} - {file.sizeMb} MB</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </section>
   );
 }
 
