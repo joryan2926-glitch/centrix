@@ -70,7 +70,7 @@ export async function syncDocumentsData(data: DocumentsCloudData) {
 
   const results = await Promise.all([
     ...data.folders.map((row) => supabase.from("folders").upsert(row, { onConflict: "id" })),
-    ...data.documents.filter((row) => validDocumentIds.has(row.id)).map((row) => supabase.from("documents").upsert(toDocumentRow(row, workspace.workspaceId, workspace.userId), { onConflict: "id" })),
+    ...data.documents.filter((row) => validDocumentIds.has(row.id)).map((row) => supabase.from("documents").upsert(toDocumentRow(row, workspace.workspaceId), { onConflict: "id" })),
     ...data.shares.filter((row) => validDocumentIds.has(row.documentId)).map((row) => supabase.from("document_shares").upsert(row, { onConflict: "id" })),
     ...data.comments.filter((row) => validDocumentIds.has(row.documentId)).map((row) => supabase.from("document_comments").upsert(row, { onConflict: "id" })),
     ...data.versions.filter((row) => validDocumentIds.has(row.documentId)).map((row) => supabase.from("document_versions").upsert(row, { onConflict: "id" })),
@@ -150,9 +150,8 @@ function mapDocument(row: Record<string, unknown>): CloudDocument {
   };
 }
 
-function toDocumentRow(document: CloudDocument, workspaceId: string, userId: string) {
+function toDocumentRow(document: CloudDocument, workspaceId: string) {
   return {
-    bucket: documentsBucket,
     category: document.category,
     downloads: document.downloads,
     extension: document.extension,
@@ -173,21 +172,15 @@ function toDocumentRow(document: CloudDocument, workspaceId: string, userId: str
       url: document.url
     },
     mimeType: document.mimeType,
-    mime_type: document.mimeType,
     moduleLink: document.moduleLink,
     name: document.name,
     ocrStatus: document.ocrStatus,
-    owner_id: userId,
-    path: document.storagePath ?? `metadata/${document.id}`,
     shared: document.shared,
     signatureStatus: document.signatureStatus,
-    signature_status: document.signatureStatus,
-    signed: document.signatureStatus === "signed",
     size: document.size,
-    size_bytes: document.size,
     storagePath: document.storagePath,
     tags: document.tags,
-    updated_at: document.updatedAt,
+    updatedAt: document.updatedAt,
     url: document.url,
     workspace_id: workspaceId
   };

@@ -19,16 +19,15 @@ export async function POST(request: NextRequest) {
 
   const { data: document, error: documentError } = await context.supabase
     .from("documents")
-    .select("id,name,bucket,path,mime_type,metadata")
+    .select("id,name,storagePath,mimeType,metadata")
     .eq("id", documentId)
     .eq("workspace_id", context.workspaceId)
     .maybeSingle();
   if (documentError || !document) return connectorError("Document introuvable.", 404);
 
-  const bucket = String(document.bucket ?? "centrix-documents");
-  const path = String(document.path ?? "");
+  const path = String(document.storagePath ?? "");
   if (!path) return connectorError("Fichier document introuvable.", 409);
-  const { data: file, error: downloadError } = await context.supabase.storage.from(bucket).download(path);
+  const { data: file, error: downloadError } = await context.supabase.storage.from("centrix-documents").download(path);
   if (downloadError || !file) return connectorError("Telechargement du document impossible.", 500);
 
   const documentBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
@@ -48,10 +47,9 @@ export async function POST(request: NextRequest) {
   if (!response.ok) return connectorError(payload.message ?? "Envoi DocuSign impossible.", response.status);
 
   await context.supabase.from("documents").update({
-    signature_status: "pending",
-    signature_external_id: payload.envelopeId,
+    signatureStatus: "pending",
     metadata: { ...(document.metadata as Record<string, unknown> ?? {}), signature_provider: "docusign", envelope_id: payload.envelopeId },
-    updated_at: new Date().toISOString()
+    updatedAt: new Date().toISOString()
   }).eq("id", documentId).eq("workspace_id", context.workspaceId);
   return Response.json({ ok: true, envelopeId: payload.envelopeId });
 }
