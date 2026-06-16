@@ -36,8 +36,16 @@ export function useIntegrationsData() {
     if (!supabase) return;
 
     const channel = supabase.channel("centrix-integrations-realtime");
-    realtimeTables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh()));
-    channel.subscribe();
+    try {
+      realtimeTables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh()));
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
 
     return () => {
       supabase.removeChannel(channel);

@@ -34,8 +34,16 @@ export function useSecurityData() {
     const supabase = getSupabaseClient();
     if (!supabase) return;
     const channel = supabase.channel("centrix-security-realtime");
-    tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh()));
-    channel.subscribe();
+    try {
+      tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh()));
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
     return () => {
       supabase.removeChannel(channel);
     };
