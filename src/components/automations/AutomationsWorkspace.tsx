@@ -4,7 +4,7 @@ import { Activity, Bot, CheckCircle2, GitBranch, Play, Plus, Save, Search, Slide
 import type { DragEvent } from "react";
 import { useMemo, useState } from "react";
 import { formatAiDate } from "@/lib/ia/format";
-import { actionLabels, getAiDashboard, triggerLabels } from "@/services/automations/calculations";
+import { actionLabels, createAutomationWorkflow, getAiDashboard, triggerLabels } from "@/services/automations/calculations";
 import { createNotification } from "@/services/ia/calculations";
 import { useAutomationData } from "@/hooks/automations/useAutomationData";
 import type { AutomationLog, WorkflowStep } from "@/types/ia";
@@ -39,6 +39,20 @@ export function AutomationsWorkspace() {
       }),
       { title: "Automatisation mise a jour", detail: "Le workflow est synchronisable avec Supabase." }
     );
+  }
+
+  function addWorkflow() {
+    const { workflow, steps: workflowSteps } = createAutomationWorkflow();
+    mutate(
+      (current) => ({
+        ...current,
+        workflows: [workflow, ...current.workflows],
+        workflowSteps: [...current.workflowSteps, ...workflowSteps],
+        notifications: [createNotification("Workflow cree", "Un nouveau scenario IA est pret a configurer.", "success"), ...current.notifications]
+      }),
+      { title: "Workflow cree", detail: "Le scenario a ete ajoute au builder automatisations." }
+    );
+    setSelectedWorkflowId(workflow.id);
   }
 
   function runWorkflow() {
@@ -101,6 +115,7 @@ export function AutomationsWorkspace() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={addWorkflow} variant="surface"><Plus size={17} /> Nouveau workflow</Button>
             <Button onClick={runWorkflow}><Play size={17} /> Tester</Button>
             <Button onClick={sync} variant="primary"><Save size={17} /> Sync {mode}</Button>
           </div>

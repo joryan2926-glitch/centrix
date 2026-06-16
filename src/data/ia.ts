@@ -31,20 +31,20 @@ export const aiAutomationFallbackData: AiAutomationData = {
     { id: "gen-1", templateId: "tpl-post", title: "Post lancement Finance OS", output: "Annonce LinkedIn prete pour validation marketing.", category: "marketing", createdAt: "2026-05-25T10:00:00.000Z" }
   ],
   workflows: [
-    { id: "wf-paid-invoice", name: "Facture payee -> CRM", description: "Met a jour le compte client, cree une tache CSM et notifie finance.", active: true, trigger: "invoice_paid", runs: 128, successRate: 98, timeSavedHours: 42, createdAt: "2026-05-01T08:00:00.000Z", updatedAt: "2026-05-26T08:00:00.000Z" },
-    { id: "wf-new-lead", name: "Nouveau lead -> Scoring IA", description: "Score le lead, recommande une action et cree un rappel commercial.", active: true, trigger: "new_lead", runs: 284, successRate: 94, timeSavedHours: 61, createdAt: "2026-05-04T08:00:00.000Z", updatedAt: "2026-05-26T08:00:00.000Z" }
+    { id: "44444444-4444-4444-8444-444444444444", name: "Facture payee -> CRM", description: "Met a jour le compte client, cree une tache CSM et notifie finance.", active: true, trigger: "invoice_paid", runs: 128, successRate: 98, timeSavedHours: 42, createdAt: "2026-05-01T08:00:00.000Z", updatedAt: "2026-05-26T08:00:00.000Z" },
+    { id: "55555555-5555-4555-8555-555555555555", name: "Nouveau lead -> Scoring IA", description: "Score le lead, recommande une action et cree un rappel commercial.", active: true, trigger: "new_lead", runs: 284, successRate: 94, timeSavedHours: 61, createdAt: "2026-05-04T08:00:00.000Z", updatedAt: "2026-05-26T08:00:00.000Z" }
   ],
   workflowSteps: [
-    { id: "step-1", workflowId: "wf-paid-invoice", type: "trigger", label: "Facture payee", action: null, positionX: 40, positionY: 80, order: 1 },
-    { id: "step-2", workflowId: "wf-paid-invoice", type: "condition", label: "Montant > 5K", action: null, positionX: 260, positionY: 80, order: 2 },
-    { id: "step-3", workflowId: "wf-paid-invoice", type: "action", label: "Notifier CSM", action: "send_notification", positionX: 500, positionY: 80, order: 3 },
-    { id: "step-4", workflowId: "wf-new-lead", type: "trigger", label: "Nouveau lead", action: null, positionX: 40, positionY: 190, order: 1 },
-    { id: "step-5", workflowId: "wf-new-lead", type: "action", label: "Scoring IA", action: "update_crm", positionX: 260, positionY: 190, order: 2 },
-    { id: "step-6", workflowId: "wf-new-lead", type: "action", label: "Creer rappel", action: "create_task", positionX: 500, positionY: 190, order: 3 }
+    { id: "step-1", workflowId: "44444444-4444-4444-8444-444444444444", type: "trigger", label: "Facture payee", action: null, positionX: 40, positionY: 80, order: 1 },
+    { id: "step-2", workflowId: "44444444-4444-4444-8444-444444444444", type: "condition", label: "Montant > 5K", action: null, positionX: 260, positionY: 80, order: 2 },
+    { id: "step-3", workflowId: "44444444-4444-4444-8444-444444444444", type: "action", label: "Notifier CSM", action: "send_notification", positionX: 500, positionY: 80, order: 3 },
+    { id: "step-4", workflowId: "55555555-5555-4555-8555-555555555555", type: "trigger", label: "Nouveau lead", action: null, positionX: 40, positionY: 190, order: 1 },
+    { id: "step-5", workflowId: "55555555-5555-4555-8555-555555555555", type: "action", label: "Scoring IA", action: "update_crm", positionX: 260, positionY: 190, order: 2 },
+    { id: "step-6", workflowId: "55555555-5555-4555-8555-555555555555", type: "action", label: "Creer rappel", action: "create_task", positionX: 500, positionY: 190, order: 3 }
   ],
   automationLogs: [
-    { id: "log-1", workflowId: "wf-paid-invoice", status: "success", message: "Compte NovaCore mis a jour.", createdAt: "2026-05-26T08:40:00.000Z" },
-    { id: "log-2", workflowId: "wf-new-lead", status: "success", message: "Lead Blue Atlas score 82/100.", createdAt: "2026-05-26T08:10:00.000Z" }
+    { id: "log-1", workflowId: "44444444-4444-4444-8444-444444444444", status: "success", message: "Compte NovaCore mis a jour.", createdAt: "2026-05-26T08:40:00.000Z" },
+    { id: "log-2", workflowId: "55555555-5555-4555-8555-555555555555", status: "success", message: "Lead Blue Atlas score 82/100.", createdAt: "2026-05-26T08:10:00.000Z" }
   ],
   notifications: [
     { id: "notif-1", title: "Action commerciale recommandee", detail: "Relancer Orion Cloud avant vendredi: probabilite de closing elevee.", severity: "warning", createdAt: "2026-05-26T08:30:00.000Z" },

@@ -1,4 +1,4 @@
-import type { AiAutomationData, AiConversation, AiGeneration, AiMessage, AiNotification, AiTemplate, WorkflowAction, WorkflowTrigger } from "@/types/ia";
+import type { AiAutomationData, AiConversation, AiGeneration, AiMessage, AiNotification, AiTemplate, Workflow, WorkflowAction, WorkflowStep, WorkflowTrigger } from "@/types/ia";
 
 export const triggerLabels: Record<WorkflowTrigger, string> = {
   new_client: "Nouveau client",
@@ -83,6 +83,47 @@ export function createNotification(title: string, detail: string, severity: AiNo
     detail,
     severity,
     createdAt: new Date().toISOString()
+  };
+}
+
+export function createAutomationWorkflow(): { workflow: Workflow; steps: WorkflowStep[] } {
+  const now = new Date().toISOString();
+  const workflowId = crypto.randomUUID();
+  return {
+    workflow: {
+      id: workflowId,
+      name: "Nouveau scenario IA",
+      description: "Workflow no-code pret a connecter a un declencheur CENTRIX.",
+      active: false,
+      trigger: "new_lead",
+      runs: 0,
+      successRate: 100,
+      timeSavedHours: 0,
+      createdAt: now,
+      updatedAt: now
+    },
+    steps: [
+      {
+        id: `step-${crypto.randomUUID()}`,
+        workflowId,
+        type: "trigger",
+        label: "Declencheur",
+        action: null,
+        positionX: 40,
+        positionY: 120,
+        order: 1
+      },
+      {
+        id: `step-${crypto.randomUUID()}`,
+        workflowId,
+        type: "action",
+        label: "Action automatique",
+        action: "send_notification",
+        positionX: 300,
+        positionY: 120,
+        order: 2
+      }
+    ]
   };
 }
 

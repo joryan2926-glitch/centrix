@@ -1,1 +1,1 @@
-export { actionLabels, getAiDashboard, triggerLabels } from "@/services/ia/calculations";
+export { actionLabels, createAutomationWorkflow, getAiDashboard, triggerLabels } from "@/services/ia/calculations";
