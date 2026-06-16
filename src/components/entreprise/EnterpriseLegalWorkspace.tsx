@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, BookOpenCheck, BriefcaseBusiness, Building2, CheckCircle2, ClipboardCheck, Download, FileSignature, FileText, Handshake, Landmark, Library, Plus, Rocket, Save, Search, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { Banknote, BookOpenCheck, BriefcaseBusiness, Building2, CheckCircle2, ClipboardCheck, Download, FileSignature, FileText, Handshake, Landmark, Library, Plus, Rocket, Save, Search, ShieldCheck, Sparkles, Trash2, Upload } from "lucide-react";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { formatLegalCurrency, formatLegalDate } from "@/lib/entreprise/format";
@@ -161,6 +161,17 @@ export function EnterpriseLegalWorkspace() {
     }));
   }
 
+  function deleteDevelopmentPlan(plan: CompanyDevelopmentPlan) {
+    mutate(
+      (current) => ({
+        ...current,
+        developmentPlans: current.developmentPlans.filter((item) => item.id !== plan.id),
+        legalNotifications: selectedCompany ? [createLegalNotification(selectedCompany.id, "Plan supprime", `${plan.title} a ete retire du suivi developpement.`, "warning"), ...current.legalNotifications] : current.legalNotifications
+      }),
+      { title: "Plan supprime", detail: `${plan.title} n'est plus suivi.` }
+    );
+  }
+
   function addAdvisorySession() {
     if (!selectedCompany) return;
     mutate(
@@ -178,6 +189,33 @@ export function EnterpriseLegalWorkspace() {
       ...current,
       advisorySessions: current.advisorySessions.map((session) => (session.id === sessionId ? { ...session, ...patch } : session))
     }));
+  }
+
+  function deleteAdvisorySession(session: AdvisorySession) {
+    mutate(
+      (current) => ({
+        ...current,
+        advisorySessions: current.advisorySessions.filter((item) => item.id !== session.id),
+        legalNotifications: selectedCompany ? [createLegalNotification(selectedCompany.id, "Conseil archive", `${session.topic} a ete retire de la roadmap conseil.`, "info"), ...current.legalNotifications] : current.legalNotifications
+      }),
+      { title: "Conseil supprime", detail: `${session.topic} est archive.` }
+    );
+  }
+
+  function exportCompanySummary() {
+    if (!selectedCompany) return;
+    downloadJsonFile(`centrix-dossier-${selectedCompany.id}.json`, {
+      company: selectedCompany,
+      legalForm: selectedForm,
+      steps,
+      documents,
+      announcement,
+      deposit,
+      shareholders,
+      developmentPlans,
+      advisorySessions,
+      exportedAt: new Date().toISOString()
+    });
   }
 
   function generateDocument(type: LegalDocument["type"]) {
@@ -254,6 +292,7 @@ export function EnterpriseLegalWorkspace() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => setView("creation")}><Plus size={17} /> Nouveau dossier</Button>
+            <Button onClick={exportCompanySummary} variant="ghost"><Download size={17} /> Export dossier</Button>
             <Button onClick={sync} variant="primary"><Save size={17} /> Sync {mode}</Button>
           </div>
         </div>
@@ -525,6 +564,7 @@ export function EnterpriseLegalWorkspace() {
                     <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { status: "in_progress" })} variant="ghost">Lancer</Button>
                     <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { status: "done", progress: 100 })} variant="ghost">Terminer</Button>
                     <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { priority: "critical", status: "blocked" })} variant="ghost">Bloquer</Button>
+                    <Button className="h-9 px-3" onClick={() => deleteDevelopmentPlan(plan)} variant="ghost"><Trash2 size={15} /> Supprimer</Button>
                   </div>
                 </div>
               )) : <EmptyState icon={<Rocket size={20} />} title="Aucun plan" detail="Ajoutez un plan de developpement pour transformer le dossier en entreprise active." />}
@@ -556,6 +596,7 @@ export function EnterpriseLegalWorkspace() {
                     <div className="flex shrink-0 flex-wrap gap-2">
                       <Button className="h-9 px-3" onClick={() => updateAdvisorySession(session.id, { status: "scheduled" })} variant="ghost">Planifier</Button>
                       <Button className="h-9 px-3" onClick={() => updateAdvisorySession(session.id, { status: "completed" })} variant="ghost">Valider</Button>
+                      <Button className="h-9 px-3" onClick={() => deleteAdvisorySession(session)} variant="ghost"><Trash2 size={15} /> Supprimer</Button>
                     </div>
                   </div>
                 </div>

@@ -18,6 +18,10 @@ function writeLocal(data: EnterpriseLegalData) {
   }
 }
 
+function toPostgrestTextList(ids: string[]) {
+  return `(${ids.map((id) => `"${id.replace(/"/g, '\\"')}"`).join(",")})`;
+}
+
 export async function loadEnterpriseLegalData(): Promise<{ data: EnterpriseLegalData; mode: "local" | "supabase" }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { data: readLocal(), mode: "local" };
@@ -72,8 +76,16 @@ export async function syncEnterpriseLegalData(data: EnterpriseLegalData) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
   const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
+  const developmentIds = data.developmentPlans.map((row) => row.id);
+  const advisoryIds = data.advisorySessions.map((row) => row.id);
 
   const results = await Promise.all([
+    developmentIds.length
+      ? supabase.from("company_development_plans").delete().eq("workspace_id", workspace.workspaceId).not("id", "in", toPostgrestTextList(developmentIds))
+      : supabase.from("company_development_plans").delete().eq("workspace_id", workspace.workspaceId),
+    advisoryIds.length
+      ? supabase.from("company_advisory_sessions").delete().eq("workspace_id", workspace.workspaceId).not("id", "in", toPostgrestTextList(advisoryIds))
+      : supabase.from("company_advisory_sessions").delete().eq("workspace_id", workspace.workspaceId),
     ...data.legalForms.map((row) => supabase.from("legal_forms").upsert(row, { onConflict: "id" })),
     ...data.companies.map((row) => supabase.from("companies").upsert(withWorkspace(row), { onConflict: "id" })),
     ...data.legalDocuments.map((row) => supabase.from("legal_documents").upsert(withWorkspace(row), { onConflict: "id" })),
