@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { documentsFallbackData } from "@/data/documents";
 import { getSupabaseClient } from "@/lib/supabase";
 import { createDocumentFromFile, createDocumentNotification } from "@/services/documents/calculations";
-import { loadDocumentsData, saveDocumentsData, syncDocumentsData, uploadDocumentAsset } from "@/services/documents/supabase";
+import { deleteDocumentAsset, loadDocumentsData, saveDocumentsData, syncDocumentsData, uploadDocumentAsset } from "@/services/documents/supabase";
 import type { CloudDocument, DocumentsCloudData } from "@/types/documents";
 
 type Toast = { title: string; detail: string };
@@ -50,7 +50,9 @@ export function useDocumentsData() {
     realtimeTables.forEach((table) => {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
     });
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setMode("local");
+    });
 
     return () => {
       supabase.removeChannel(channel);
@@ -107,8 +109,13 @@ export function useDocumentsData() {
     notify(result.mode === "supabase" ? "Documents synchronises" : "Sauvegarde locale", "Le cloud documentaire est a jour.");
   }, [data, notify]);
 
+  const removeDocumentAsset = useCallback(async (document: CloudDocument) => {
+    const result = await deleteDocumentAsset(document);
+    setMode(result.mode);
+  }, []);
+
   return useMemo(
-    () => ({ data, loading, mode, toast, uploadProgress, mutate, uploadFiles, sync, notify }),
-    [data, loading, mode, toast, uploadProgress, mutate, uploadFiles, sync, notify]
+    () => ({ data, loading, mode, toast, uploadProgress, mutate, notify, removeDocumentAsset, sync, uploadFiles }),
+    [data, loading, mode, toast, uploadProgress, mutate, notify, removeDocumentAsset, sync, uploadFiles]
   );
 }

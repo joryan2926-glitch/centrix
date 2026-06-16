@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { DragEvent } from "react";
 import { useMemo, useState } from "react";
 import { formatBytes, formatDocumentDate, formatStoragePercent } from "@/lib/documents/format";
+import { downloadTextFile } from "@/lib/download";
 import { categoryLabels, createDocumentNotification, createFolder, createShare, documentTone, duplicateDocument, filterDocuments, getDocumentsDashboard } from "@/services/documents/calculations";
 import { useDocumentsData } from "@/hooks/documents/useDocumentsData";
 import type { CloudDocument, DocumentCategory } from "@/types/documents";
@@ -27,7 +28,7 @@ const views = [
 type View = (typeof views)[number]["id"];
 
 export function DocumentsWorkspace() {
-  const { data, loading, mode, toast, uploadProgress, mutate, uploadFiles, sync, notify } = useDocumentsData();
+  const { data, loading, mode, toast, uploadProgress, mutate, removeDocumentAsset, uploadFiles, sync, notify } = useDocumentsData();
   const [view, setView] = useState<View>("grid");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<DocumentCategory | "all">("all");
@@ -80,7 +81,10 @@ export function DocumentsWorkspace() {
     );
   }
 
-  function removeDocument(documentId: string) {
+  async function removeDocument(documentId: string) {
+    const document = data.documents.find((item) => item.id === documentId);
+    if (!document || !window.confirm("Supprimer ce document du cloud ?")) return;
+    await removeDocumentAsset(document);
     mutate(
       (current) => ({
         ...current,
@@ -91,6 +95,37 @@ export function DocumentsWorkspace() {
       }),
       { title: "Document supprime", detail: "Le fichier est retire de l'espace courant." }
     );
+  }
+
+  function downloadDocument(document: CloudDocument) {
+    if (document.url) {
+      window.open(document.url, "_blank", "noopener,noreferrer");
+    } else {
+      downloadTextFile(document.name, `Document CENTRIX\nNom: ${document.name}\nCategorie: ${document.category}\nTaille: ${formatBytes(document.size)}\nStorage: ${document.storagePath ?? "local"}`);
+    }
+    mutate((current) => ({
+      ...current,
+      documents: current.documents.map((item) => item.id === document.id ? { ...item, downloads: item.downloads + 1, updatedAt: new Date().toISOString() } : item)
+    }));
+  }
+
+  function addComment(documentId: string) {
+    const content = window.prompt("Commentaire document");
+    if (!content) return;
+    mutate((current) => ({
+      ...current,
+      comments: [{ author: "CENTRIX", content, createdAt: new Date().toISOString(), documentId, id: `comment-${crypto.randomUUID()}` }, ...current.comments],
+      notifications: [createDocumentNotification(documentId, "Commentaire ajoute", content, "info"), ...current.notifications]
+    }), { title: "Commentaire ajoute", detail: "La discussion document est mise a jour." });
+  }
+
+  function addTag(documentId: string) {
+    const tag = window.prompt("Tag a ajouter");
+    if (!tag) return;
+    mutate((current) => ({
+      ...current,
+      documents: current.documents.map((document) => document.id === documentId ? { ...document, tags: Array.from(new Set([...document.tags, tag])), updatedAt: new Date().toISOString() } : document)
+    }), { title: "Tag ajoute", detail: tag });
   }
 
   function shareDocument(documentId: string) {
@@ -263,7 +298,7 @@ export function DocumentsWorkspace() {
           {view === "grid" ? (
             <div className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
               {documents.map((document) => (
-                <DocumentCard key={document.id} document={document} onDuplicate={duplicate} onFavorite={toggleFavorite} onPreview={() => { setSelectedDocumentId(document.id); setPreviewOpen(true); }} onRemove={removeDocument} onRename={renameDocument} onSelect={() => setSelectedDocumentId(document.id)} onShare={shareDocument} selected={selectedDocument?.id === document.id} />
+                <DocumentCard key={document.id} document={document} onDownload={downloadDocument} onDuplicate={duplicate} onFavorite={toggleFavorite} onPreview={() => { setSelectedDocumentId(document.id); setPreviewOpen(true); }} onRemove={removeDocument} onRename={renameDocument} onSelect={() => setSelectedDocumentId(document.id)} onShare={shareDocument} selected={selectedDocument?.id === document.id} />
               ))}
             </div>
           ) : null}
@@ -333,9 +368,16 @@ export function DocumentsWorkspace() {
                 <Badge tone={documentTone(selectedDocument)}>{categoryLabels[selectedDocument.category]}</Badge>
               </div>
               <PreviewBox document={selectedDocument} />
-              <Button className="mt-4 w-full" onClick={() => sendForSignature(selectedDocument.id)} variant="primary">
-                <FileSignature size={16} /> Envoyer a signer
-              </Button>
+              <div className="mt-4 grid gap-2">
+                <Button className="w-full" onClick={() => sendForSignature(selectedDocument.id)} variant="primary">
+                  <FileSignature size={16} /> Envoyer a signer
+                </Button>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button className="h-9 px-2" onClick={() => downloadDocument(selectedDocument)} variant="ghost"><Download size={15} /> Telecharger</Button>
+                  <Button className="h-9 px-2" onClick={() => addComment(selectedDocument.id)} variant="ghost"><MessageSquare size={15} /> Commenter</Button>
+                  <Button className="h-9 px-2" onClick={() => addTag(selectedDocument.id)} variant="ghost"><Tags size={15} /> Tag</Button>
+                </div>
+              </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Metric label="Taille" value={formatBytes(selectedDocument.size)} />
                 <Metric label="OCR" value={selectedDocument.ocrStatus} />
@@ -367,11 +409,12 @@ export function DocumentsWorkspace() {
   );
 }
 
-function DocumentCard({ document, selected, onSelect, onPreview, onFavorite, onShare, onDuplicate, onRename, onRemove }: {
+function DocumentCard({ document, selected, onSelect, onPreview, onDownload, onFavorite, onShare, onDuplicate, onRename, onRemove }: {
   document: CloudDocument;
   selected: boolean;
   onSelect: () => void;
   onPreview: () => void;
+  onDownload: (document: CloudDocument) => void;
   onFavorite: (id: string) => void;
   onShare: (id: string) => void;
   onDuplicate: (document: CloudDocument) => void;
@@ -392,6 +435,7 @@ function DocumentCard({ document, selected, onSelect, onPreview, onFavorite, onS
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button className="h-9 px-3" onClick={(event) => { event.stopPropagation(); onPreview(); }} variant="ghost"><Eye size={15} /></Button>
+        <Button className="h-9 px-3" onClick={(event) => { event.stopPropagation(); onDownload(document); }} variant="ghost"><Download size={15} /></Button>
         <Button className="h-9 px-3" onClick={(event) => { event.stopPropagation(); onShare(document.id); }} variant="ghost"><Link2 size={15} /></Button>
         <Button className="h-9 px-3" onClick={(event) => { event.stopPropagation(); onDuplicate(document); }} variant="ghost"><File size={15} /></Button>
         <Button className="h-9 px-3" onClick={(event) => { event.stopPropagation(); onRename(document.id); }} variant="ghost"><MoreHorizontal size={15} /></Button>
