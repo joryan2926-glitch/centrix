@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "recette:prod": "node scripts/production-recipes.mjs",
+    "recette:prod:external": "node scripts/production-recipes.mjs --external",
     "supabase:manifest": "node scripts/supabase-sql-manifest.mjs"
   },
   "dependencies": {
