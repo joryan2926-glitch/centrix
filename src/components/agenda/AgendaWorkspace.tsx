@@ -24,6 +24,7 @@ import { useMemo, useState } from "react";
 import { googleCalendarOAuthAction } from "@/app/auth/actions";
 import { fromDateTimeLocal, formatAgendaDate, formatAgendaTime, toDateTimeLocal } from "@/lib/agenda/format";
 import { buildEvent, duplicateEvent, eventStatusLabels, eventTypeLabels, filterEvents, getAgendaDashboard, hasReservationConflict, priorityTone, statusTone } from "@/services/agenda/calculations";
+import { deleteAgendaWorkflow, upsertAgendaTask, upsertAgendaWorkflow } from "@/services/agenda/supabase";
 import { useAgendaData } from "@/hooks/agenda/useAgendaData";
 import type { AgendaFilters, CalendarEvent, CalendarEventType } from "@/types/agenda";
 import { AgendaKpiCard } from "@/ui/agenda/AgendaKpiCard";
@@ -116,28 +117,41 @@ export function AgendaWorkspace() {
     setModalOpen(true);
   }
 
-  function createEvent(event: FormEvent<HTMLFormElement>) {
+  async function createEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (editingId) {
+      const updatedEvent = data.events.find((item) => item.id === editingId);
+      if (!updatedEvent) return;
+      const nextEvent = {
+        ...updatedEvent,
+        description: draft.description,
+        durationMinutes: Math.max(15, Math.round((new Date(fromDateTimeLocal(draft.end)).getTime() - new Date(fromDateTimeLocal(draft.start)).getTime()) / 60000)),
+        end: fromDateTimeLocal(draft.end),
+        location: draft.location,
+        participants: draft.participants.split(",").map((participant) => participant.trim()).filter(Boolean),
+        start: fromDateTimeLocal(draft.start),
+        title: draft.title,
+        type: draft.type,
+        updatedAt: new Date().toISOString(),
+        videoUrl: draft.videoUrl
+      };
       mutate(
         (current) => ({
           ...current,
-          events: current.events.map((item) => item.id === editingId ? {
-            ...item,
-            description: draft.description,
-            durationMinutes: Math.max(15, Math.round((new Date(fromDateTimeLocal(draft.end)).getTime() - new Date(fromDateTimeLocal(draft.start)).getTime()) / 60000)),
-            end: fromDateTimeLocal(draft.end),
-            location: draft.location,
-            participants: draft.participants.split(",").map((participant) => participant.trim()).filter(Boolean),
-            start: fromDateTimeLocal(draft.start),
-            title: draft.title,
-            type: draft.type,
-            updatedAt: new Date().toISOString(),
-            videoUrl: draft.videoUrl
-          } : item)
+          events: current.events.map((item) => item.id === editingId ? nextEvent : item),
+          reservations: current.reservations.map((reservation) => reservation.eventId === editingId ? { ...reservation, end: nextEvent.end, resourceName: nextEvent.location, start: nextEvent.start } : reservation)
         }),
         { title: "Evenement modifie", detail: `${draft.title} est a jour.` }
       );
+      if (mode === "supabase") {
+        const linkedReservation = data.reservations.find((reservation) => reservation.eventId === editingId);
+        const result = await upsertAgendaWorkflow({
+          event: nextEvent,
+          reservation: linkedReservation ? { ...linkedReservation, end: nextEvent.end, resourceName: nextEvent.location, start: nextEvent.start } : null
+        });
+        if (result.error) notify("Sauvegarde Supabase impossible", result.error);
+        else await refresh();
+      }
       setEditingId(null);
       setModalOpen(false);
       return;
@@ -175,40 +189,55 @@ export function AgendaWorkspace() {
       return;
     }
 
+    const reminder = { id: `rem-${crypto.randomUUID()}`, eventId: newEvent.id, minutesBefore: 15, channel: "dashboard" as const, sent: false };
     mutate(
       (current) => ({
         ...current,
         events: [newEvent, ...current.events],
         reservations: [reservationCandidate, ...current.reservations],
-        reminders: [{ id: `rem-${crypto.randomUUID()}`, eventId: newEvent.id, minutesBefore: 15, channel: "dashboard", sent: false }, ...current.reminders]
+        reminders: [reminder, ...current.reminders]
       }),
       { title: "Evenement cree", detail: `${newEvent.title} est ajoute a l'agenda.` }
     );
+    if (mode === "supabase") {
+      const result = await upsertAgendaWorkflow({ event: newEvent, reminder, reservation: reservationCandidate });
+      if (result.error) notify("Sauvegarde Supabase impossible", result.error);
+      else await refresh();
+    }
     setSelectedId(newEvent.id);
     setModalOpen(false);
   }
 
-  function updateEventTime(eventId: string, start: string, end: string) {
+  async function updateEventTime(eventId: string, start: string, end: string) {
+    const event = data.events.find((item) => item.id === eventId);
+    if (!event) return;
+    const nextEvent = {
+      ...event,
+      durationMinutes: Math.max(15, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000)),
+      end,
+      start,
+      updatedAt: new Date().toISOString()
+    };
     mutate(
       (current) => ({
         ...current,
-        events: current.events.map((event) =>
-          event.id === eventId
-            ? {
-                ...event,
-                start,
-                end,
-                durationMinutes: Math.max(15, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000)),
-                updatedAt: new Date().toISOString()
-              }
-            : event
-        )
+        events: current.events.map((item) => item.id === eventId ? nextEvent : item),
+        reservations: current.reservations.map((reservation) => reservation.eventId === eventId ? { ...reservation, end, start } : reservation)
       }),
       { title: "Agenda mis a jour", detail: "Le creneau a ete modifie." }
     );
+    if (mode === "supabase") {
+      const linkedReservation = data.reservations.find((reservation) => reservation.eventId === eventId);
+      const result = await upsertAgendaWorkflow({
+        event: nextEvent,
+        reservation: linkedReservation ? { ...linkedReservation, end, start } : null
+      });
+      if (result.error) notify("Synchronisation Supabase impossible", result.error);
+      else await refresh();
+    }
   }
 
-  function deleteEvent(id: string) {
+  async function deleteEvent(id: string) {
     mutate(
       (current) => ({
         ...current,
@@ -219,22 +248,40 @@ export function AgendaWorkspace() {
       }),
       { title: "Evenement supprime", detail: "Les donnees liees ont ete retirees." }
     );
+    if (mode === "supabase") {
+      const result = await deleteAgendaWorkflow(id);
+      if (result.error) notify("Suppression Supabase impossible", result.error);
+      else await refresh();
+    }
   }
 
-  function cloneEvent(event: CalendarEvent) {
+  async function cloneEvent(event: CalendarEvent) {
     const cloned = duplicateEvent(event);
     mutate((current) => ({ ...current, events: [cloned, ...current.events] }), {
       title: "Evenement duplique",
       detail: `${cloned.title} est pret a etre ajuste.`
     });
+    if (mode === "supabase") {
+      const result = await upsertAgendaWorkflow({ event: cloned });
+      if (result.error) notify("Duplication Supabase impossible", result.error);
+      else await refresh();
+    }
     setSelectedId(cloned.id);
   }
 
-  function toggleTask(id: string) {
+  async function toggleTask(id: string) {
+    const nextTask = data.tasks.find((task) => task.id === id);
+    if (!nextTask) return;
+    const toggled = { ...nextTask, done: !nextTask.done };
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task))
+      tasks: current.tasks.map((task) => (task.id === id ? toggled : task))
     }));
+    if (mode === "supabase") {
+      const result = await upsertAgendaTask(toggled);
+      if (result.error) notify("Tache non synchronisee", result.error);
+      else await refresh();
+    }
   }
 
   async function syncGoogleCalendar() {
