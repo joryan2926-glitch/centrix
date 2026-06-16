@@ -17,7 +17,9 @@ const realtimeTables = [
   "company_steps",
   "company_settings",
   "capital_deposits",
-  "legal_notifications"
+  "legal_notifications",
+  "company_development_plans",
+  "company_advisory_sessions"
 ];
 
 export function useEnterpriseLegalData() {
@@ -46,10 +48,18 @@ export function useEnterpriseLegalData() {
     if (!supabase) return;
 
     const channel = supabase.channel("centrix-enterprise-legal-realtime");
-    realtimeTables.forEach((table) => {
-      channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
-    });
-    channel.subscribe();
+    try {
+      realtimeTables.forEach((table) => {
+        channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
+      });
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
 
     return () => {
       supabase.removeChannel(channel);

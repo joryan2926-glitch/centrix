@@ -1,14 +1,18 @@
 "use client";
 
-import { Banknote, BookOpenCheck, BriefcaseBusiness, Building2, CheckCircle2, ClipboardCheck, Download, FileSignature, FileText, Landmark, Library, Plus, Save, Search, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { Banknote, BookOpenCheck, BriefcaseBusiness, Building2, CheckCircle2, ClipboardCheck, Download, FileSignature, FileText, Handshake, Landmark, Library, Plus, Rocket, Save, Search, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { formatLegalCurrency, formatLegalDate } from "@/lib/entreprise/format";
 import { downloadJsonFile } from "@/lib/download";
 import {
   companyStatusLabels,
+  advisoryStatusLabels,
+  createAdvisorySession,
+  createDevelopmentPlan,
   createLegalDocument,
   createLegalNotification,
+  developmentAreaLabels,
   documentTypeLabels,
   estimateAnnouncementPrice,
   estimateMonthlyCharges,
@@ -17,7 +21,7 @@ import {
   stepStatusLabels
 } from "@/services/entreprise/calculations";
 import { useEnterpriseLegalData } from "@/hooks/entreprise/useEnterpriseLegalData";
-import type { Company, LegalDocument } from "@/types/entreprise";
+import type { AdvisorySession, Company, CompanyDevelopmentPlan, LegalDocument } from "@/types/entreprise";
 import { LegalKpiCard } from "@/ui/entreprise/LegalKpiCard";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -33,6 +37,8 @@ const views = [
   { id: "annonces", label: "Annonces", icon: FileSignature },
   { id: "capital", label: "Capital", icon: Landmark },
   { id: "documents", label: "Documents", icon: Library },
+  { id: "developpement", label: "Developpement", icon: Rocket },
+  { id: "conseil", label: "Conseil", icon: Handshake },
   { id: "aide", label: "Aide", icon: BookOpenCheck }
 ] as const;
 
@@ -70,6 +76,8 @@ export function EnterpriseLegalWorkspace() {
   const deposit = data.capitalDeposits.find((item) => item.companyId === selectedCompany?.id) ?? null;
   const shareholders = data.shareholders.filter((item) => item.companyId === selectedCompany?.id);
   const notifications = data.legalNotifications.filter((item) => item.companyId === selectedCompany?.id);
+  const developmentPlans = data.developmentPlans.filter((item) => item.companyId === selectedCompany?.id);
+  const advisorySessions = data.advisorySessions.filter((item) => item.companyId === selectedCompany?.id);
   const announcementPrice = estimateAnnouncementPrice(selectedCompany, selectedForm);
 
   function createCompany(event: FormEvent<HTMLFormElement>) {
@@ -98,8 +106,11 @@ export function EnterpriseLegalWorkspace() {
           { id: `step-${crypto.randomUUID()}`, companyId: company.id, title: "Identite entreprise", description: "Renseigner les informations legales de base.", status: "in_progress", dueAt: now, order: 1 },
           { id: `step-${crypto.randomUUID()}`, companyId: company.id, title: "Associes et dirigeants", description: "Ajouter les roles, apports et beneficiaires.", status: "todo", dueAt: now, order: 2 },
           { id: `step-${crypto.randomUUID()}`, companyId: company.id, title: "Documents juridiques", description: "Generer les statuts et pieces du dossier.", status: "todo", dueAt: now, order: 3 },
+          { id: `step-${crypto.randomUUID()}`, companyId: company.id, title: "Plan developpement", description: "Structurer les jalons produit, commerciaux et financiers.", status: "todo", dueAt: now, order: 4 },
           ...current.companySteps
         ],
+        developmentPlans: [createDevelopmentPlan(company.id, "Plan de lancement entreprise"), ...current.developmentPlans],
+        advisorySessions: [createAdvisorySession(company.id, "Conseil creation et developpement"), ...current.advisorySessions],
         companySettings: [
           { companyId: company.id, legalAddress: "", accountingCurrency: "EUR", fiscalYearEnd: "12-31", vatRegime: "franchise", logoUrl: null },
           ...current.companySettings
@@ -129,6 +140,44 @@ export function EnterpriseLegalWorkspace() {
       }),
       { title: "Checklist mise a jour", detail: "La progression du dossier a ete recalculée." }
     );
+  }
+
+  function addDevelopmentPlan() {
+    if (!selectedCompany) return;
+    mutate(
+      (current) => ({
+        ...current,
+        developmentPlans: [createDevelopmentPlan(selectedCompany.id), ...current.developmentPlans],
+        legalNotifications: [createLegalNotification(selectedCompany.id, "Plan developpement ajoute", "Un nouveau jalon de developpement est pret a piloter.", "success"), ...current.legalNotifications]
+      }),
+      { title: "Plan ajoute", detail: "Le plan de developpement est rattache au dossier." }
+    );
+  }
+
+  function updateDevelopmentPlan(planId: string, patch: Partial<CompanyDevelopmentPlan>) {
+    mutate((current) => ({
+      ...current,
+      developmentPlans: current.developmentPlans.map((plan) => (plan.id === planId ? { ...plan, ...patch, updatedAt: new Date().toISOString() } : plan))
+    }));
+  }
+
+  function addAdvisorySession() {
+    if (!selectedCompany) return;
+    mutate(
+      (current) => ({
+        ...current,
+        advisorySessions: [createAdvisorySession(selectedCompany.id), ...current.advisorySessions],
+        legalNotifications: [createLegalNotification(selectedCompany.id, "Conseil demande", "Une session d'accompagnement est ajoutee au suivi.", "info"), ...current.legalNotifications]
+      }),
+      { title: "Conseil ajoute", detail: "La demande est disponible dans l'espace conseil." }
+    );
+  }
+
+  function updateAdvisorySession(sessionId: string, patch: Partial<AdvisorySession>) {
+    mutate((current) => ({
+      ...current,
+      advisorySessions: current.advisorySessions.map((session) => (session.id === sessionId ? { ...session, ...patch } : session))
+    }));
   }
 
   function generateDocument(type: LegalDocument["type"]) {
@@ -210,13 +259,15 @@ export function EnterpriseLegalWorkspace() {
         </div>
       </Card>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <LegalKpiCard delta={`${dashboard.averageProgress}% avg`} icon={<Building2 size={19} />} label="Entreprises creees" value={String(dashboard.companiesCreated)} />
         <LegalKpiCard delta="actifs" icon={<BriefcaseBusiness size={19} />} label="Dossiers en cours" tone="violet" value={String(dashboard.activeDossiers)} />
         <LegalKpiCard delta="generes" icon={<FileText size={19} />} label="Documents" tone="emerald" value={String(dashboard.generatedDocuments)} />
         <LegalKpiCard delta="JAL" icon={<FileSignature size={19} />} label="Annonces legales" value={String(dashboard.announcements)} />
         <LegalKpiCard delta="capital" icon={<Banknote size={19} />} label="Capital depose" tone="emerald" value={formatLegalCurrency(dashboard.capitalDeposited)} />
         <LegalKpiCard delta="checklist" icon={<CheckCircle2 size={19} />} label="Etapes finalisees" tone="cyan" value={String(dashboard.finalizedSteps)} />
+        <LegalKpiCard delta="plans" icon={<Rocket size={19} />} label="Developpement" tone="violet" value={String(dashboard.activeDevelopmentPlans)} />
+        <LegalKpiCard delta="sessions" icon={<Handshake size={19} />} label="Conseil" tone="cyan" value={String(dashboard.advisorySessions)} />
       </section>
 
       <div className="flex gap-2 overflow-x-auto rounded-[8px] border border-white/10 bg-white/[0.045] p-1">
@@ -442,6 +493,73 @@ export function EnterpriseLegalWorkspace() {
                   </div>
                 </div>
               )) : <EmptyState icon={<FileText size={20} />} title="Aucun document" detail="Generez les premiers documents du dossier." />}
+            </div>
+          </Card>
+        ) : null}
+
+        {view === "developpement" ? (
+          <Card className="p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-400">Developpement entreprise</p>
+                <h2 className="text-lg font-semibold text-white">Plans produit, commercial, finance et operations</h2>
+              </div>
+              <Button onClick={addDevelopmentPlan} variant="primary"><Plus size={17} /> Ajouter plan</Button>
+            </div>
+            <div className="mt-5 grid gap-3 lg:grid-cols-2">
+              {developmentPlans.length ? developmentPlans.map((plan) => (
+                <div key={plan.id} className="rounded-[8px] border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{plan.title}</p>
+                      <p className="mt-1 text-xs text-slate-500">{developmentAreaLabels[plan.area]} - Responsable {plan.owner}</p>
+                    </div>
+                    <Badge tone={legalStatusTone(plan.status)}>{plan.status}</Badge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-400">{plan.objective}</p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <input aria-label={`Progression ${plan.title}`} className="h-2 flex-1 accent-cyan-300" max={100} min={0} type="range" value={plan.progress} onChange={(event) => updateDevelopmentPlan(plan.id, { progress: Number(event.target.value), status: Number(event.target.value) >= 100 ? "done" : "in_progress" })} />
+                    <span className="w-12 text-right text-sm font-semibold text-white">{plan.progress}%</span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { status: "in_progress" })} variant="ghost">Lancer</Button>
+                    <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { status: "done", progress: 100 })} variant="ghost">Terminer</Button>
+                    <Button className="h-9 px-3" onClick={() => updateDevelopmentPlan(plan.id, { priority: "critical", status: "blocked" })} variant="ghost">Bloquer</Button>
+                  </div>
+                </div>
+              )) : <EmptyState icon={<Rocket size={20} />} title="Aucun plan" detail="Ajoutez un plan de developpement pour transformer le dossier en entreprise active." />}
+            </div>
+          </Card>
+        ) : null}
+
+        {view === "conseil" ? (
+          <Card className="p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-400">Conseil & accompagnement</p>
+                <h2 className="text-lg font-semibold text-white">Recommandations, sessions experts et suivi decisions</h2>
+              </div>
+              <Button onClick={addAdvisorySession} variant="primary"><Plus size={17} /> Demander conseil</Button>
+            </div>
+            <div className="mt-5 grid gap-3">
+              {advisorySessions.length ? advisorySessions.map((session) => (
+                <div key={session.id} className="rounded-[8px] border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-white">{session.topic}</p>
+                        <Badge tone={legalStatusTone(session.status)}>{advisoryStatusLabels[session.status]}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">{session.expertName} - {formatLegalDate(session.scheduledAt)}</p>
+                      <p className="mt-3 text-sm leading-6 text-slate-400">{session.recommendation}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button className="h-9 px-3" onClick={() => updateAdvisorySession(session.id, { status: "scheduled" })} variant="ghost">Planifier</Button>
+                      <Button className="h-9 px-3" onClick={() => updateAdvisorySession(session.id, { status: "completed" })} variant="ghost">Valider</Button>
+                    </div>
+                  </div>
+                </div>
+              )) : <EmptyState icon={<Handshake size={20} />} title="Aucun conseil" detail="Creez une demande pour piloter l'accompagnement juridique, business ou croissance." />}
             </div>
           </Card>
         ) : null}

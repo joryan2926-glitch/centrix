@@ -153,5 +153,57 @@ export const enterpriseLegalFallbackData: EnterpriseLegalData = {
   legalNotifications: [
     { id: "legal-notif-1", companyId: "company-nova", title: "Document a verifier", detail: "Les statuts sont generes et prets pour relecture.", severity: "info", createdAt: "2026-05-26T09:00:00.000Z" },
     { id: "legal-notif-2", companyId: "company-nova", title: "Depot capital en attente", detail: "L'attestation bancaire doit etre ajoutee au dossier final.", severity: "warning", createdAt: "2026-05-26T11:00:00.000Z" }
+  ],
+  developmentPlans: [
+    {
+      id: "dev-plan-product",
+      companyId: "company-nova",
+      title: "Lancement MVP SaaS",
+      area: "product",
+      objective: "Finaliser le produit, valider le pricing et ouvrir les premiers acces clients.",
+      owner: "Lea Martin",
+      progress: 64,
+      priority: "high",
+      dueAt: "2026-06-18T09:00:00.000Z",
+      status: "in_progress",
+      createdAt: "2026-05-20T09:00:00.000Z",
+      updatedAt: "2026-05-26T09:00:00.000Z"
+    },
+    {
+      id: "dev-plan-sales",
+      companyId: "company-nova",
+      title: "Plan acquisition B2B",
+      area: "sales",
+      objective: "Structurer les canaux LinkedIn, partenariats et demos pour atteindre 30 prospects qualifies.",
+      owner: "Sarah Picon",
+      progress: 42,
+      priority: "medium",
+      dueAt: "2026-06-25T09:00:00.000Z",
+      status: "planned",
+      createdAt: "2026-05-22T09:00:00.000Z",
+      updatedAt: "2026-05-25T09:00:00.000Z"
+    }
+  ],
+  advisorySessions: [
+    {
+      id: "advice-legal-1",
+      companyId: "company-nova",
+      expertName: "Nora Chen",
+      topic: "Validation statuts et pacte futur",
+      recommendation: "Ajouter les clauses de cession, propriete intellectuelle et gouvernance avant immatriculation.",
+      status: "scheduled",
+      scheduledAt: "2026-06-04T10:00:00.000Z",
+      createdAt: "2026-05-26T10:30:00.000Z"
+    },
+    {
+      id: "advice-growth-1",
+      companyId: "company-nova",
+      expertName: "Yanis Perrin",
+      topic: "Conseil developpement commercial",
+      recommendation: "Prioriser trois segments ICP et connecter les devis au CRM des le lancement.",
+      status: "requested",
+      scheduledAt: "2026-06-07T14:00:00.000Z",
+      createdAt: "2026-05-26T13:00:00.000Z"
+    }
   ]
 };

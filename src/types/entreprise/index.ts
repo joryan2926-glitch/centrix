@@ -100,6 +100,32 @@ export type LegalNotification = {
   createdAt: string;
 };
 
+export type CompanyDevelopmentPlan = {
+  id: string;
+  companyId: string;
+  title: string;
+  area: "product" | "sales" | "finance" | "operations" | "legal";
+  objective: string;
+  owner: string;
+  progress: number;
+  priority: "low" | "medium" | "high" | "critical";
+  dueAt: string;
+  status: "planned" | "in_progress" | "done" | "blocked";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdvisorySession = {
+  id: string;
+  companyId: string;
+  expertName: string;
+  topic: string;
+  recommendation: string;
+  status: "requested" | "scheduled" | "completed";
+  scheduledAt: string;
+  createdAt: string;
+};
+
 export type EnterpriseLegalData = {
   companies: Company[];
   legalForms: LegalForm[];
@@ -110,4 +136,6 @@ export type EnterpriseLegalData = {
   companySettings: CompanySettings[];
   capitalDeposits: CapitalDeposit[];
   legalNotifications: LegalNotification[];
+  developmentPlans: CompanyDevelopmentPlan[];
+  advisorySessions: AdvisorySession[];
 };
