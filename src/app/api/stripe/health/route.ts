@@ -15,6 +15,13 @@ type PriceCheck = {
   error: string | null;
 };
 
+const requiredWebhookEvents = [
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted"
+] as const;
+
 export async function GET() {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const stripeConfigured = Boolean(stripeSecretKey);
@@ -30,6 +37,8 @@ export async function GET() {
   let stripeRecurringPriceCount = 0;
   let activeSubscriptionCount = 0;
   let processedEventCount = 0;
+  let webhookEventsValid = false;
+  let webhookEvents: string[] = [];
   let prices: PriceCheck[] = [];
 
   if (admin) {
@@ -84,7 +93,20 @@ export async function GET() {
     }
   }
 
-  const ready = stripeConfigured && webhookConfigured && supabaseAdminConfigured && catalogConnected && planCount >= 4 && stripePricesValid;
+  if (stripeSecretKey) {
+    const response = await fetch("https://api.stripe.com/v1/webhook_endpoints?limit=100", {
+      headers: { Authorization: `Bearer ${stripeSecretKey}` },
+      cache: "no-store"
+    });
+    if (response.ok) {
+      const payload = await response.json() as { data?: Array<{ enabled_events?: string[]; status?: string; url?: string }> };
+      const endpoint = payload.data?.find((item) => item.status === "enabled" && item.url?.includes("/api/stripe/webhook"));
+      webhookEvents = endpoint?.enabled_events ?? [];
+      webhookEventsValid = webhookEvents.includes("*") || requiredWebhookEvents.every((event) => webhookEvents.includes(event));
+    }
+  }
+
+  const ready = stripeConfigured && webhookConfigured && webhookEventsValid && supabaseAdminConfigured && catalogConnected && planCount >= 4 && stripePricesValid;
 
   return Response.json(
     {
@@ -92,6 +114,9 @@ export async function GET() {
       checks: {
         stripeConfigured,
         webhookConfigured,
+        webhookEventsValid,
+        requiredWebhookEvents,
+        webhookEvents,
         supabaseAdminConfigured,
         catalogConnected,
         planCount,

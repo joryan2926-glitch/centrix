@@ -10,10 +10,12 @@ import {
   History,
   Mail,
   Plus,
+  Pencil,
   Search,
   Sparkles,
   StickyNote,
   Table2,
+  Trash2,
   UserRound,
   UsersRound
 } from "lucide-react";
@@ -21,6 +23,7 @@ import type { DragEvent, FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { crmStages } from "@/data/crm";
 import { useCrmData } from "@/hooks/useCrmData";
+import { deleteClientFromSupabase, deleteLeadFromSupabase } from "@/services/supabaseCrm";
 import {
   buildClientFromLead,
   buildNewLead,
@@ -84,6 +87,8 @@ export function CrmWorkspace({ initialView = "pipeline" }: { initialView?: CrmVi
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
   const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<CrmLead | null>(null);
+  const [editingClient, setEditingClient] = useState<CrmClient | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [noteDraft, setNoteDraft] = useState("");
   const [taskDraft, setTaskDraft] = useState("");
@@ -103,72 +108,141 @@ export function CrmWorkspace({ initialView = "pipeline" }: { initialView?: CrmVi
   const selectedActivities = data.activities.filter((activity) => activity.leadId === selectedLeadId || activity.clientId === selectedClientId);
 
   function openLeadModal() {
+    setEditingLead(null);
     setDraft(emptyDraft);
     setLeadModalOpen(true);
   }
 
   function openClientModal() {
+    setEditingClient(null);
     setDraft({ ...emptyDraft, company: "Nouveau client", tags: "Client, Onboarding" });
     setClientModalOpen(true);
   }
 
-  function createLead(event: FormEvent<HTMLFormElement>) {
+  function openEditLead(lead: CrmLead) {
+    setEditingLead(lead);
+    setDraft({
+      amount: lead.potentialAmount,
+      company: lead.company,
+      email: lead.email,
+      name: lead.name,
+      phone: lead.phone,
+      tags: lead.tags.join(", ")
+    });
+    setLeadModalOpen(true);
+  }
+
+  function openEditClient(client: CrmClient) {
+    setEditingClient(client);
+    setDraft({
+      amount: client.lifetimeValue,
+      company: client.company,
+      email: client.email,
+      name: client.name,
+      phone: client.phone,
+      tags: client.tags.join(", ")
+    });
+    setClientModalOpen(true);
+  }
+
+  function saveLead(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const lead = {
-      ...buildNewLead(data.leads.length),
+    const now = new Date().toISOString();
+    const lead: CrmLead = {
+      ...(editingLead ?? buildNewLead(data.leads.length)),
       name: draft.name,
       company: draft.company,
       email: draft.email,
       phone: draft.phone,
       potentialAmount: Number(draft.amount),
-      tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
-    };
-
-    mutate(
-      (current) => ({
-        ...current,
-        leads: [lead, ...current.leads],
-        activities: [
-          createActivity({ leadId: lead.id, clientId: null, type: "status", title: "Prospect cree", detail: "Creation depuis la modale CRM." }),
-          ...current.activities
-        ]
-      }),
-      { title: "Prospect cree", detail: `${lead.company} est ajoute au pipeline.` }
-    );
-    setSelection({ type: "lead", id: lead.id });
-    setLeadModalOpen(false);
-  }
-
-  function createClient(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const now = new Date().toISOString();
-    const client: CrmClient = {
-      id: createCrmId("client"),
-      leadId: null,
-      name: draft.name,
-      company: draft.company,
-      email: draft.email,
-      phone: draft.phone,
       tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      lifetimeValue: Number(draft.amount),
-      status: "active",
-      createdAt: now,
       updatedAt: now
     };
 
     mutate(
       (current) => ({
         ...current,
-        clients: [client, ...current.clients],
+        leads: editingLead ? current.leads.map((item) => (item.id === lead.id ? lead : item)) : [lead, ...current.leads],
         activities: [
-          createActivity({ leadId: null, clientId: client.id, type: "client", title: "Client cree", detail: "Creation directe depuis CENTRIX CRM." }),
+          createActivity({ leadId: lead.id, clientId: null, type: "status", title: editingLead ? "Prospect modifie" : "Prospect cree", detail: editingLead ? "Mise a jour depuis la fiche CRM." : "Creation depuis la modale CRM." }),
           ...current.activities
         ]
       }),
-      { title: "Client cree", detail: `${client.company} est ajoute a la base clients.` }
+      { title: editingLead ? "Prospect modifie" : "Prospect cree", detail: `${lead.company} est synchronise dans le pipeline.` }
+    );
+    setSelection({ type: "lead", id: lead.id });
+    setEditingLead(null);
+    setLeadModalOpen(false);
+  }
+
+  function saveClient(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const now = new Date().toISOString();
+    const client: CrmClient = {
+      id: editingClient?.id ?? createCrmId("client"),
+      leadId: editingClient?.leadId ?? null,
+      name: draft.name,
+      company: draft.company,
+      email: draft.email,
+      phone: draft.phone,
+      tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      lifetimeValue: Number(draft.amount),
+      status: editingClient?.status ?? "active",
+      createdAt: editingClient?.createdAt ?? now,
+      updatedAt: now
+    };
+
+    mutate(
+      (current) => ({
+        ...current,
+        clients: editingClient ? current.clients.map((item) => (item.id === client.id ? client : item)) : [client, ...current.clients],
+        activities: [
+          createActivity({ leadId: null, clientId: client.id, type: "client", title: editingClient ? "Client modifie" : "Client cree", detail: editingClient ? "Fiche client mise a jour." : "Creation directe depuis CENTRIX CRM." }),
+          ...current.activities
+        ]
+      }),
+      { title: editingClient ? "Client modifie" : "Client cree", detail: `${client.company} est synchronise dans la base clients.` }
     );
     setSelection({ type: "client", id: client.id });
+    setEditingClient(null);
     setClientModalOpen(false);
+  }
+
+  async function deleteSelectedEntity() {
+    if (!selectedEntity) return;
+    const label = selectedEntity.company || selectedEntity.name;
+    if (!window.confirm(`Supprimer ${label} et son historique CRM ?`)) return;
+
+    if (selectedLead) {
+      const cloudError = mode === "supabase" ? await deleteLeadFromSupabase(selectedLead.id) : null;
+      mutate(
+        (current) => ({
+          ...current,
+          activities: current.activities.filter((activity) => activity.leadId !== selectedLead.id),
+          leads: current.leads.filter((lead) => lead.id !== selectedLead.id),
+          notes: current.notes.filter((note) => note.leadId !== selectedLead.id),
+          tasks: current.tasks.filter((task) => task.leadId !== selectedLead.id)
+        }),
+        { title: cloudError ? "Suppression locale" : "Prospect supprime", detail: cloudError ?? `${label} a ete supprime du CRM.` }
+      );
+      setSelection(null);
+      return;
+    }
+
+    if (selectedClient) {
+      const cloudError = mode === "supabase" ? await deleteClientFromSupabase(selectedClient.id) : null;
+      mutate(
+        (current) => ({
+          ...current,
+          activities: current.activities.filter((activity) => activity.clientId !== selectedClient.id),
+          clients: current.clients.filter((client) => client.id !== selectedClient.id),
+          notes: current.notes.filter((note) => note.clientId !== selectedClient.id),
+          tasks: current.tasks.filter((task) => task.clientId !== selectedClient.id)
+        }),
+        { title: cloudError ? "Suppression locale" : "Client supprime", detail: cloudError ?? `${label} a ete supprime de la base clients.` }
+      );
+      setSelection(null);
+    }
   }
 
   function moveLead(status: CrmStatus) {
@@ -401,6 +475,9 @@ export function CrmWorkspace({ initialView = "pipeline" }: { initialView?: CrmVi
             addTask={addTask}
             client={selectedClient}
             convertLead={convertSelectedLead}
+            deleteEntity={deleteSelectedEntity}
+            editClient={selectedClient ? () => openEditClient(selectedClient) : undefined}
+            editLead={selectedLead ? () => openEditLead(selectedLead) : undefined}
             lead={selectedLead}
             noteDraft={noteDraft}
             notes={selectedNotes}
@@ -413,8 +490,8 @@ export function CrmWorkspace({ initialView = "pipeline" }: { initialView?: CrmVi
         </div>
       </section>
 
-      <CreateEntityModal draft={draft} open={leadModalOpen} setDraft={setDraft} title="Creer un prospect" onClose={() => setLeadModalOpen(false)} onSubmit={createLead} />
-      <CreateEntityModal draft={draft} open={clientModalOpen} setDraft={setDraft} title="Creer un client" onClose={() => setClientModalOpen(false)} onSubmit={createClient} />
+      <CreateEntityModal draft={draft} open={leadModalOpen} setDraft={setDraft} submitLabel={editingLead ? "Enregistrer" : "Creer"} title={editingLead ? "Modifier le prospect" : "Creer un prospect"} onClose={() => { setEditingLead(null); setLeadModalOpen(false); }} onSubmit={saveLead} />
+      <CreateEntityModal draft={draft} open={clientModalOpen} setDraft={setDraft} submitLabel={editingClient ? "Enregistrer" : "Creer"} title={editingClient ? "Modifier le client" : "Creer un client"} onClose={() => { setEditingClient(null); setClientModalOpen(false); }} onSubmit={saveClient} />
     </div>
   );
 }
@@ -594,7 +671,10 @@ function DetailPanel({
   addNote,
   addTask,
   toggleTask,
-  convertLead
+  convertLead,
+  deleteEntity,
+  editClient,
+  editLead
 }: {
   lead: CrmLead | null;
   client: CrmClient | null;
@@ -609,6 +689,9 @@ function DetailPanel({
   addTask: () => void;
   toggleTask: (id: string) => void;
   convertLead: () => void;
+  deleteEntity: () => void;
+  editClient?: () => void;
+  editLead?: () => void;
 }) {
   const entity = lead ?? client;
 
@@ -625,7 +708,17 @@ function DetailPanel({
               <h2 className="text-2xl font-semibold text-white">{entity.company}</h2>
               <p className="mt-1 text-sm text-slate-400">{entity.name}</p>
             </div>
-            {lead ? <Badge tone={statusTone(lead.status)}>{statusLabels[lead.status]}</Badge> : <Badge tone="emerald">Client</Badge>}
+            <div className="flex flex-wrap gap-2">
+              {lead ? <Badge tone={statusTone(lead.status)}>{statusLabels[lead.status]}</Badge> : <Badge tone="emerald">Client</Badge>}
+              <Button className="h-9 px-3" onClick={lead ? editLead : editClient}>
+                <Pencil size={15} />
+                Modifier
+              </Button>
+              <Button className="h-9 px-3 text-rose-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={deleteEntity}>
+                <Trash2 size={15} />
+                Supprimer
+              </Button>
+            </div>
           </div>
 
           <div className="mt-5 grid gap-3 text-sm text-slate-300">
@@ -735,6 +828,7 @@ function CreateEntityModal({
   open,
   draft,
   setDraft,
+  submitLabel = "Creer",
   onSubmit,
   onClose
 }: {
@@ -742,6 +836,7 @@ function CreateEntityModal({
   open: boolean;
   draft: Draft;
   setDraft: (draft: Draft) => void;
+  submitLabel?: string;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
 }) {
@@ -761,7 +856,7 @@ function CreateEntityModal({
             Annuler
           </Button>
           <Button type="submit" variant="primary">
-            Creer
+            {submitLabel}
           </Button>
         </div>
       </form>

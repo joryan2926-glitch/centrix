@@ -12,6 +12,7 @@ export type SocialAccount = {
   engagementRate: number;
   reach: number;
   connected: boolean;
+  providerAccountId?: string | null;
   color: string;
   createdAt: string;
 };
@@ -52,6 +53,7 @@ export type SocialPost = {
   };
   createdAt: string;
   updatedAt: string;
+  publicationError?: string | null;
 };
 
 export type MediaAsset = {

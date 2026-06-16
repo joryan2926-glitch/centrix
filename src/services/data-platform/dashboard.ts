@@ -30,9 +30,30 @@ function numberValue(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function metricName(row: Record<string, unknown>) {
+  return String(row.metric ?? row.metric_key ?? "");
+}
+
+function metricAmount(row: Record<string, unknown>) {
+  return numberValue(row.value ?? row.metric_value);
+}
+
 function dateLabel(value: unknown) {
   if (!value) return "Maintenant";
   return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(String(value)));
+}
+
+function stageLabel(stage: string) {
+  const labels: Record<string, string> = {
+    contacted: "Contactes",
+    lost: "Perdus",
+    negotiation: "Negociation",
+    new: "Nouveaux leads",
+    proposal: "Propositions",
+    qualified: "Qualifies",
+    won: "Gagnes"
+  };
+  return labels[stage] ?? stage;
 }
 
 function isOpenStatus(row: Record<string, unknown>) {
@@ -87,7 +108,7 @@ function buildActivities(tables: TableResult): PlatformActivity[] {
     ...tables.projects.map((row) => ({
       id: `project-${row.id}`,
       module: "projects",
-      title: `Projet: ${String(row.name ?? "Projet")}`,
+      title: `Projet: ${String(row.name ?? row.title ?? "Projet")}`,
       detail: `${String(row.status ?? "planned")} - ${numberValue(row.progress)}%`,
       createdAt: String(row.created_at ?? new Date().toISOString())
     })),
@@ -104,11 +125,11 @@ function buildActivities(tables: TableResult): PlatformActivity[] {
 }
 
 function buildAnalytics(tables: TableResult): DashboardAnalyticsPoint[] {
-  const explicit = tables.analytics.filter((row) => String(row.metric ?? "") === "revenue");
+  const explicit = tables.analytics.filter((row) => metricName(row) === "revenue");
   if (explicit.length) {
     return explicit.slice(0, 8).map((row) => ({
       label: String(row.period ?? row.metric ?? "Periode"),
-      revenue: numberValue(row.value) / 1000,
+      revenue: metricAmount(row) / 1000,
       expenses: numberValue(row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>).expenses : 0) / 1000,
       leads: numberValue(row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>).leads : 0)
     }));
@@ -123,6 +144,32 @@ function buildAnalytics(tables: TableResult): DashboardAnalyticsPoint[] {
     { label: "En attente", revenue: pendingRevenue / 1000, expenses: 2.1, leads: tables.prospects.filter((lead) => String(lead.stage) !== "won").length },
     { label: "Encaisse", revenue: paidRevenue / 1000, expenses: 2.8, leads: tables.prospects.filter((lead) => String(lead.stage) === "won").length }
   ];
+}
+
+function buildBusinessPipeline(tables: TableResult): PlatformDashboardSnapshot["businessPipeline"] {
+  const stages = ["new", "qualified", "proposal", "negotiation", "won", "lost"];
+  const totalProspects = Math.max(tables.prospects.length, 1);
+
+  return stages.map((stage) => {
+    const stageRows = tables.prospects.filter((row) => String(row.stage ?? "new").toLowerCase() === stage);
+    const value = stageRows.reduce((sum, row) => sum + numberValue(row.potential_amount), 0);
+    return {
+      id: stage,
+      label: stageLabel(stage),
+      value,
+      conversion: Math.round((stageRows.length / totalProspects) * 100),
+      cards: stageRows.slice(0, 5).map((row) => {
+        const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata as Record<string, unknown> : {};
+        return {
+          id: String(row.id),
+          amount: numberValue(row.potential_amount),
+          company: String(row.company ?? row.name ?? "Prospect"),
+          owner: String(metadata.owner ?? "Equipe"),
+          score: Math.min(100, Math.max(0, Math.round(numberValue(row.score ?? metadata.probability))))
+        };
+      })
+    };
+  }).filter((column) => column.cards.length || ["new", "qualified", "proposal", "negotiation", "won"].includes(column.id));
 }
 
 function buildTasks(tables: TableResult): ModuleTask[] {
@@ -216,9 +263,9 @@ export async function loadDataPlatformDashboard(): Promise<{ data: SaasCoreDashb
   const urgentTasks = tables.tasks.filter((task) => String(task.priority ?? "").toLowerCase() === "urgent" || String(task.priority ?? "").toLowerCase() === "high").length;
   const monthlyRevenue = paidRevenue || tables.invoices.reduce((sum, invoice) => sum + numberValue(invoice.total), 0);
   const conversionRate = tables.prospects.length ? (wonProspects / tables.prospects.length) * 100 : Math.min(87, tables.clients.length * 12);
-  const growthRate = tables.analytics.find((row) => String(row.metric) === "growth")?.value;
+  const growthRate = tables.analytics.find((row) => metricName(row) === "growth");
   const forecastRevenue = monthlyRevenue * 1.18 + tables.quotes.reduce((sum, quote) => sum + numberValue(quote.total), 0) * 0.42;
-  const cashflow = paidRevenue - tables.analytics.filter((row) => String(row.metric) === "expenses").reduce((sum, row) => sum + numberValue(row.value), 0);
+  const cashflow = paidRevenue - tables.analytics.filter((row) => metricName(row) === "expenses").reduce((sum, row) => sum + metricAmount(row), 0);
   const profitability = monthlyRevenue ? Math.max(0, Math.min(100, (cashflow / monthlyRevenue) * 100)) : 72;
   const snapshot: PlatformDashboardSnapshot = {
     workspace,
@@ -238,7 +285,7 @@ export async function loadDataPlatformDashboard(): Promise<{ data: SaasCoreDashb
     unreadNotifications: tables.notifications.filter((notification) => !notification.read_at).length,
     supportOpen: tables.supportTickets.filter(isOpenStatus).length,
     conversionRate,
-    growthRate: Number(growthRate ?? (tables.invoices.length ? 14.8 : 0)),
+    growthRate: Number(growthRate ? metricAmount(growthRate) : tables.invoices.length ? 14.8 : 0),
     cashflow,
     forecastRevenue,
     profitability,
@@ -246,7 +293,8 @@ export async function loadDataPlatformDashboard(): Promise<{ data: SaasCoreDashb
     leadSeries: [],
     cashflowSeries: [],
     forecastSeries: [],
-    recentActivity: buildActivities(tables)
+    recentActivity: buildActivities(tables),
+    businessPipeline: buildBusinessPipeline(tables)
   };
 
   const analyticsPoints = buildAnalytics(tables);

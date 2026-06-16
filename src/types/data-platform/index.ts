@@ -60,4 +60,17 @@ export type PlatformDashboardSnapshot = {
   cashflowSeries: Array<{ label: string; value: number }>;
   forecastSeries: Array<{ label: string; value: number }>;
   recentActivity: PlatformActivity[];
+  businessPipeline: Array<{
+    id: string;
+    label: string;
+    value: number;
+    conversion: number;
+    cards: Array<{
+      id: string;
+      amount: number;
+      company: string;
+      owner: string;
+      score: number;
+    }>;
+  }>;
 };

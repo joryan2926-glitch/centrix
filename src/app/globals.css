@@ -6,13 +6,15 @@
 
 :root {
   color-scheme: light;
-  --bg: #f6f8fb;
+  --bg: #f4f7fb;
   --surface: #ffffff;
   --surface-strong: #ffffff;
-  --line: rgba(15, 23, 42, 0.10);
+  --line: rgba(15, 23, 42, 0.09);
   --centrix-blue: #2563eb;
   --centrix-sky: #0ea5e9;
   --centrix-navy: #071226;
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.065);
+  --shadow-lifted: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 48px rgba(15, 23, 42, 0.10);
 }
 
 * {
@@ -26,10 +28,10 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f3f6fb;
+  background: #f4f7fb;
   color: #0f172a;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  text-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -43,13 +45,11 @@ select {
 input,
 textarea,
 select {
-  min-height: 2.75rem;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.42);
+  min-height: 2.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.38);
   background: #ffffff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.82),
-    0 10px 24px rgba(15, 23, 42, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 1px 2px rgba(15, 23, 42, 0.035);
   transition:
     border-color 220ms ease,
     box-shadow 220ms ease,
@@ -63,8 +63,8 @@ select:focus {
   border-color: rgba(37, 99, 235, 0.62);
   background: rgba(255, 255, 255, 0.96);
   box-shadow:
-    0 0 0 4px rgba(37, 99, 235, 0.10),
-    0 18px 44px rgba(37, 99, 235, 0.10);
+    0 0 0 3px rgba(37, 99, 235, 0.10),
+    0 8px 20px rgba(37, 99, 235, 0.08);
   outline: none;
 }
 
@@ -75,16 +75,15 @@ label {
 @layer utilities {
   .bg-app-light {
     background:
-      linear-gradient(180deg, #f8fbff 0%, #f3f6fb 44%, #eef3f9 100%),
-      radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.13), transparent 30%),
-      radial-gradient(circle at 88% 8%, rgba(14, 165, 233, 0.10), transparent 28%);
+      linear-gradient(180deg, #f8faff 0%, #f4f7fb 42%, #f1f5f9 100%),
+      radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.07), transparent 26%);
   }
 
   .bg-grid-light {
     background-image:
       linear-gradient(rgba(15, 23, 42, 0.032) 1px, transparent 1px),
       linear-gradient(90deg, rgba(15, 23, 42, 0.032) 1px, transparent 1px);
-    background-size: 64px 64px;
+    background-size: 72px 72px;
     mask-image: linear-gradient(to bottom, black, transparent 72%);
   }
 
@@ -135,9 +134,9 @@ label {
   }
 
   .premium-panel {
-    border: 1px solid rgba(203, 213, 225, 1);
+    border: 1px solid rgba(203, 213, 225, 0.9);
     background: #ffffff;
-    box-shadow: 0 18px 46px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.98);
+    box-shadow: var(--shadow-soft);
   }
 
   .futuristic-glow {
@@ -176,7 +175,8 @@ label {
 .centrix-content h2,
 .centrix-content h3 {
   color: #0f172a;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .centrix-content .text-cyan-100,
@@ -260,12 +260,38 @@ label {
 
 .centrix-content th {
   color: #475569;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .centrix-content td {
   color: #1e293b;
   font-weight: 500;
+}
+
+.centrix-content table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.centrix-content table tbody tr:hover {
+  background-color: rgba(239, 246, 255, 0.72);
+}
+
+.centrix-content form label > span:first-child {
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.centrix-content [class*="rounded-[24px]"],
+.centrix-content [class*="rounded-[22px]"],
+.centrix-content [class*="rounded-[20px]"] {
+  border-radius: 18px;
+}
+
+.centrix-content [class*="shadow-[0_24px_80px"],
+.centrix-content [class*="shadow-[0_24px_70px"],
+.centrix-content [class*="shadow-[0_18px_46px"] {
+  box-shadow: var(--shadow-soft);
 }
 
 .centrix-content input,

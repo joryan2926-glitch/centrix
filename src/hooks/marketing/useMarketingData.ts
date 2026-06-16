@@ -31,7 +31,7 @@ export function useMarketingData() {
 
   useEffect(() => {
     const supabase = getSupabaseClient();
-    if (!supabase) return;
+    if (!supabase || mode !== "supabase") return;
 
     const channel = supabase
       .channel("centrix-marketing-realtime")
@@ -46,7 +46,7 @@ export function useMarketingData() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refresh]);
+  }, [mode, refresh]);
 
   const mutate = useCallback(
     (updater: (current: MarketingData) => MarketingData, message?: Toast) => {
@@ -67,5 +67,5 @@ export function useMarketingData() {
     notify(result.mode === "supabase" ? "Marketing synchronise" : "Sauvegarde locale", "Les donnees marketing sont a jour.");
   }, [data, notify]);
 
-  return useMemo(() => ({ data, loading, mode, toast, mutate, sync }), [data, loading, mode, toast, mutate, sync]);
+  return useMemo(() => ({ data, loading, mode, toast, mutate, notify, refresh, sync }), [data, loading, mode, toast, mutate, notify, refresh, sync]);
 }

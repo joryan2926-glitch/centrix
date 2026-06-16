@@ -55,6 +55,13 @@ const demoSnapshot: PlatformDashboardSnapshot = {
     { id: "demo-act-2", module: "billing", title: "Paiement recu", detail: "Facture premium reglee pour 12 400 EUR.", createdAt: new Date().toISOString() },
     { id: "demo-act-3", module: "automation", title: "Workflow execute", detail: "Relance automatique envoyee aux devis ouverts.", createdAt: new Date().toISOString() }
   ],
+  businessPipeline: [
+    { id: "new", label: "Nouveaux leads", value: 42000, conversion: 18, cards: [{ id: "demo-lead-1", amount: 18000, company: "NovaCore", owner: "Sarah", score: 82 }] },
+    { id: "qualified", label: "Qualifies", value: 31000, conversion: 29, cards: [{ id: "demo-lead-2", amount: 31000, company: "Kaizen Lab", owner: "Nora", score: 69 }] },
+    { id: "proposal", label: "Propositions", value: 27000, conversion: 64, cards: [{ id: "demo-lead-3", amount: 27000, company: "Blue Factory", owner: "Ilyes", score: 88 }] },
+    { id: "negotiation", label: "Negociation", value: 76000, conversion: 51, cards: [{ id: "demo-lead-4", amount: 44000, company: "Helio Bank", owner: "Malik", score: 91 }] },
+    { id: "won", label: "Gagnes", value: 52000, conversion: 100, cards: [{ id: "demo-lead-5", amount: 52000, company: "Strata Group", owner: "Nora", score: 96 }] }
+  ],
   revenueSeries: [
     { label: "Jan", value: 42 },
     { label: "Fev", value: 48 },

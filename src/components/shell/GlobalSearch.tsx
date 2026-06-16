@@ -23,8 +23,8 @@ export function GlobalSearch() {
     <div className="relative flex-1 sm:max-w-2xl">
       <div
         className={cn(
-          "flex h-11 items-center gap-3 rounded-[14px] border bg-white px-3 text-sm font-medium text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition-all duration-200",
-          open ? "border-blue-300 shadow-[0_14px_34px_rgba(37,99,235,0.14)]" : "border-slate-200 hover:border-blue-300 hover:shadow-[0_12px_28px_rgba(37,99,235,0.10)]"
+          "flex h-10 items-center gap-3 rounded-[10px] border bg-slate-50/70 px-3 text-sm font-medium text-slate-600 shadow-[inset_0_1px_1px_rgba(15,23,42,0.02)] transition-all duration-200",
+          open ? "border-blue-300 bg-white shadow-[0_0_0_3px_rgba(37,99,235,0.08)]" : "border-slate-200 hover:border-blue-300 hover:bg-white"
         )}
       >
         <Search size={17} />
@@ -53,7 +53,7 @@ export function GlobalSearch() {
       </div>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-14 z-50 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+        <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.15)]">
           <div className="border-b border-slate-100 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Recherche globale</div>
           <div className="max-h-[420px] overflow-y-auto p-2">
             {results.length ? (

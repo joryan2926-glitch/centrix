@@ -7,13 +7,13 @@ import { getSupabaseEnv } from "@/lib/supabase-env";
 export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   if (DEMO_MODE) {
-    return { response, user: DEMO_AUTH_USER };
+    return { response, supabase: null, user: DEMO_AUTH_USER };
   }
 
   const { key, url } = getSupabaseEnv();
 
   if (!url || !key) {
-    return { response, user: null };
+    return { response, supabase: null, user: null };
   }
 
   const supabase = createServerClient(url, key, {
@@ -30,5 +30,5 @@ export async function updateSupabaseSession(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getUser();
-  return { response, user: data.user };
+  return { response, supabase, user: data.user };
 }

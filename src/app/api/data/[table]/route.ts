@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isAllowedDataTable } from "@/repositories/supabaseRepository";
 
@@ -15,8 +14,12 @@ async function getContext(context: { params: Promise<{ table: string }> }) {
   if (!supabase) {
     return { table, error: Response.json({ error: "Supabase non configure." }, { status: 503 }) };
   }
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    return { table, error: Response.json({ error: "Session CENTRIX requise." }, { status: 401 }) };
+  }
 
-  return { table, supabase, user: DEMO_AUTH_USER, error: null };
+  return { table, supabase, user: authData.user, error: null };
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ table: string }> }) {

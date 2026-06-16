@@ -111,8 +111,9 @@ async function syncSubscription(object: StripeObject) {
   }, { onConflict: "stripeSubscriptionId" });
   if (subscriptionError) throw subscriptionError;
 
-  await admin.from("workspaces").update({ plan: plan.code, updated_at: now }).eq("id", workspaceId);
-  await admin.from("users").update({ abonnement: plan.code, updated_at: now }).eq("id", userId);
+  const effectivePlan = toCentrixStatus(stripeSubscription.status) === "canceled" ? "starter" : plan.code;
+  await admin.from("workspaces").update({ plan: effectivePlan, updated_at: now }).eq("id", workspaceId);
+  await admin.from("users").update({ abonnement: effectivePlan, updated_at: now }).eq("id", userId);
 }
 
 export async function POST(request: NextRequest) {
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
   const admin = createSupabaseAdminClient();
   if (!admin) return Response.json({ error: "SUPABASE_SERVICE_ROLE_KEY manquante." }, { status: 503 });
 
-  const syncEvents = ["checkout.session.completed", "customer.subscription.updated", "customer.subscription.deleted"];
+  const syncEvents = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
   const handled = syncEvents.includes(event.type) || ["invoice.payment_succeeded", "invoice.payment_failed", "charge.refunded"].includes(event.type);
 
   try {

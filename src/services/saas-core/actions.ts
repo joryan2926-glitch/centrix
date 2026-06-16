@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase";
+import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { CentrixModuleKey, EventSeverity, ModuleConnection, ModuleEvent, ModuleTask, TaskPriority } from "@/types/saas-core";
 
 type CreateEventInput = {
@@ -36,6 +37,8 @@ export async function createModuleEvent(input: CreateEventInput): Promise<Module
 
   const supabase = getSupabaseClient();
   if (supabase) {
+    const workspace = await resolveWorkspaceContext(supabase);
+    if (!workspace) return event;
     await supabase.from("module_events").insert({
       id: event.id,
       module: event.module,
@@ -46,6 +49,8 @@ export async function createModuleEvent(input: CreateEventInput): Promise<Module
       severity: event.severity,
       status: event.status,
       metadata: input.metadata ?? {},
+      created_by: workspace.userId,
+      workspace_id: workspace.workspaceId,
       created_at: event.createdAt
     });
   }
@@ -66,6 +71,8 @@ export async function createLinkedTask(input: CreateTaskInput): Promise<ModuleTa
 
   const supabase = getSupabaseClient();
   if (supabase) {
+    const workspace = await resolveWorkspaceContext(supabase);
+    if (!workspace) return task;
     await supabase.from("module_tasks").insert({
       id: task.id,
       module: task.module,
@@ -75,7 +82,9 @@ export async function createLinkedTask(input: CreateTaskInput): Promise<ModuleTa
       status: task.status,
       due_at: task.dueAt,
       source_entity_type: input.sourceEntityType,
-      source_entity_id: input.sourceEntityId
+      source_entity_id: input.sourceEntityId,
+      created_by: workspace.userId,
+      workspace_id: workspace.workspaceId
     });
   }
 
@@ -90,13 +99,16 @@ export async function createModuleConnection(input: Omit<ModuleConnection, "id">
 
   const supabase = getSupabaseClient();
   if (supabase) {
+    const workspace = await resolveWorkspaceContext(supabase);
+    if (!workspace) return connection;
     await supabase.from("module_connections").insert({
       id: connection.id,
       source_module: connection.sourceModule,
       target_module: connection.targetModule,
       trigger: connection.trigger,
       action: connection.action,
-      active: connection.active
+      active: connection.active,
+      workspace_id: workspace.workspaceId
     });
   }
 

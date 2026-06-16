@@ -27,6 +27,7 @@ export function useOperationalModule(moduleKey: string) {
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"local" | "supabase">("local");
   const [message, setMessage] = useState<string | null>(null);
+  const [cloudError, setCloudError] = useState<string | null>(null);
 
   const notify = useCallback((value: string) => {
     setMessage(value);
@@ -44,10 +45,12 @@ export function useOperationalModule(moduleKey: string) {
     if (result.error) {
       setRecords(readLocal(moduleKey));
       setMode("local");
+      setCloudError(result.error);
     } else {
       setRecords(result.records);
       setHistory(result.history);
       setMode("supabase");
+      setCloudError(null);
     }
     setLoading(false);
   }, [moduleKey, supabase]);
@@ -64,6 +67,9 @@ export function useOperationalModule(moduleKey: string) {
         notify("Element cree et synchronise avec Supabase.");
         return null;
       }
+      setCloudError(result.error);
+      notify(`Supabase: ${result.error}`);
+      return result.error;
     }
     const now = new Date().toISOString();
     const local = [{ ...draft, created_at: now, created_by: "local", id: crypto.randomUUID(), metadata: {}, module_key: moduleKey, updated_at: now, workspace_id: "local" }, ...records] as OperationalRecord[];
@@ -82,6 +88,9 @@ export function useOperationalModule(moduleKey: string) {
         notify("Modifications enregistrees.");
         return;
       }
+      setCloudError(result.error);
+      notify(`Supabase: ${result.error}`);
+      return;
     }
     const local = records.map((record) => record.id === id ? { ...record, ...draft, updated_at: new Date().toISOString() } : record);
     setRecords(local);
@@ -90,7 +99,14 @@ export function useOperationalModule(moduleKey: string) {
   }, [mode, moduleKey, notify, records, refresh, supabase]);
 
   const remove = useCallback(async (record: OperationalRecord) => {
-    if (supabase && mode === "supabase") await deleteOperationalRecord(supabase, moduleKey, record);
+    if (supabase && mode === "supabase") {
+      const result = await deleteOperationalRecord(supabase, moduleKey, record);
+      if (result.error) {
+        setCloudError(result.error);
+        notify(`Supabase: ${result.error}`);
+        return;
+      }
+    }
     const local = records.filter((item) => item.id !== record.id);
     setRecords(local);
     writeLocal(moduleKey, local);
@@ -110,5 +126,5 @@ export function useOperationalModule(moduleKey: string) {
     notify(`${action} lance.`);
   }, [mode, moduleKey, notify, refresh, supabase]);
 
-  return useMemo(() => ({ create, history, loading, message, mode, records, refresh, remove, runAction, update }), [create, history, loading, message, mode, records, refresh, remove, runAction, update]);
+  return useMemo(() => ({ cloudError, create, history, loading, message, mode, records, refresh, remove, runAction, update }), [cloudError, create, history, loading, message, mode, records, refresh, remove, runAction, update]);
 }

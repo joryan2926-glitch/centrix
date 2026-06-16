@@ -11,12 +11,12 @@ export function Button({ children, className, variant = "surface", ...props }: B
   return (
     <button
       className={clsx(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-[13px] px-4 text-sm font-extrabold tracking-[-0.01em] shadow-[inset_0_1px_0_rgba(255,255,255,0.58)] disabled:pointer-events-none disabled:opacity-55",
+        "inline-flex h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-sm font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.58)] disabled:pointer-events-none disabled:opacity-55",
         theme.transition,
         theme.interactive,
-        variant === "primary" && "bg-gradient-to-r from-[#2563EB] via-[#0B7CFF] to-[#2563EB] text-white shadow-[0_16px_36px_rgba(37,99,235,0.30),inset_0_1px_0_rgba(255,255,255,0.28)] hover:-translate-y-0.5 hover:shadow-[0_24px_52px_rgba(37,99,235,0.38),0_0_0_1px_rgba(255,255,255,0.16)_inset]",
+        variant === "primary" && "border border-blue-600 bg-gradient-to-b from-[#3478f6] to-[#2563EB] text-white shadow-[0_1px_2px_rgba(15,23,42,0.10),0_8px_22px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.24)] hover:-translate-y-0.5 hover:from-[#3b82f6] hover:to-[#1d4ed8] hover:shadow-[0_12px_28px_rgba(37,99,235,0.30)]",
         variant === "ghost" && "text-slate-600 hover:bg-slate-100 hover:text-slate-950 hover:shadow-none",
-        variant === "surface" && "border border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:text-blue-700 hover:shadow-[0_14px_30px_rgba(37,99,235,0.12)]",
+        variant === "surface" && "border border-slate-200 bg-white text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/40 hover:text-blue-700 hover:shadow-[0_8px_20px_rgba(37,99,235,0.10)]",
         className
       )}
       {...props}

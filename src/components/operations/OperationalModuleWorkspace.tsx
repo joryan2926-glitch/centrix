@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Bot, Download, FileDown, Filter, History, KanbanSquare, Pencil, Plus, Search, Sparkles, Trash2, Upload, Zap } from "lucide-react";
+import { AlertTriangle, Archive, Bot, Download, FileDown, Filter, History, KanbanSquare, Pencil, Plus, Search, Sparkles, Trash2, Upload, Zap } from "lucide-react";
 import { cloneElement, type ChangeEvent, type FormEvent, type ReactElement } from "react";
 import { useMemo, useRef, useState } from "react";
 import { downloadCsvFile } from "@/lib/download";
@@ -38,7 +38,7 @@ const statusLabels: Record<OperationalStatus, string> = {
 };
 
 export function OperationalModuleWorkspace({ config }: { config: OperationalModuleConfig }) {
-  const { create, history, loading, message, mode, records, remove, runAction, update } = useOperationalModule(config.key);
+  const { cloudError, create, history, loading, message, mode, records, remove, runAction, update } = useOperationalModule(config.key);
   const permissions = useModulePermissions(config.key);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<OperationalStatus | "all">("all");
@@ -126,6 +126,12 @@ export function OperationalModuleWorkspace({ config }: { config: OperationalModu
   return (
     <div className="mx-auto max-w-[1600px] space-y-6">
       {message ? <Toast detail={message} title={config.title} /> : null}
+      {cloudError ? (
+        <div className="flex items-start gap-3 rounded-[14px] border border-amber-200 bg-amber-50 p-4 text-amber-900">
+          <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+          <div><p className="font-black">Synchronisation cloud indisponible</p><p className="mt-1 text-sm font-semibold">{cloudError}</p></div>
+        </div>
+      ) : null}
       <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="max-w-4xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.15em] text-blue-700">

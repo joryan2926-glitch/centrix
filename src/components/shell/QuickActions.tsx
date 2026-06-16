@@ -23,7 +23,7 @@ export function QuickActions() {
       </Button>
 
       {open ? (
-        <div className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+        <div className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.16)]">
           <div className="border-b border-slate-100 px-5 py-4">
             <p className="flex items-center gap-2 text-sm font-black text-slate-950">
               <Sparkles size={16} className="text-blue-600" />

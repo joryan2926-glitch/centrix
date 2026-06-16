@@ -1,5 +1,6 @@
 import { saasCoreFallbackDashboard } from "@/data/saasCore";
 import { getSupabaseClient } from "@/lib/supabase";
+import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { DashboardAnalyticsPoint, ModuleConnection, ModuleEvent, ModuleTask, SaasCoreDashboard } from "@/types/saas-core";
 import type { Metric } from "@/types/navigation";
 
@@ -26,13 +27,15 @@ function loadLocalDashboard(): SaasCoreDashboard {
 export async function loadSaasCoreDashboard(): Promise<{ data: SaasCoreDashboard; mode: "local" | "supabase" }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { data: loadLocalDashboard(), mode: "local" };
+  const workspace = await resolveWorkspaceContext(supabase);
+  if (!workspace) return { data: loadLocalDashboard(), mode: "local" };
 
   const [metrics, events, tasks, connections, analytics] = await Promise.all([
-    supabase.from("dashboard_metrics").select("*").order("sort_order"),
-    supabase.from("module_events").select("*").order("created_at", { ascending: false }).limit(20),
-    supabase.from("module_tasks").select("*").order("created_at", { ascending: false }).limit(20),
-    supabase.from("module_connections").select("*").order("created_at", { ascending: false }),
-    supabase.from("dashboard_analytics").select("*").order("period_index")
+    supabase.from("dashboard_metrics").select("*").eq("workspace_id", workspace.workspaceId).order("sort_order"),
+    supabase.from("module_events").select("*").eq("workspace_id", workspace.workspaceId).order("created_at", { ascending: false }).limit(20),
+    supabase.from("module_tasks").select("*").eq("workspace_id", workspace.workspaceId).order("created_at", { ascending: false }).limit(20),
+    supabase.from("module_connections").select("*").eq("workspace_id", workspace.workspaceId).order("created_at", { ascending: false }),
+    supabase.from("dashboard_analytics").select("*").eq("workspace_id", workspace.workspaceId).order("period_index")
   ]);
 
   if (metrics.error || events.error || tasks.error || connections.error || analytics.error) {
@@ -66,13 +69,15 @@ export async function syncSaasCoreDashboard(data: SaasCoreDashboard): Promise<{ 
   saveSaasCoreDashboard(data);
 
   if (!supabase) return { mode: "local" };
+  const workspace = await resolveWorkspaceContext(supabase);
+  if (!workspace) return { mode: "local" };
 
   const [metrics, events, tasks, connections, analytics] = await Promise.all([
-    supabase.from("dashboard_metrics").upsert(data.metrics.map((metric, index) => toMetricRow(metric, index))),
-    supabase.from("module_events").upsert(data.events.map(toEventRow)),
-    supabase.from("module_tasks").upsert(data.tasks.map(toTaskRow)),
-    supabase.from("module_connections").upsert(data.connections.map(toConnectionRow)),
-    supabase.from("dashboard_analytics").upsert(data.analytics.map((point, index) => toAnalyticsRow(point, index)))
+    supabase.from("dashboard_metrics").upsert(data.metrics.map((metric, index) => ({ ...toMetricRow(metric, index, workspace.workspaceId), workspace_id: workspace.workspaceId }))),
+    supabase.from("module_events").upsert(data.events.map((event) => ({ ...toEventRow(event), created_by: workspace.userId, workspace_id: workspace.workspaceId }))),
+    supabase.from("module_tasks").upsert(data.tasks.map((task) => ({ ...toTaskRow(task), created_by: workspace.userId, workspace_id: workspace.workspaceId }))),
+    supabase.from("module_connections").upsert(data.connections.map((connection) => ({ ...toConnectionRow(connection), workspace_id: workspace.workspaceId }))),
+    supabase.from("dashboard_analytics").upsert(data.analytics.map((point, index) => ({ ...toAnalyticsRow(point, index, workspace.workspaceId), workspace_id: workspace.workspaceId })))
   ]);
 
   if (metrics.error || events.error || tasks.error || connections.error || analytics.error) return { mode: "local" };
@@ -134,9 +139,9 @@ function mapAnalytics(row: Record<string, unknown>): DashboardAnalyticsPoint {
   };
 }
 
-function toMetricRow(metric: Metric, index: number) {
+function toMetricRow(metric: Metric, index: number, workspaceId: string) {
   return {
-    id: `metric-${index + 1}`,
+    id: `${workspaceId}-metric-${index + 1}`,
     key: metric.label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
     label: metric.label,
     value: metric.value,
@@ -183,9 +188,9 @@ function toConnectionRow(connection: ModuleConnection) {
   };
 }
 
-function toAnalyticsRow(point: DashboardAnalyticsPoint, index: number) {
+function toAnalyticsRow(point: DashboardAnalyticsPoint, index: number, workspaceId: string) {
   return {
-    id: `analytics-${index + 1}`,
+    id: `${workspaceId}-analytics-${index + 1}`,
     period_index: index,
     label: point.label,
     revenue: point.revenue,

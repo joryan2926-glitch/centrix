@@ -3,6 +3,9 @@ export const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/r
 export const protectedRoutes = [
   "/dashboard",
   "/unauthorized",
+  "/upgrade",
+  "/operations",
+  "/permissions",
   "/admin",
   "/onboarding",
   "/crm",

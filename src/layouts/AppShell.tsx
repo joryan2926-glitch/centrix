@@ -62,20 +62,18 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f6fb] text-slate-900">
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
       <div className="fixed inset-0 -z-10 bg-app-light" />
-      <div className="fixed inset-0 -z-10 bg-grid-light opacity-55" />
-      <div className="pointer-events-none fixed left-[18rem] top-[-18rem] -z-10 h-[34rem] w-[34rem] rounded-full bg-blue-500/10 blur-3xl" />
-      <div className="pointer-events-none fixed bottom-[-16rem] right-[-10rem] -z-10 h-[32rem] w-[32rem] rounded-full bg-cyan-400/8 blur-3xl" />
+      <div className="fixed inset-0 -z-10 bg-grid-light opacity-35" />
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-80 border-r border-white/10 bg-[#071226] px-4 py-5 text-white shadow-[20px_0_64px_rgba(7,18,38,0.42)]",
+          "fixed inset-y-0 left-0 z-40 w-[292px] border-r border-white/10 bg-[#071226] px-3.5 py-4 text-white shadow-[16px_0_48px_rgba(7,18,38,0.22)]",
           "transition-transform duration-300 ease-out lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_0%,rgba(37,99,235,0.28),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.045),transparent_25%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(37,99,235,0.15),transparent_24%),linear-gradient(90deg,rgba(255,255,255,0.025),transparent)]" />
         <div className="relative z-10 flex h-full flex-col">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="group flex items-center gap-3" onClick={() => setOpen(false)}>
@@ -86,7 +84,7 @@ export function AppShell({ children }: AppShellProps) {
           </Button>
         </div>
 
-        <div className="mt-7 rounded-[18px] border border-white/14 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_16px_36px_rgba(0,0,0,0.22)]">
+        <div className="mt-6 rounded-[14px] border border-white/10 bg-white/[0.055] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-100/72">Workspace</p>
@@ -99,7 +97,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
 
-        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none]">
+        <nav className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none]">
           <div>
             <p className="mb-2 flex items-center gap-2 px-3 text-[0.66rem] font-black uppercase tracking-[0.24em] text-blue-100/50">
               <Star size={12} />
@@ -117,11 +115,11 @@ export function AppShell({ children }: AppShellProps) {
                     onClick={() => setOpen(false)}
                     prefetch
                     className={cn(
-                      "group relative flex min-h-10 items-center gap-3 rounded-[13px] px-3 py-2 text-sm font-bold transition-all duration-200",
-                      active ? "bg-white text-[#071225] shadow-[0_12px_28px_rgba(37,99,235,0.24),0_0_0_1px_rgba(255,255,255,0.70)_inset]" : "text-blue-100/78 hover:bg-white/[0.10] hover:text-white"
+                      "group relative flex min-h-10 items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13px] font-bold transition-all duration-200",
+                      active ? "bg-white text-[#071225] shadow-[0_6px_18px_rgba(0,0,0,0.18)]" : "text-blue-100/72 hover:bg-white/[0.08] hover:text-white"
                     )}
                   >
-                    <span className={cn("relative z-10 grid h-7 w-7 place-items-center rounded-[10px]", active ? "bg-blue-50" : "bg-white/[0.07]")}>
+                    <span className={cn("relative z-10 grid h-7 w-7 place-items-center rounded-[8px]", active ? "bg-blue-50" : "bg-white/[0.06]")}>
                       <Icon size={16} className={active ? "text-[#2563EB]" : ""} />
                     </span>
                     <span className="relative z-10 min-w-0 flex-1 truncate">{item.label}</span>
@@ -154,14 +152,14 @@ export function AppShell({ children }: AppShellProps) {
                       onClick={() => setOpen(false)}
                       prefetch
                       className={cn(
-                        "group relative flex min-h-10 items-center gap-3 rounded-[13px] px-3 py-2 text-sm font-bold transition-all duration-200",
+                        "group relative flex min-h-10 items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13px] font-bold transition-all duration-200",
                         active
-                          ? "bg-white text-[#071225] shadow-[0_12px_28px_rgba(37,99,235,0.24),0_0_0_1px_rgba(255,255,255,0.70)_inset]"
-                          : "text-blue-100/78 hover:bg-white/[0.10] hover:text-white"
+                          ? "bg-white text-[#071225] shadow-[0_6px_18px_rgba(0,0,0,0.18)]"
+                          : "text-blue-100/72 hover:bg-white/[0.08] hover:text-white"
                       )}
                     >
-                      {active ? <motion.span layoutId="sidebar-active" className="absolute inset-0 rounded-[13px] bg-white" transition={{ type: "spring", stiffness: 420, damping: 34 }} /> : null}
-                      <span className={cn("relative z-10 grid h-7 w-7 place-items-center rounded-[10px]", active ? "bg-blue-50" : "bg-white/[0.07]")}>
+                      {active ? <motion.span layoutId="sidebar-active" className="absolute inset-0 rounded-[10px] bg-white" transition={{ type: "spring", stiffness: 420, damping: 34 }} /> : null}
+                      <span className={cn("relative z-10 grid h-7 w-7 place-items-center rounded-[8px]", active ? "bg-blue-50" : "bg-white/[0.06]")}>
                         <Icon size={16} className={cn("transition-transform duration-200 group-hover:scale-110", active ? "text-[#2563EB]" : "")} />
                       </span>
                       <span className="relative z-10 min-w-0 flex-1 truncate">{item.label}</span>
@@ -174,7 +172,7 @@ export function AppShell({ children }: AppShellProps) {
           ))}
         </nav>
 
-        <div className="mt-5 rounded-[18px] border border-blue-300/20 bg-[#0d1b36] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.20)]">
+        <div className="mt-4 rounded-[14px] border border-blue-300/15 bg-[#0d1b36] p-3.5">
           <p className="text-sm font-bold text-white">{profile?.role === "admin" ? "Plan Enterprise" : "Acces equipe"}</p>
           <p className="mt-1 text-xs leading-5 text-blue-100/72">{profile?.workspaceName ? `${profile.workspaceName} synchronise avec Supabase Auth.` : "Modules metier, IA et donnees consolidees."}</p>
         </div>
@@ -183,10 +181,10 @@ export function AppShell({ children }: AppShellProps) {
 
       {open ? <button aria-label="Fermer le menu" className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)} /> : null}
 
-      <div className="lg:pl-80">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/96 shadow-[0_12px_34px_rgba(15,23,42,0.07)] backdrop-blur-sm">
+      <div className="lg:pl-[292px]">
+        <header className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.03),0_8px_24px_rgba(15,23,42,0.035)] backdrop-blur-md">
           {authLoading ? <div className="absolute inset-x-0 top-0 h-0.5 overflow-hidden bg-blue-50"><span className="block h-full w-1/2 animate-pulse bg-blue-600" /></div> : null}
-          <div className="flex h-[72px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex h-[68px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <Button aria-label="Ouvrir le menu" className="h-10 w-10 px-0 lg:hidden" onClick={() => setOpen(true)} variant="surface">
               <Menu size={20} />
             </Button>
@@ -199,7 +197,7 @@ export function AppShell({ children }: AppShellProps) {
             <div className="ml-auto flex items-center gap-2">
               <QuickActions />
               <NotificationCenter />
-              <Link href="/profile" className="flex h-11 items-center gap-3 rounded-[14px] border border-slate-200 bg-white px-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-blue-300 hover:bg-blue-50">
+              <Link href="/profile" className="flex h-10 items-center gap-3 rounded-[10px] border border-slate-200 bg-white px-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/60">
                 <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#0077ff] to-[#6d5dfc] text-xs font-bold text-white">
                   {profile?.avatarUrl ? <span className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${profile.avatarUrl})` }} /> : profileInitials}
                 </span>
@@ -225,14 +223,14 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </header>
 
-        <main className="centrix-content mobile-safe px-4 pb-28 pt-7 sm:px-6 lg:px-8 xl:px-10 lg:pb-12">
+        <main className="centrix-content mobile-safe px-4 pb-28 pt-6 sm:px-6 lg:px-8 xl:px-10 lg:pb-12">
           <motion.div key={pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
             <RoutePermissionGuard>{children}</RoutePermissionGuard>
           </motion.div>
         </main>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 gap-1 rounded-[20px] border border-slate-200 bg-white p-1.5 shadow-[0_16px_44px_rgba(15,23,42,0.16)] lg:hidden">
+      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 gap-1 rounded-[16px] border border-slate-200 bg-white p-1.5 shadow-[0_12px_34px_rgba(15,23,42,0.14)] lg:hidden">
         {navigation.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
@@ -242,7 +240,7 @@ export function AppShell({ children }: AppShellProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex h-14 flex-col items-center justify-center gap-1 rounded-[16px] text-[11px] font-bold transition-all duration-200",
+                "flex h-14 flex-col items-center justify-center gap-1 rounded-[12px] text-[11px] font-bold transition-all duration-200",
                 active ? "bg-blue-600 text-white shadow-[0_10px_26px_rgba(0,119,255,0.25)]" : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
               )}
             >

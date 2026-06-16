@@ -1,12 +1,12 @@
 export const theme = {
   radius: {
-    sm: "rounded-[12px]",
-    md: "rounded-[20px]",
+    sm: "rounded-[10px]",
+    md: "rounded-[16px]",
     full: "rounded-full"
   },
   transition: "transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-  surface: "border border-slate-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.98)_inset]",
-  interactive: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f9fc]"
+  surface: "border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_rgba(15,23,42,0.065)]",
+  interactive: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4f7fb]"
 } as const;
 
 export function toneClass(tone: "cyan" | "violet" | "emerald" | "rose" = "cyan") {

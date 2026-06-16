@@ -39,6 +39,8 @@ async function context(moduleKey: string) {
   const supabase = await createServerSupabaseClient();
   if (!config) return { error: Response.json({ error: "Module introuvable." }, { status: 404 }), config: null, supabase: null };
   if (!supabase) return { error: Response.json({ error: "Supabase non configure." }, { status: 503 }), config, supabase: null };
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) return { error: Response.json({ error: "Session CENTRIX requise." }, { status: 401 }), config, supabase: null };
   return { error: null, config, supabase };
 }
 

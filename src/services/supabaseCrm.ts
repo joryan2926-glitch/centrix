@@ -71,12 +71,36 @@ export async function upsertLead(lead: CrmLead) {
   return error?.message ?? null;
 }
 
+export async function deleteLeadFromSupabase(leadId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return "Supabase non configure.";
+  const workspace = await resolveWorkspaceContext(supabase);
+  if (!workspace) return "Workspace introuvable.";
+
+  await supabase.from("messages").delete().eq("workspace_id", workspace.workspaceId).filter("metadata->>leadId", "eq", leadId);
+  await supabase.from("tasks").delete().eq("workspace_id", workspace.workspaceId).filter("metadata->>leadId", "eq", leadId);
+  const { error } = await supabase.from("prospects").delete().eq("workspace_id", workspace.workspaceId).eq("id", leadId);
+  return error?.message ?? null;
+}
+
 export async function upsertClient(client: CrmClient) {
   const supabase = getSupabaseClient();
   if (!supabase) return "Supabase non configure.";
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return "Workspace introuvable.";
   const { error } = await supabase.from("clients").upsert(toClientRow(client, workspace.workspaceId, workspace.userId), { onConflict: "id" });
+  return error?.message ?? null;
+}
+
+export async function deleteClientFromSupabase(clientId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return "Supabase non configure.";
+  const workspace = await resolveWorkspaceContext(supabase);
+  if (!workspace) return "Workspace introuvable.";
+
+  await supabase.from("messages").delete().eq("workspace_id", workspace.workspaceId).eq("client_id", clientId);
+  await supabase.from("tasks").delete().eq("workspace_id", workspace.workspaceId).eq("client_id", clientId);
+  const { error } = await supabase.from("clients").delete().eq("workspace_id", workspace.workspaceId).eq("id", clientId);
   return error?.message ?? null;
 }
 
@@ -143,7 +167,7 @@ function mapProspectToLead(row: Record<string, unknown>): CrmLead {
     probability: Number(metadata.probability ?? row.score ?? 0),
     owner: String(metadata.owner ?? "Equipe"),
     source: String(row.source ?? "Manuel"),
-    tags: Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [],
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [],
     createdAt: String(row.created_at ?? new Date().toISOString()),
     updatedAt: String(row.updated_at ?? row.created_at ?? new Date().toISOString())
   };
@@ -216,6 +240,8 @@ function toProspectRow(lead: CrmLead, workspaceId: string, userId: string) {
     score: lead.probability,
     source: lead.source,
     stage: lead.status,
+    tags: lead.tags,
+    metadata: { owner: lead.owner, priority: lead.priority, probability: lead.probability, tags: lead.tags },
     updated_at: lead.updatedAt,
     workspace_id: workspaceId
   };

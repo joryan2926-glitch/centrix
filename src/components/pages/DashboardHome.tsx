@@ -18,12 +18,6 @@ import { MetricCard } from "@/ui/MetricCard";
 import { Skeleton } from "@/ui/Skeleton";
 import { Toast } from "@/ui/Toast";
 
-const aiInsights = [
-  "Probabilite de signature NovaCore: 78%",
-  "Risque churn detecte sur 2 comptes premium",
-  "Cashflow juin au-dessus du previsionnel de 9,7%"
-];
-
 const teamPerformance = [
   { label: "Sales", value: 86 },
   { label: "Finance", value: 74 },
@@ -44,10 +38,21 @@ type PipelineCard = {
 type PipelineColumn = {
   id: string;
   label: string;
-  value: string;
-  conversion: string;
+  value: number;
+  conversion: number;
   cards: PipelineCard[];
 };
+
+const euroCompact = new Intl.NumberFormat("fr-FR", {
+  currency: "EUR",
+  maximumFractionDigits: 0,
+  notation: "compact",
+  style: "currency"
+});
+
+function formatKiloCurrency(value: number) {
+  return `${Math.round(value / 1000)}K EUR`;
+}
 
 export function DashboardHome() {
   const { data, snapshot, loading, mode, toast, sync } = useSaasCoreDashboard();
@@ -68,7 +73,10 @@ export function DashboardHome() {
   }));
   const activeConnections = data.connections.filter((connection) => connection.active);
   const activeModules = data.modules.filter((module) => module.status === "active").length;
-  const businessHealth = Math.min(98, Math.round((activeModules / Math.max(data.modules.length, 1)) * 100));
+  const operationalScore = Math.min(38, Math.round(((snapshot?.clientsCount ?? 0) + (snapshot?.projectsActive ?? 0) + (snapshot?.tasksOpen ?? 0)) / 2));
+  const revenueScore = Math.min(34, Math.round(((snapshot?.monthlyRevenue ?? 0) / Math.max(snapshot?.forecastRevenue ?? 1, 1)) * 34));
+  const conversionScore = Math.min(28, Math.round(snapshot?.conversionRate ?? 0));
+  const businessHealth = snapshot ? Math.min(98, Math.max(8, operationalScore + revenueScore + conversionScore)) : Math.min(98, Math.round((activeModules / Math.max(data.modules.length, 1)) * 100));
   const workspaceLabel = snapshot?.workspace?.workspaceName ?? "CENTRIX Workspace";
   const crmPipeline = data.analytics.map((point) => ({
     company: point.label,
@@ -105,50 +113,12 @@ export function DashboardHome() {
     [data.analytics, data.tasks, snapshot?.clientsCount, snapshot?.conversionRate, snapshot?.growthRate]
   );
   const basePipelineColumns = useMemo<PipelineColumn[]>(
-    () => [
-      {
-        id: "new",
-        label: "Nouveaux leads",
-        value: "42K EUR",
-        conversion: "18%",
-        cards: [
-          { id: "lead-nova", amount: "18K EUR", company: "NovaCore", owner: "Sarah", score: 82 },
-          { id: "lead-orion", amount: "24K EUR", company: "Orion Retail", owner: "Ilyes", score: 74 }
-        ]
-      },
-      {
-        id: "contacted",
-        label: "Contactes",
-        value: "31K EUR",
-        conversion: "29%",
-        cards: [{ id: "lead-kaizen", amount: "31K EUR", company: "Kaizen Lab", owner: "Nora", score: 69 }]
-      },
-      {
-        id: "negotiation",
-        label: "Negociation",
-        value: "76K EUR",
-        conversion: "51%",
-        cards: [
-          { id: "lead-helio", amount: "44K EUR", company: "Helio Bank", owner: "Malik", score: 91 },
-          { id: "lead-atelier", amount: "32K EUR", company: "Atelier V", owner: "Sarah", score: 77 }
-        ]
-      },
-      {
-        id: "quotes",
-        label: "Devis envoyes",
-        value: `${Math.round((snapshot?.pendingQuotes ?? 46000) / 1000)}K EUR`,
-        conversion: "64%",
-        cards: [{ id: "lead-blue", amount: "27K EUR", company: "Blue Factory", owner: "Ilyes", score: 88 }]
-      },
-      {
-        id: "won",
-        label: "Clients gagnes",
-        value: `${Math.round((snapshot?.paidRevenue ?? 98000) / 1000)}K EUR`,
-        conversion: "100%",
-        cards: [{ id: "lead-strata", amount: "52K EUR", company: "Strata Group", owner: "Nora", score: 96 }]
-      }
-    ],
-    [snapshot?.paidRevenue, snapshot?.pendingQuotes]
+    () =>
+      (snapshot?.businessPipeline ?? []).map((column) => ({
+        ...column,
+        cards: column.cards.map((card) => ({ ...card, amount: formatKiloCurrency(card.amount) }))
+      })),
+    [snapshot?.businessPipeline]
   );
   const [pipelineColumns, setPipelineColumns] = useState<PipelineColumn[]>(basePipelineColumns);
 
@@ -181,6 +151,15 @@ export function DashboardHome() {
     });
     setDraggedDeal(null);
   }, [draggedDeal]);
+  const aiDashboardInsights = useMemo(
+    () => [
+      `${snapshot?.unpaidInvoices ?? 0} facture(s) a surveiller avant echeance.`,
+      `Conversion estimee a ${(snapshot?.conversionRate ?? 0).toFixed(1)}%, relancer les prospects chauds.`,
+      `Forecast revenu: ${Math.round((snapshot?.forecastRevenue ?? 0) / 1000)}K EUR sur tendance actuelle.`,
+      `${snapshot?.supportOpen ?? 0} ticket(s) support ouvert(s), ${snapshot?.urgentTasks ?? 0} tache(s) urgente(s).`
+    ],
+    [snapshot?.conversionRate, snapshot?.forecastRevenue, snapshot?.supportOpen, snapshot?.unpaidInvoices, snapshot?.urgentTasks]
+  );
   const widgets = useMemo<Record<DashboardWidgetId, ReactNode>>(
     () => ({
       advancedAnalytics: (
@@ -250,7 +229,7 @@ export function DashboardHome() {
         <Card className="p-6" interactive>
           <WidgetToolbar id="ai" moveWidget={moveWidget} title="Analytics IA" icon={<Bot size={18} className="text-blue-600" />} />
           <div className="mt-5 space-y-3">
-            {aiInsights.map((insight) => (
+            {aiDashboardInsights.map((insight) => (
               <div key={insight} className="flex items-start gap-3 rounded-[16px] border border-slate-200 bg-white p-4">
                 <Sparkles size={17} className="mt-0.5 text-blue-600" />
                 <span className="text-sm font-medium leading-6 text-slate-700">{insight}</span>
@@ -325,7 +304,7 @@ export function DashboardHome() {
         </Card>
       )
     }),
-    [activeConnections, acquisitionSeries, advancedAnalyticsData, calendarItems, cashflowSeries, crmPipeline, data.events, data.tasks, forecastSeries, miniAnalytics, movePipelineCard, moveWidget, notifications, period, pipelineColumns, recentTasks, snapshot?.cashflow, snapshot?.forecastRevenue, snapshot?.profitability, unreadCount]
+    [activeConnections, acquisitionSeries, advancedAnalyticsData, aiDashboardInsights, calendarItems, cashflowSeries, crmPipeline, data.events, data.tasks, forecastSeries, miniAnalytics, movePipelineCard, moveWidget, notifications, period, pipelineColumns, recentTasks, snapshot?.cashflow, snapshot?.forecastRevenue, snapshot?.profitability, unreadCount]
   );
   const visibleOrder = order.filter((id) => dashboardWidgetIds.includes(id) && !hiddenWidgets.includes(id));
   const quickActions = [
@@ -336,12 +315,6 @@ export function DashboardHome() {
     { label: "Generer avec IA", href: "/ia", icon: WandSparkles },
     { label: "Creer workflow", href: "/workflows", icon: Workflow }
   ];
-  const aiDashboardInsights = [
-    `${snapshot?.unpaidInvoices ?? 0} facture(s) a surveiller avant echeance.`,
-    `Conversion estimee a ${(snapshot?.conversionRate ?? 0).toFixed(1)}%, relancer les prospects chauds.`,
-    `Forecast revenu: ${Math.round((snapshot?.forecastRevenue ?? 0) / 1000)}K EUR sur tendance actuelle.`
-  ];
-
   return (
     <div className="mx-auto max-w-[1540px] space-y-7">
       {toast ? <Toast title={toast.title} detail={toast.detail} /> : null}
@@ -465,18 +438,24 @@ export function DashboardHome() {
             </div>
             <CircleDollarSign size={22} className="text-emerald-600" />
           </div>
-          <p className="mt-6 text-5xl font-black text-slate-950">84.2K</p>
-          <p className="mt-2 text-sm font-semibold text-emerald-600">+18.4% ce mois-ci</p>
+          <p className="mt-6 text-5xl font-black text-slate-950">{euroCompact.format(snapshot?.monthlyRevenue ?? 0)}</p>
+          <p className="mt-2 text-sm font-semibold text-emerald-600">{`${(snapshot?.growthRate ?? 0).toFixed(1)}% ce mois-ci`}</p>
           <div className="mt-6 space-y-3">
-            {["Starter", "Business", "Enterprise"].map((plan, index) => (
-              <div key={plan} className="grid grid-cols-[90px_1fr_48px] items-center gap-3 text-sm">
-                <span className="font-semibold text-slate-600">{plan}</span>
+            {[
+              { label: "Encaisse", value: snapshot?.paidRevenue ?? 0 },
+              { label: "Devis", value: snapshot?.quotesTotal ?? 0 },
+              { label: "Forecast", value: snapshot?.forecastRevenue ?? 0 }
+            ].map((plan) => {
+              const width = Math.min(100, Math.round((plan.value / Math.max(snapshot?.forecastRevenue ?? 1, 1)) * 100));
+              return (
+              <div key={plan.label} className="grid grid-cols-[90px_1fr_48px] items-center gap-3 text-sm">
+                <span className="font-semibold text-slate-600">{plan.label}</span>
                 <span className="h-2 rounded-full bg-slate-100">
-                  <span className="block h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ width: `${52 + index * 16}%` }} />
+                  <span className="block h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ width: `${width}%` }} />
                 </span>
-                <span className="text-right font-black text-blue-700">{52 + index * 16}%</span>
+                <span className="text-right font-black text-blue-700">{width}%</span>
               </div>
-            ))}
+            ); })}
           </div>
         </Card>
       </section>
@@ -589,7 +568,7 @@ function AdvancedAnalyticsWidget({ data, miniAnalytics, period, setPeriod }: { d
 }
 
 function BusinessPipelineWidget({ columns, movePipelineCard, setDraggedDeal }: { columns: PipelineColumn[]; movePipelineCard: (targetColumnId: string) => void; setDraggedDeal: (deal: { cardId: string; columnId: string } | null) => void }) {
-  const totalValue = columns.reduce((total, column) => total + Number(column.value.replace(/[^0-9]/g, "") || 0), 0);
+  const totalValue = columns.reduce((total, column) => total + column.value, 0);
 
   return (
     <Card className="p-5" interactive>
@@ -603,7 +582,7 @@ function BusinessPipelineWidget({ columns, movePipelineCard, setDraggedDeal }: {
         </div>
         <div className="rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-right shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Valeur pipeline</p>
-          <p className="mt-1 text-2xl font-black text-blue-700">{totalValue}K EUR</p>
+          <p className="mt-1 text-2xl font-black text-blue-700">{formatKiloCurrency(totalValue)}</p>
         </div>
       </div>
       <div className="mt-5 grid gap-3 overflow-x-auto pb-2 lg:grid-cols-5">
@@ -617,7 +596,7 @@ function BusinessPipelineWidget({ columns, movePipelineCard, setDraggedDeal }: {
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <p className="font-black text-slate-950">{column.label}</p>
-                <p className="mt-1 text-xs font-bold text-slate-500">{column.value} - {column.conversion}</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">{formatKiloCurrency(column.value)} - {column.conversion}%</p>
               </div>
               <Badge tone="cyan">{column.cards.length}</Badge>
             </div>
