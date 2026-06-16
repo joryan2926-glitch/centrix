@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { BarChart3, CalendarDays, Edit3, Image as ImageIcon, Link2, Loader2, Megaphone, MousePointerClick, Plus, Save, Search, Share2, Sparkles, Target, TrendingUp, UsersRound } from "lucide-react";
+import { BarChart3, CalendarDays, Edit3, Image as ImageIcon, Link2, Loader2, Megaphone, MousePointerClick, Plus, Save, Search, Share2, Sparkles, Target, Trash2, TrendingUp, UsersRound } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMarketingCurrency, formatMarketingNumber } from "@/lib/marketing/format";
 import { buildPost, campaignRoi, filterPosts, getMarketingDashboard, networkLabels, postStatusLabels, statusTone } from "@/services/marketing/calculations";
+import { deleteMarketingPost, upsertMarketingAccount, upsertMarketingPost } from "@/services/marketing/supabase";
 import { useMarketingData } from "@/hooks/marketing/useMarketingData";
 import type { MarketingFilters, SocialNetwork, SocialPost } from "@/types/marketing";
 import { MarketingKpiCard } from "@/ui/marketing/MarketingKpiCard";
@@ -78,7 +79,7 @@ export function MarketingWorkspace() {
   const posts = useMemo(() => filterPosts(data.posts, filters, data.accounts), [data.posts, data.accounts, filters]);
   const selectedPost = data.posts.find((post) => post.id === selectedPostId) ?? data.posts[0] ?? null;
 
-  function createPost(event: FormEvent<HTMLFormElement>) {
+  async function createPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft.accountIds.length) {
       notify("Compte requis", "Selectionnez au moins un reseau destinataire.");
@@ -95,39 +96,66 @@ export function MarketingWorkspace() {
       category: draft.category
     });
 
+    const activity = { id: `act-${crypto.randomUUID()}`, title: "Post programme", detail: `${post.title} est programme.`, tone: "success" as const, createdAt: new Date().toISOString() };
     mutate(
       (current) => ({
         ...current,
         posts: [post, ...current.posts],
-        activities: [{ id: `act-${crypto.randomUUID()}`, title: "Post programme", detail: `${post.title} est programme.`, tone: "success", createdAt: new Date().toISOString() }, ...current.activities]
+        activities: [activity, ...current.activities]
       }),
       { title: "Post programme", detail: `${post.title} est ajoute au calendrier editorial.` }
     );
+    if (mode === "supabase") {
+      const result = await upsertMarketingPost(post, activity);
+      if (result.error) notify("Sauvegarde Supabase impossible", result.error);
+      else await refresh();
+    }
     setSelectedPostId(post.id);
     setModalOpen(false);
   }
 
-  function createAccount(event: FormEvent<HTMLFormElement>) {
+  async function createAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!accountDraft.handle.trim() || !accountDraft.displayName.trim()) return;
+    const account = {
+      id: `account-${crypto.randomUUID()}`,
+      network: accountDraft.network,
+      handle: accountDraft.handle.trim(),
+      displayName: accountDraft.displayName.trim(),
+      providerAccountId: accountDraft.providerAccountId.trim() || null,
+      followers: 0,
+      engagementRate: 0,
+      reach: 0,
+      connected: providers.some((provider) => provider.network === accountDraft.network && provider.configured),
+      color: "#2563eb",
+      createdAt: new Date().toISOString()
+    };
+    const activity = { id: `act-${crypto.randomUUID()}`, title: "Compte social ajoute", detail: `${account.displayName} est connecte au planning marketing.`, tone: "success" as const, createdAt: new Date().toISOString() };
     mutate((current) => ({
       ...current,
-      accounts: [{
-        id: `account-${crypto.randomUUID()}`,
-        network: accountDraft.network,
-        handle: accountDraft.handle.trim(),
-        displayName: accountDraft.displayName.trim(),
-        providerAccountId: accountDraft.providerAccountId.trim() || null,
-        followers: 0,
-        engagementRate: 0,
-        reach: 0,
-        connected: providers.some((provider) => provider.network === accountDraft.network && provider.configured),
-        color: "#2563eb",
-        createdAt: new Date().toISOString()
-      }, ...current.accounts]
+      accounts: [account, ...current.accounts],
+      activities: [activity, ...current.activities]
     }), { title: "Compte social ajoute", detail: "Le compte est disponible pour les prochaines publications." });
+    if (mode === "supabase") {
+      const result = await upsertMarketingAccount(account, activity);
+      if (result.error) notify("Sauvegarde Supabase impossible", result.error);
+      else await refresh();
+    }
     setAccountModalOpen(false);
     setAccountDraft({ network: "linkedin", handle: "", displayName: "", providerAccountId: "" });
+  }
+
+  async function removePost(postId: string) {
+    mutate((current) => ({
+      ...current,
+      posts: current.posts.filter((post) => post.id !== postId),
+      activities: [{ id: `act-${crypto.randomUUID()}`, title: "Post supprime", detail: "La publication a ete retiree du calendrier.", tone: "warning", createdAt: new Date().toISOString() }, ...current.activities]
+    }), { title: "Post supprime", detail: "La publication a ete retiree du calendrier editorial." });
+    if (mode === "supabase") {
+      const result = await deleteMarketingPost(postId);
+      if (result.error) notify("Suppression Supabase impossible", result.error);
+      else await refresh();
+    }
   }
 
   async function publishNow(postId: string) {
@@ -229,7 +257,7 @@ export function MarketingWorkspace() {
 
           {view === "dashboard" ? <MarketingCharts data={data} /> : null}
           {view === "calendar" ? <EditorialCalendar posts={posts} onSelect={setSelectedPostId} /> : null}
-          {view === "posts" ? <PostsView data={data} posts={posts} publishingId={publishingId} selectedPost={selectedPost} onPublish={publishNow} onSelect={setSelectedPostId} /> : null}
+          {view === "posts" ? <PostsView data={data} posts={posts} publishingId={publishingId} selectedPost={selectedPost} onDelete={removePost} onPublish={publishNow} onSelect={setSelectedPostId} /> : null}
           {view === "campaigns" ? <CampaignsView data={data} /> : null}
           {view === "networks" ? <NetworksView data={data} providers={providers} /> : null}
           {view === "media" ? <MediaView data={data} /> : null}
@@ -270,7 +298,7 @@ function EditorialCalendar({ posts, onSelect }: { posts: ReturnType<typeof filte
   );
 }
 
-function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublish }: { data: ReturnType<typeof useMarketingData>["data"]; posts: ReturnType<typeof filterPosts>; publishingId: string | null; selectedPost: ReturnType<typeof useMarketingData>["data"]["posts"][number] | null; onSelect: (id: string) => void; onPublish: (id: string) => void }) {
+function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublish, onDelete }: { data: ReturnType<typeof useMarketingData>["data"]; posts: ReturnType<typeof filterPosts>; publishingId: string | null; selectedPost: ReturnType<typeof useMarketingData>["data"]["posts"][number] | null; onSelect: (id: string) => void; onPublish: (id: string) => void; onDelete: (id: string) => void }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="grid gap-4 md:grid-cols-2">
@@ -286,6 +314,10 @@ function PostsView({ data, posts, publishingId, selectedPost, onSelect, onPublis
             <Button className="mt-5 w-full" disabled={publishingId === selectedPost.id || selectedPost.status === "published"} onClick={() => onPublish(selectedPost.id)} variant="primary">
               {publishingId === selectedPost.id ? <Loader2 className="animate-spin" size={17} /> : <Megaphone size={17} />}
               {selectedPost.status === "published" ? "Publication envoyee" : publishingId === selectedPost.id ? "Publication..." : "Publier maintenant"}
+            </Button>
+            <Button className="mt-2 w-full text-rose-200" onClick={() => onDelete(selectedPost.id)} variant="ghost">
+              <Trash2 size={17} />
+              Supprimer le post
             </Button>
           </>
         ) : <EmptyState icon={<Edit3 size={18} />} title="Aucune publication" detail="Selectionnez un post." />}
