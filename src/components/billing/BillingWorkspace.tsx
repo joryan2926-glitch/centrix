@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileDown, History, Plus, ReceiptText, Save, Send, Trash2 } from "lucide-react";
+import { CreditCard, Download, FileDown, History, Plus, ReceiptText, Save, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { frenchVatRates } from "@/data/billing";
 import {
@@ -14,7 +14,7 @@ import {
   statusLabel
 } from "@/services/billing";
 import { exportBillingCsv, generateBillingPdf } from "@/services/billingExport";
-import { loadBillingDocuments, syncBillingDocuments } from "@/services/supabaseBilling";
+import { deleteBillingDocument, loadBillingDocuments, saveBillingDocuments, syncBillingDocuments } from "@/services/supabaseBilling";
 import type { BillingDocument, BillingLine, BillingStatus, FrenchVatRate } from "@/types/billing";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
@@ -44,6 +44,7 @@ export function BillingWorkspace() {
   const [documents, setDocuments] = useState<BillingDocument[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [syncState, setSyncState] = useState("Local");
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   useEffect(() => {
     loadBillingDocuments().then((items) => {
@@ -87,6 +88,7 @@ export function BillingWorkspace() {
             }
           : document
       );
+      saveBillingDocuments(next);
       syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale"));
       return next;
     });
@@ -116,6 +118,7 @@ export function BillingWorkspace() {
 
     setDocuments((current) => {
       const next = [document, ...current];
+      saveBillingDocuments(next);
       syncBillingDocuments(next).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale"));
       return next;
     });
@@ -156,6 +159,66 @@ export function BillingWorkspace() {
         ]
       };
     });
+  }
+
+  function convertQuoteToInvoice() {
+    if (!selected || selected.type !== "quote") return;
+    const now = new Date().toISOString();
+    const invoice: BillingDocument = {
+      ...selected,
+      createdAt: now,
+      history: [createHistory("Facture creee", `Conversion depuis le devis ${selected.number}.`), ...selected.history],
+      id: createBillingId("invoice"),
+      number: buildDocumentNumber("invoice", documents.length),
+      status: "pending",
+      type: "invoice",
+      updatedAt: now
+    };
+    setDocuments((current) => {
+      const next = current.map((document) => document.id === selected.id ? { ...document, status: "paid" as const, history: [createHistory("Converti en facture", `Facture ${invoice.number} generee.`), ...document.history], updatedAt: now } : document);
+      const withInvoice = [invoice, ...next];
+      saveBillingDocuments(withInvoice);
+      syncBillingDocuments(withInvoice).then((result) => setSyncState(result.mode === "supabase" ? "Supabase synchronise" : "error" in result && result.error ? `Erreur: ${result.error}` : "Sauvegarde locale"));
+      return withInvoice;
+    });
+    setSelectedId(invoice.id);
+  }
+
+  async function removeSelectedDocument() {
+    if (!selected || !window.confirm(`Supprimer ${selected.number} ?`)) return;
+    const result = await deleteBillingDocument(selected);
+    setDocuments((current) => {
+      const next = current.filter((document) => document.id !== selected.id);
+      saveBillingDocuments(next);
+      setSelectedId(next[0]?.id ?? "");
+      return next;
+    });
+    setSyncState(result.mode === "supabase" ? "Supabase synchronise" : result.error ? `Erreur: ${result.error}` : "Sauvegarde locale");
+  }
+
+  async function payWithStripe() {
+    if (!selected || selected.type !== "invoice") return;
+    setStripeLoading(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        body: JSON.stringify({
+          amount: totals.total,
+          customerEmail: selected.clientEmail,
+          invoiceId: selected.id,
+          invoiceNumber: selected.number,
+          mode: "payment"
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Stripe Checkout indisponible.");
+      window.location.href = payload.url;
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Stripe: ${error.message}` : "Stripe indisponible");
+    } finally {
+      setStripeLoading(false);
+    }
   }
 
   async function sync() {
@@ -267,9 +330,24 @@ export function BillingWorkspace() {
                   <Send size={17} />
                   {selected.status === "paid" ? "Marquer en attente" : "Marquer paye"}
                 </Button>
+                {selected.type === "quote" ? (
+                  <Button onClick={convertQuoteToInvoice}>
+                    <ReceiptText size={17} />
+                    Convertir facture
+                  </Button>
+                ) : (
+                  <Button disabled={stripeLoading || selected.status === "paid"} onClick={payWithStripe} variant="primary">
+                    <CreditCard size={17} />
+                    Payer Stripe
+                  </Button>
+                )}
                 <Button onClick={() => generateBillingPdf(selected)}>
                   <FileDown size={17} />
                   PDF
+                </Button>
+                <Button onClick={removeSelectedDocument} variant="ghost">
+                  <Trash2 size={17} />
+                  Supprimer
                 </Button>
               </div>
             </div>

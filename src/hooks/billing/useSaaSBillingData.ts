@@ -49,7 +49,9 @@ export function useSaaSBillingData() {
     realtimeTables.forEach((table) => {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
     });
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setMode("local");
+    });
 
     return () => {
       supabase.removeChannel(channel);

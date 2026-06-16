@@ -6,9 +6,12 @@ export const runtime = "nodejs";
 
 type StripeObject = {
   id?: string;
+  amount_total?: number;
   customer?: string;
   customer_email?: string | null;
   customer_details?: { email?: string | null };
+  mode?: string;
+  payment_intent?: string;
   subscription?: string;
   status?: string;
   cancel_at_period_end?: boolean;
@@ -116,6 +119,27 @@ async function syncSubscription(object: StripeObject) {
   await admin.from("users").update({ abonnement: effectivePlan, updated_at: now }).eq("id", userId);
 }
 
+async function syncInvoicePayment(object: StripeObject) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY manquante.");
+
+  const invoiceId = object.metadata?.invoice_id;
+  if (!invoiceId) throw new Error("invoice_id manquant dans les metadonnees Stripe.");
+  const paidAmount = typeof object.amount_total === "number" ? object.amount_total / 100 : undefined;
+  const now = new Date().toISOString();
+
+  const update: Record<string, unknown> = {
+    paid_at: now,
+    status: "paid",
+    stripe_payment_intent_id: object.payment_intent ?? null,
+    updated_at: now
+  };
+  if (paidAmount !== undefined) update.paid_amount = paidAmount;
+
+  const { error } = await admin.from("invoices").update(update).eq("id", invoiceId);
+  if (error) throw error;
+}
+
 export async function POST(request: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) return Response.json({ error: "STRIPE_WEBHOOK_SECRET manquant." }, { status: 503 });
@@ -141,7 +165,14 @@ export async function POST(request: NextRequest) {
   const handled = syncEvents.includes(event.type) || ["invoice.payment_succeeded", "invoice.payment_failed", "charge.refunded"].includes(event.type);
 
   try {
-    if (syncEvents.includes(event.type) && event.data?.object) await syncSubscription(event.data.object);
+    if (syncEvents.includes(event.type) && event.data?.object) {
+      const object = event.data.object;
+      if (event.type === "checkout.session.completed" && object.mode === "payment") {
+        await syncInvoicePayment(object);
+      } else {
+        await syncSubscription(object);
+      }
+    }
 
     const { error } = await admin.from("stripe_events").upsert({
       id: event.id,

@@ -5,6 +5,7 @@ import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { BillingDocument, BillingStatus } from "@/types/billing";
 
 const storageKey = "centrix-billing-documents";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readLocal() {
   if (typeof window === "undefined") return billingDocuments;
@@ -62,9 +63,21 @@ export async function syncBillingDocuments(documents: BillingDocument[]) {
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { mode: "local" as const };
 
-  const errors = await Promise.all(documents.map((document) => upsertBillingDocument(document)));
+  const errors = await Promise.all(documents.filter((document) => isUuid(document.id)).map((document) => upsertBillingDocument(document)));
   const error = errors.find(Boolean) ?? null;
   return { error, mode: error ? "local" as const : "supabase" as const };
+}
+
+export async function deleteBillingDocument(document: BillingDocument) {
+  const supabase = getSupabaseClient();
+  if (!supabase || !isUuid(document.id)) return { mode: "local" as const };
+  const table = document.type === "quote" ? "quotes" : "invoices";
+  const { error } = await supabase.from(table).delete().eq("id", document.id);
+  return { error: error?.message ?? null, mode: error ? "local" as const : "supabase" as const };
+}
+
+function isUuid(value: string) {
+  return uuidPattern.test(value);
 }
 
 function mapRowToDocument(row: Record<string, unknown>, type: BillingDocument["type"]): BillingDocument {
@@ -118,7 +131,7 @@ function toBillingBaseRow(document: BillingDocument, workspaceId: string, userId
 }
 
 function toQuoteRow(document: BillingDocument, workspaceId: string, userId: string) {
-  return { ...toBillingBaseRow(document, workspaceId, userId), valid_until: document.dueDate };
+  return { ...toBillingBaseRow(document, workspaceId, userId), status: toQuoteStatus(document.status), valid_until: document.dueDate };
 }
 
 function toInvoiceRow(document: BillingDocument, workspaceId: string, userId: string) {
@@ -133,5 +146,12 @@ function toInvoiceRow(document: BillingDocument, workspaceId: string, userId: st
 
 function normalizeBillingStatus(status: string): BillingStatus {
   if (status === "draft" || status === "pending" || status === "paid") return status;
+  if (status === "sent" || status === "accepted" || status === "converted") return "pending";
   return "pending";
+}
+
+function toQuoteStatus(status: BillingStatus) {
+  if (status === "draft") return "draft";
+  if (status === "paid") return "accepted";
+  return "sent";
 }
