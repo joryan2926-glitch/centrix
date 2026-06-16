@@ -12,10 +12,10 @@ const realtimeTables = [
   "subscriptions",
   "subscription_plans",
   "billing_customers",
-  "invoices",
-  "payments",
+  "subscription_invoices",
+  "subscription_payments",
   "coupons",
-  "usage_limits",
+  "subscription_usage_limits",
   "billing_notifications",
   "stripe_events"
 ];
@@ -46,12 +46,19 @@ export function useSaaSBillingData() {
     if (!supabase) return;
 
     const channel = supabase.channel("centrix-saas-billing-realtime");
-    realtimeTables.forEach((table) => {
-      channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
-    });
-    channel.subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setMode("local");
-    });
+    try {
+      realtimeTables.forEach((table) => {
+        channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh());
+      });
+      channel.subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setMode("local");
+          supabase.removeChannel(channel);
+        }
+      });
+    } catch {
+      supabase.removeChannel(channel);
+    }
 
     return () => {
       supabase.removeChannel(channel);
