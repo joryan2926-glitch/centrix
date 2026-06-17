@@ -61,6 +61,7 @@ export async function GET() {
         email: Boolean(process.env.BREVO_API_KEY),
         google: isGoogleAuthEnabled(),
         mistral: Boolean(process.env.MISTRAL_API_KEY),
+        signatures: Boolean(process.env.DOCUSIGN_INTEGRATION_KEY && process.env.DOCUSIGN_CLIENT_SECRET),
         stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET)
       }
     },

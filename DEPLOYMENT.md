@@ -40,6 +40,10 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 BRIDGE_CLIENT_ID
 BRIDGE_CLIENT_SECRET
 BREVO_API_KEY
+DOCUSIGN_INTEGRATION_KEY
+DOCUSIGN_CLIENT_SECRET
+DOCUSIGN_REDIRECT_URI=https://your-centrix-domain.vercel.app/api/integrations/docusign/callback
+DOCUSIGN_AUTH_BASE_URL=https://account.docusign.com
 ```
 
 Ne pas ajouter `SUPABASE_ACCESS_TOKEN` dans Vercel.
@@ -102,3 +106,28 @@ BREVO_API_KEY
 ```
 
 Les emails transactionnels applicatifs partent depuis `noreply@app-centrix.fr`. Les emails natifs Supabase Auth doivent etre configures cote Supabase si vous souhaitez les router via le SMTP Brevo.
+
+## DocuSign
+
+CENTRIX utilise DocuSign en OAuth2 Authorization Code pour signer les devis, contrats, mandats et documents.
+
+Variables serveur :
+
+```text
+DOCUSIGN_INTEGRATION_KEY
+DOCUSIGN_CLIENT_SECRET
+DOCUSIGN_REDIRECT_URI=https://app-centrix.fr/api/integrations/docusign/callback
+DOCUSIGN_AUTH_BASE_URL=https://account.docusign.com
+```
+
+Dans DocuSign Developer/Admin, ajouter l'URL de redirection :
+
+```text
+https://app-centrix.fr/api/integrations/docusign/callback
+```
+
+Pour un compte sandbox, utiliser :
+
+```text
+DOCUSIGN_AUTH_BASE_URL=https://account-d.docusign.com
+```

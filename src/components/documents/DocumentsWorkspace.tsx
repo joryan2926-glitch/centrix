@@ -206,6 +206,9 @@ export function DocumentsWorkspace() {
               <UploadCloud size={17} /> Upload
               <input className="hidden" multiple type="file" onChange={(event) => handleInputUpload(event.target.files)} />
             </label>
+            <Button onClick={() => { window.location.href = "/api/integrations/docusign/connect?returnTo=/documents"; }} variant="ghost">
+              <FileSignature size={17} /> Connecter DocuSign
+            </Button>
             <Button onClick={sync}><ShieldCheck size={17} /> Sync {mode}</Button>
           </div>
         </div>

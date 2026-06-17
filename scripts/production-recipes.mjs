@@ -42,6 +42,7 @@ const tables = [
   "marketplace_services", "service_categories", "providers", "provider_reviews", "marketplace_orders", "order_messages", "payouts", "marketplace_notifications", "provider_portfolios",
   "courses", "course_modules", "lessons", "quizzes", "quiz_results", "enrollments", "certificates", "community_posts", "community_comments", "student_progress", "academy_notifications",
   "api_keys", "api_logs", "webhooks", "webhook_logs", "integrations", "oauth_connections", "api_permissions", "api_rate_limits", "integration_notifications", "integration_deliveries", "external_connections",
+  "docusign_connections", "docusign_signature_requests",
   "security_logs", "user_sessions", "login_attempts", "security_alerts", "api_security_logs", "user_permissions", "audit_logs", "backups", "gdpr_requests",
   "enterprise_companies", "franchises", "enterprise_users", "enterprise_permissions", "enterprise_metrics", "enterprise_activities",
   "legal_forms", "companies", "legal_documents", "legal_announcements", "shareholders", "company_steps", "company_settings", "capital_deposits", "legal_notifications", "company_development_plans", "advisory_sessions",
@@ -163,7 +164,7 @@ async function runIntegrationRecipes() {
   checks.push({ name: "SMS/WhatsApp", status: "passed", configured: false, disabled: true, note: "Fonctionnalites desactivees sans provider externe." });
   checks.push(await configCheck("Brevo email", ["BREVO_API_KEY"], { productionReady: productionIntegrations.email }));
   checks.push(await googleConfigCheck());
-  checks.push(await configCheck("DocuSign", ["DOCUSIGN_ACCOUNT_ID", "DOCUSIGN_ACCESS_TOKEN"]));
+  checks.push(await configCheck("DocuSign OAuth", ["DOCUSIGN_INTEGRATION_KEY", "DOCUSIGN_CLIENT_SECRET"], { productionReady: productionIntegrations.signatures }));
   checks.push(await configCheck("Bridge banking", ["BRIDGE_CLIENT_ID", "BRIDGE_CLIENT_SECRET"], { productionReady: productionIntegrations.bridge }));
 
   if (sendEmail) checks.push(await sendBrevoEmail());

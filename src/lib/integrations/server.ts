@@ -97,7 +97,7 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
   const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const hasBridge = Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET);
   const hasEmailing = Boolean(process.env.BREVO_API_KEY);
-  const hasSignatures = Boolean(process.env.DOCUSIGN_ACCOUNT_ID && process.env.DOCUSIGN_ACCESS_TOKEN);
+  const hasSignatures = Boolean(process.env.DOCUSIGN_INTEGRATION_KEY && process.env.DOCUSIGN_CLIENT_SECRET);
   const googleOAuth = await getGoogleOAuthStatus();
 
   return {
@@ -140,7 +140,7 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
     },
     signatures: {
       configured: hasSignatures,
-      detail: hasSignatures ? "Enveloppes DocuSign disponibles." : "Ajoutez DOCUSIGN_ACCOUNT_ID et DOCUSIGN_ACCESS_TOKEN dans Vercel."
+      detail: hasSignatures ? "OAuth2 DocuSign disponible pour signatures." : "Ajoutez DOCUSIGN_INTEGRATION_KEY et DOCUSIGN_CLIENT_SECRET dans Vercel."
     }
   };
 }
