@@ -15,7 +15,7 @@ export async function requirePlan(requiredPlan: PlanCode) {
     .maybeSingle();
   if (!profile?.workspace_id) return { allowed: false as const, error: "Workspace introuvable.", status: 403 };
   const workspace = Array.isArray(profile.workspaces) ? profile.workspaces[0] : profile.workspaces;
-  const plan = String(workspace?.plan ?? "starter") as PlanCode;
+  const plan = String(workspace?.plan ?? "free") as PlanCode;
   const allowed = profile.role === "super_admin" || planRank[plan] >= planRank[requiredPlan];
   return allowed
     ? { allowed: true as const, plan, role: String(profile.role), userId: authData.user.id, workspaceId: String(profile.workspace_id) }

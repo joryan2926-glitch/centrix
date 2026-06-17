@@ -127,7 +127,7 @@ async function auditTables() {
 async function verifyPermissions() {
   assertSupabase();
   const [profile, plans, rolePermissions, planModules] = await withTimeout(Promise.all([
-    supabase.from("profiles").select("id,email,role,workspace_id").limit(1).single(),
+    supabase.from("profiles").select("id,email,role,workspace_id").eq("role", "super_admin").limit(1).single(),
     supabase.from("subscription_plans").select("code,stripePriceId", { count: "exact" }).not("stripePriceId", "is", null),
     supabase.from("role_permissions").select("role_id", { count: "exact", head: true }),
     supabase.from("plan_modules").select("plan_code,module_key", { count: "exact" })
@@ -142,7 +142,7 @@ async function verifyPermissions() {
   const requiredModules = ["dashboard", "crm", "clients", "billing", "finance", "projects", "hr", "agenda", "marketing", "social", "ai", "documents", "support", "marketplace", "academy", "integrations", "security", "settings"];
   const missingModules = requiredModules.filter((module) => !moduleCoverage.has(module));
 
-  if (profile.data.role !== "super_admin") throw new Error(`Le compte principal n'est pas super_admin (${profile.data.role}).`);
+  if (profile.data.role !== "super_admin") throw new Error(`Aucun compte plateforme super_admin disponible (${profile.data.role}).`);
   if (priceIssues.length) throw Object.assign(new Error("Price IDs Stripe invalides dans subscription_plans"), { detail: priceIssues });
   if (missingModules.length) throw Object.assign(new Error("Modules absents de plan_modules"), { detail: missingModules });
 

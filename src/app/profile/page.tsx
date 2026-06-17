@@ -5,7 +5,7 @@ export default async function ProfilePage() {
   return (
     <ProfileSettings
       profile={{
-        abonnement: "starter",
+        abonnement: "free",
         avatarUrl: null,
         email: DEMO_USER.email,
         entreprise: DEMO_WORKSPACE.name,

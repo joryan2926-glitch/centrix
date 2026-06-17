@@ -114,7 +114,7 @@ async function syncSubscription(object: StripeObject) {
   }, { onConflict: "stripeSubscriptionId" });
   if (subscriptionError) throw subscriptionError;
 
-  const effectivePlan = toCentrixStatus(stripeSubscription.status) === "canceled" ? "starter" : plan.code;
+  const effectivePlan = toCentrixStatus(stripeSubscription.status) === "canceled" ? "free" : plan.code;
   await admin.from("workspaces").update({ plan: effectivePlan, updated_at: now }).eq("id", workspaceId);
   await admin.from("users").update({ abonnement: effectivePlan, updated_at: now }).eq("id", userId);
 }

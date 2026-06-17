@@ -1,6 +1,7 @@
-export type PlanCode = "starter" | "premium" | "business" | "enterprise";
+export type PlanCode = "free" | "starter" | "premium" | "business" | "enterprise";
 
 export const planRank: Record<PlanCode, number> = {
+  free: 0,
   starter: 1,
   premium: 2,
   business: 3,
@@ -8,18 +9,19 @@ export const planRank: Record<PlanCode, number> = {
 };
 
 export const moduleMinimumPlan = {
-  dashboard: "starter",
+  dashboard: "free",
   crm: "starter",
   clients: "starter",
   billing: "starter",
   agenda: "starter",
-  notifications: "starter",
-  finance: "premium",
+  notifications: "free",
+  finance: "business",
   marketing: "premium",
+  social: "premium",
   ai: "premium",
   analytics: "premium",
   workflows: "premium",
-  support: "premium",
+  support: "business",
   projects: "business",
   hr: "business",
   documents: "business",

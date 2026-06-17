@@ -81,7 +81,7 @@ export async function signUpAction(formData: FormData): Promise<AuthActionState>
     password,
     options: {
       emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
-      data: { name, company, role: "super_admin", subscription: "starter" }
+      data: { name, company, role: "admin", subscription: "free" }
     }
   });
 

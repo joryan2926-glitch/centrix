@@ -6,6 +6,9 @@ export const runtime = "nodejs";
 type PriceCheck = {
   plan: string;
   priceId: string | null;
+  expectedProductNames: string[];
+  productName: string | null;
+  productNameValid: boolean;
   exists: boolean;
   liveMode: boolean;
   active: boolean;
@@ -26,6 +29,13 @@ const recommendedWebhookEvents = [
   "invoice.payment_succeeded",
   "invoice.payment_failed"
 ] as const;
+
+const expectedProductNames: Record<string, string[]> = {
+  starter: ["CENTRIX Starter"],
+  premium: ["CENTRIX Premium", "CENTRIX Prenium"],
+  business: ["CENTRIX Business"],
+  enterprise: ["CENTRIX Enterprise", "CENTRIX Entreprise"]
+};
 
 export async function GET() {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -67,6 +77,9 @@ export async function GET() {
           const base = {
             plan: String(plan.code),
             priceId: plan.stripePriceId,
+            expectedProductNames: expectedProductNames[String(plan.code)] ?? [`CENTRIX ${String(plan.code)}`],
+            productName: null,
+            productNameValid: false,
             exists: false,
             liveMode: false,
             active: false,
@@ -75,7 +88,7 @@ export async function GET() {
             valid: false,
             error: null
           } satisfies PriceCheck;
-          const response = await fetch(`https://api.stripe.com/v1/prices/${plan.stripePriceId}`, {
+          const response = await fetch(`https://api.stripe.com/v1/prices/${plan.stripePriceId}?expand[]=product`, {
             headers: { Authorization: `Bearer ${stripeSecretKey}` },
             cache: "no-store"
           });
@@ -83,15 +96,17 @@ export async function GET() {
             const payload = await response.json().catch(() => null) as { error?: { code?: string } } | null;
             return { ...base, error: payload?.error?.code ?? `stripe_http_${response.status}` };
           }
-          const price = await response.json() as { active?: boolean; livemode?: boolean; recurring?: { interval?: string } | null };
+          const price = await response.json() as { active?: boolean; livemode?: boolean; recurring?: { interval?: string } | null; product?: { name?: string } | string | null };
           const liveMode = Boolean(price.livemode);
           const active = Boolean(price.active);
           const recurring = Boolean(price.recurring);
           const monthly = price.recurring?.interval === "month";
+          const productName = typeof price.product === "object" && price.product ? price.product.name ?? null : null;
+          const productNameValid = productName ? base.expectedProductNames.includes(productName) : false;
           stripeReachablePriceCount += 1;
           if (active) stripeActivePriceCount += 1;
           if (recurring) stripeRecurringPriceCount += 1;
-          return { ...base, exists: true, liveMode, active, recurring, monthly, valid: liveMode && active && recurring && monthly };
+          return { ...base, productName, productNameValid, exists: true, liveMode, active, recurring, monthly, valid: liveMode && active && recurring && monthly && productNameValid };
         })
       );
       stripePricesValid = prices.length >= 4 && prices.every((price) => price.valid);
