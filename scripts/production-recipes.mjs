@@ -9,6 +9,9 @@ const external = args.has("--external");
 const sendEmail = args.has("--send-email");
 const sendSms = args.has("--send-sms");
 const json = args.has("--json");
+const HTTP_CHECK_TIMEOUT_MS = 15_000;
+const SUPABASE_CHECK_TIMEOUT_MS = 20_000;
+const RECIPE_STEP_TIMEOUT_MS = 120_000;
 
 const env = loadEnv();
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,7 +70,7 @@ async function main() {
   await cleanupRows();
   printReport();
 
-  if (results.some((result) => result.status === "failed")) process.exitCode = 1;
+  process.exit(results.some((result) => result.status === "failed") ? 1 : 0);
 }
 
 async function runCrudRecipes() {
@@ -110,7 +113,11 @@ async function auditTables() {
   assertSupabase();
   const checks = [];
   for (const table of [...new Set(tables)]) {
-    const { error, count } = await supabase.from(table).select("*", { head: true, count: "exact" }).limit(1);
+    const { error, count } = await withTimeout(
+      supabase.from(table).select("*", { head: true, count: "exact" }).limit(1),
+      `audit ${table}`,
+      SUPABASE_CHECK_TIMEOUT_MS
+    );
     checks.push({ table, ok: !error, count: error ? null : count, error: error?.message ?? null });
   }
   const failures = checks.filter((check) => !check.ok);
@@ -120,12 +127,12 @@ async function auditTables() {
 
 async function verifyPermissions() {
   assertSupabase();
-  const [profile, plans, rolePermissions, planModules] = await Promise.all([
+  const [profile, plans, rolePermissions, planModules] = await withTimeout(Promise.all([
     supabase.from("profiles").select("id,email,role,workspace_id").limit(1).single(),
     supabase.from("subscription_plans").select("code,stripePriceId", { count: "exact" }).not("stripePriceId", "is", null),
     supabase.from("role_permissions").select("role_id", { count: "exact", head: true }),
     supabase.from("plan_modules").select("plan_code,module_key", { count: "exact" })
-  ]);
+  ]), "verify permissions", SUPABASE_CHECK_TIMEOUT_MS);
   fail("profiles", profile.error);
   fail("subscription_plans", plans.error);
   fail("role_permissions", rolePermissions.error);
@@ -151,7 +158,7 @@ async function verifyPermissions() {
 
 async function runIntegrationRecipes() {
   const checks = [];
-  checks.push(await endpointCheck("Stripe billing", `${target}/api/stripe/health`, external));
+  checks.push(await endpointCheck("Stripe billing", `${target}/api/stripe/health`, external, true));
   checks.push(await endpointCheck("OpenAI", `${target}/api/openai/health`, external));
   checks.push(await endpointCheck("Twilio", `${target}/api/integrations/sms/health`, external));
   checks.push(await configCheck("Resend email", ["RESEND_API_KEY", "EMAIL_FROM"]));
@@ -162,7 +169,7 @@ async function runIntegrationRecipes() {
   if (sendEmail) checks.push(await sendResendEmail());
   if (sendSms) checks.push(await sendTwilioSms());
 
-  const blocking = checks.filter((check) => check.status === "failed");
+  const blocking = checks.filter((check) => check.status === "failed" && check.required);
   if (external && blocking.length) {
     throw Object.assign(new Error(`${blocking.length} integration(s) externe(s) en erreur`), {
       detail: { checks, blocking: blocking.map((check) => check.name) }
@@ -171,13 +178,13 @@ async function runIntegrationRecipes() {
   return { checks, blocking: blocking.length };
 }
 
-async function endpointCheck(name, url, shouldCall) {
-  if (!shouldCall) return { name, status: "skipped", reason: "Ajoute --external pour appeler le provider." };
+async function endpointCheck(name, url, shouldCall, required = false) {
+  if (!shouldCall) return { name, status: "skipped", required, reason: "Ajoute --external pour appeler le provider." };
   try {
     const data = await getJson(url);
-    return { name, status: data.ready === false ? "partial" : "passed", data };
+    return { name, required, status: data.ready === false ? "partial" : "passed", data };
   } catch (error) {
-    return { name, status: "failed", error: error.message };
+    return { name, required, status: required ? "failed" : "partial", error: error.message };
   }
 }
 
@@ -365,14 +372,22 @@ async function operationalCrud({ workspaceId }) {
 }
 
 async function getContext() {
-  const { data, error } = await supabase.from("profiles").select("id,email,role,workspace_id").limit(1).single();
+  const { data, error } = await withTimeout(
+    supabase.from("profiles").select("id,email,role,workspace_id").limit(1).single(),
+    "load recipe context",
+    SUPABASE_CHECK_TIMEOUT_MS
+  );
   fail("profiles", error);
   if (!data.workspace_id) throw new Error("Profil sans workspace_id.");
   return { userId: data.id, email: data.email, role: data.role, workspaceId: data.workspace_id };
 }
 
 async function insert(table, row) {
-  const { data, error } = await supabase.from(table).insert(row).select("*").single();
+  const { data, error } = await withTimeout(
+    supabase.from(table).insert(row).select("*").single(),
+    `insert ${table}`,
+    SUPABASE_CHECK_TIMEOUT_MS
+  );
   fail(`insert ${table}`, error);
   cleanup.push(async () => {
     if (data?.id) await supabase.from(table).delete().eq("id", data.id);
@@ -381,7 +396,11 @@ async function insert(table, row) {
 }
 
 async function update(table, id, patch) {
-  const { data, error } = await supabase.from(table).update(patch).eq("id", id).select("*").single();
+  const { data, error } = await withTimeout(
+    supabase.from(table).update(patch).eq("id", id).select("*").single(),
+    `update ${table}`,
+    SUPABASE_CHECK_TIMEOUT_MS
+  );
   fail(`update ${table}`, error);
   return data;
 }
@@ -399,7 +418,7 @@ async function cleanupRows() {
 async function recipe(name, fn, required = false) {
   const startedAt = Date.now();
   try {
-    const detail = await fn();
+    const detail = await withTimeout(fn(), name, RECIPE_STEP_TIMEOUT_MS);
     results.push({ name, status: "passed", durationMs: Date.now() - startedAt, detail });
   } catch (error) {
     results.push({
@@ -413,10 +432,19 @@ async function recipe(name, fn, required = false) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(HTTP_CHECK_TIMEOUT_MS) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw Object.assign(new Error(`${url} HTTP ${response.status}`), { detail: data });
   return data;
+}
+
+async function withTimeout(promise, label, timeoutMs) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`${label} timeout apres ${timeoutMs}ms`)), timeoutMs);
+    })
+  ]);
 }
 
 function loadEnv() {

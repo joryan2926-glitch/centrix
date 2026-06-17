@@ -34,6 +34,28 @@ export const allowedDataTables = [
 
 export type DataTableName = (typeof allowedDataTables)[number];
 
+export const dataTableModuleMap = {
+  users: "settings",
+  profiles: "settings",
+  workspaces: "settings",
+  clients: "clients",
+  prospects: "crm",
+  invoices: "billing",
+  quotes: "billing",
+  projects: "projects",
+  tasks: "projects",
+  employees: "hr",
+  payroll: "hr",
+  notifications: "notifications",
+  meetings: "agenda",
+  documents: "documents",
+  messages: "notifications",
+  workflows: "workflows",
+  analytics: "analytics",
+  subscriptions: "billing",
+  support_tickets: "support"
+} as const satisfies Record<DataTableName, string>;
+
 export function isAllowedDataTable(table: string): table is DataTableName {
   return allowedDataTables.includes(table as DataTableName);
 }

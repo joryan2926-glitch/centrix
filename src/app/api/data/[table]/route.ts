@@ -1,10 +1,12 @@
 import type { NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { isAllowedDataTable } from "@/repositories/supabaseRepository";
+import { dataTableModuleMap, isAllowedDataTable } from "@/repositories/supabaseRepository";
 
 export const runtime = "nodejs";
 
-async function getContext(context: { params: Promise<{ table: string }> }) {
+type DataAction = "read" | "create" | "update" | "delete";
+
+async function getContext(context: { params: Promise<{ table: string }> }, action: DataAction) {
   const { table } = await context.params;
   if (!isAllowedDataTable(table)) {
     return { table: null, error: Response.json({ error: "Table non autorisee." }, { status: 404 }) };
@@ -19,11 +21,42 @@ async function getContext(context: { params: Promise<{ table: string }> }) {
     return { table, error: Response.json({ error: "Session CENTRIX requise." }, { status: 401 }) };
   }
 
-  return { table, supabase, user: authData.user, error: null };
+  const moduleKey = dataTableModuleMap[table];
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("workspace_id, role")
+    .eq("id", authData.user.id)
+    .maybeSingle<{ workspace_id: string | null; role: string | null }>();
+
+  if (!profile?.workspace_id) {
+    return { table, error: Response.json({ error: "Workspace CENTRIX introuvable." }, { status: 403 }) };
+  }
+
+  const accessCheck = action === "read"
+    ? await supabase.rpc("can_access_current_module", { target_module_key: moduleKey })
+    : await supabase.rpc("can_use_module", {
+      requested_action: action,
+      target_module_key: moduleKey,
+      target_workspace_id: profile.workspace_id
+    });
+
+  if (accessCheck.error || accessCheck.data !== true) {
+    return {
+      table,
+      error: Response.json({
+        action,
+        error: "Permission insuffisante pour ce module.",
+        module: moduleKey,
+        table
+      }, { status: 403 })
+    };
+  }
+
+  return { table, supabase, user: authData.user, workspaceId: profile.workspace_id, error: null };
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ table: string }> }) {
-  const ctx = await getContext(context);
+  const ctx = await getContext(context, "read");
   if (ctx.error) return ctx.error;
 
   const limit = Math.min(Number(request.nextUrl.searchParams.get("limit") ?? 50), 100);
@@ -41,7 +74,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tab
 }
 
 export async function POST(request: NextRequest, context: { params: Promise<{ table: string }> }) {
-  const ctx = await getContext(context);
+  const ctx = await getContext(context, "create");
   if (ctx.error) return ctx.error;
 
   const body = await request.json().catch(() => ({}));
@@ -52,7 +85,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ta
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ table: string }> }) {
-  const ctx = await getContext(context);
+  const ctx = await getContext(context, "update");
   if (ctx.error) return ctx.error;
 
   const body = await request.json().catch(() => ({}));
@@ -68,7 +101,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ t
 }
 
 export async function DELETE(request: NextRequest, context: { params: Promise<{ table: string }> }) {
-  const ctx = await getContext(context);
+  const ctx = await getContext(context, "delete");
   if (ctx.error) return ctx.error;
 
   const id = request.nextUrl.searchParams.get("id");

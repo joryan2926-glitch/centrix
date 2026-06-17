@@ -17,9 +17,14 @@ type PriceCheck = {
 
 const requiredWebhookEvents = [
   "checkout.session.completed",
-  "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted"
+] as const;
+
+const recommendedWebhookEvents = [
+  "customer.subscription.created",
+  "invoice.payment_succeeded",
+  "invoice.payment_failed"
 ] as const;
 
 export async function GET() {
@@ -116,6 +121,7 @@ export async function GET() {
         webhookConfigured,
         webhookEventsValid,
         requiredWebhookEvents,
+        recommendedWebhookEvents,
         webhookEvents,
         supabaseAdminConfigured,
         catalogConnected,

@@ -11,8 +11,7 @@ export async function ensureUserOnboarding(name?: string | null, company?: strin
   const displayName = name || user.user_metadata?.name || user.email?.split("@")[0] || "Utilisateur CENTRIX";
   const companyName = company || user.user_metadata?.company || "Mon entreprise";
   const workspaceSlug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "workspace"}-${user.id.slice(0, 8)}`;
-  const { data: ownedWorkspace } = await supabase.from("workspaces").select("id").eq("owner_id", user.id).maybeSingle();
-  const role = ownedWorkspace ? "super_admin" : "admin";
+  const role = "super_admin";
 
   await supabase.from("users").upsert({
     id: user.id,
