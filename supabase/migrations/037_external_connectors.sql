@@ -2,7 +2,7 @@ create table if not exists public.integration_deliveries (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   created_by uuid references auth.users(id) on delete set null,
-  provider text not null check (provider in ('google_calendar', 'resend', 'twilio', 'docusign')),
+  provider text not null,
   action text not null,
   status text not null default 'pending' check (status in ('pending', 'delivered', 'failed')),
   recipient text,

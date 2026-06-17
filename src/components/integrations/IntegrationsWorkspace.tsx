@@ -266,8 +266,8 @@ function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | n
     { key: "bridge", label: "Bridge Open Banking", icon: <WalletCards size={18} /> },
     { key: "googleOAuth", label: "Google OAuth", icon: <Globe2 size={18} /> },
     { key: "googleCalendar", label: "Google Calendar", icon: <CalendarSync size={18} /> },
-    { key: "emailing", label: "Emailing Resend", icon: <Mail size={18} /> },
-    { key: "sms", label: "SMS Twilio", icon: <MessageSquareText size={18} /> },
+    { key: "emailing", label: "Emailing Brevo", icon: <Mail size={18} /> },
+    { key: "sms", label: "SMS désactivé", icon: <MessageSquareText size={18} /> },
     { key: "signatures", label: "Signatures DocuSign", icon: <PenLine size={18} /> }
   ] as const;
 

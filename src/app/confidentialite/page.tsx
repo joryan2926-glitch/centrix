@@ -32,7 +32,7 @@ export default function ConfidentialitePage() {
         {
           title: "Sous-traitants",
           body: "CENTRIX peut s'appuyer sur des prestataires cloud et integrations externes strictement necessaires au fonctionnement du service.",
-          items: ["Supabase pour auth, base de donnees et storage", "Vercel pour l'hebergement applicatif", "Stripe pour paiements et abonnements", "Mistral pour les fonctions IA", "Resend, Google, Twilio, DocuSign ou Bridge selon configuration"]
+          items: ["Supabase pour auth, base de donnees et storage", "Vercel pour l'hebergement applicatif", "Stripe pour paiements et abonnements", "Mistral pour les fonctions IA", "Brevo, Google ou Bridge selon configuration"]
         },
         {
           title: "Droits des utilisateurs",

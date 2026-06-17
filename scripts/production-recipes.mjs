@@ -7,7 +7,6 @@ const targetArg = process.argv.find((arg) => arg.startsWith("--target="));
 const target = (targetArg?.split("=")[1] ?? process.env.CENTRIX_RECIPE_TARGET ?? "https://app-centrix.fr").replace(/\/$/, "");
 const external = args.has("--external");
 const sendEmail = args.has("--send-email");
-const sendSms = args.has("--send-sms");
 const json = args.has("--json");
 const HTTP_CHECK_TIMEOUT_MS = 15_000;
 const SUPABASE_CHECK_TIMEOUT_MS = 20_000;
@@ -57,8 +56,7 @@ async function main() {
     serviceRoleKey: Boolean(serviceRoleKey),
     target,
     external,
-    sendEmail,
-    sendSms
+    sendEmail
   }), true);
 
   await recipe("Production /api/health", async () => getJson(`${target}/api/health`), true);
@@ -158,16 +156,17 @@ async function verifyPermissions() {
 
 async function runIntegrationRecipes() {
   const checks = [];
+  const productionHealth = await getJson(`${target}/api/health`).catch(() => null);
+  const productionIntegrations = productionHealth?.integrations ?? {};
   checks.push(await endpointCheck("Stripe billing", `${target}/api/stripe/health`, external, true));
   checks.push(await endpointCheck("Mistral AI", `${target}/api/mistral/health`, external));
-  checks.push(await endpointCheck("Twilio", `${target}/api/integrations/sms/health`, external));
-  checks.push(await configCheck("Resend email", ["RESEND_API_KEY", "EMAIL_FROM"]));
+  checks.push({ name: "SMS/WhatsApp", status: "passed", configured: false, disabled: true, note: "Fonctionnalites desactivees sans provider externe." });
+  checks.push(await configCheck("Brevo email", ["BREVO_API_KEY"], { productionReady: productionIntegrations.email }));
   checks.push(await googleConfigCheck());
   checks.push(await configCheck("DocuSign", ["DOCUSIGN_ACCOUNT_ID", "DOCUSIGN_ACCESS_TOKEN"]));
-  checks.push(await configCheck("Bridge banking", ["BRIDGE_CLIENT_ID", "BRIDGE_CLIENT_SECRET"]));
+  checks.push(await configCheck("Bridge banking", ["BRIDGE_CLIENT_ID", "BRIDGE_CLIENT_SECRET"], { productionReady: productionIntegrations.bridge }));
 
-  if (sendEmail) checks.push(await sendResendEmail());
-  if (sendSms) checks.push(await sendTwilioSms());
+  if (sendEmail) checks.push(await sendBrevoEmail());
 
   const blocking = checks.filter((check) => check.status === "failed" && check.required);
   if (external && blocking.length) {
@@ -190,6 +189,16 @@ async function endpointCheck(name, url, shouldCall, required = false) {
 
 async function configCheck(name, keys, options = {}) {
   const configured = keys.every((key) => Boolean(env[key]));
+  if (!configured && options.productionReady) {
+    return {
+      name,
+      status: "passed",
+      configured: true,
+      source: "production",
+      keys: Object.fromEntries(keys.map((key) => [key, false])),
+      note: "Configure en production, absent de .env.local."
+    };
+  }
   const enabled = options.enabledValue ? env[keys[0]] === options.enabledValue : configured;
   return {
     name,
@@ -214,39 +223,22 @@ async function googleConfigCheck() {
   };
 }
 
-async function sendResendEmail() {
+async function sendBrevoEmail() {
   const to = env.RECIPE_EMAIL_TO;
   if (!to) return { name: "Email reel", status: "skipped", reason: "Definis RECIPE_EMAIL_TO pour envoyer un test." };
-  if (!env.RESEND_API_KEY || !env.EMAIL_FROM) return { name: "Email reel", status: "failed", error: "RESEND_API_KEY/EMAIL_FROM manquants." };
-  const response = await fetch("https://api.resend.com/emails", {
+  if (!env.BREVO_API_KEY) return { name: "Email reel", status: "failed", error: "BREVO_API_KEY manquante." };
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    headers: { "api-key": env.BREVO_API_KEY, "Content-Type": "application/json", accept: "application/json" },
     body: JSON.stringify({
-      from: env.EMAIL_FROM,
-      to: [to],
+      sender: { email: "noreply@app-centrix.fr", name: "CENTRIX" },
+      to: [{ email: to }],
       subject: "Recette production CENTRIX",
-      text: `CENTRIX_OK ${marker}`
+      textContent: `CENTRIX_OK ${marker}`
     })
   });
   const payload = await response.json().catch(() => ({}));
-  return { name: "Email reel", status: response.ok ? "passed" : "failed", id: payload.id ?? null, error: response.ok ? null : payload.message ?? `HTTP ${response.status}` };
-}
-
-async function sendTwilioSms() {
-  const to = env.RECIPE_SMS_TO;
-  if (!to) return { name: "SMS reel", status: "skipped", reason: "Definis RECIPE_SMS_TO pour envoyer un test." };
-  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_FROM_NUMBER) return { name: "SMS reel", status: "failed", error: "Variables Twilio manquantes." };
-  const params = new URLSearchParams({ To: to, From: env.TWILIO_FROM_NUMBER, Body: `CENTRIX_OK ${marker}` });
-  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: params
-  });
-  const payload = await response.json().catch(() => ({}));
-  return { name: "SMS reel", status: response.ok ? "passed" : "failed", id: payload.sid ?? null, error: response.ok ? null : payload.message ?? `HTTP ${response.status}` };
+  return { name: "Email reel", provider: "brevo", status: response.ok ? "passed" : "failed", id: payload.messageId ?? null, error: response.ok ? null : payload.message ?? `HTTP ${response.status}` };
 }
 
 async function coreBusinessCrud({ workspaceId, userId }) {

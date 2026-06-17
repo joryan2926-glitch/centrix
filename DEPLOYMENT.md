@@ -32,11 +32,14 @@ NEXT_PUBLIC_APP_URL=https://your-centrix-domain.vercel.app
 ## Integrations optionnelles
 
 ```text
-OPENAI_API_KEY
-OPENAI_MODEL=gpt-5.1
+MISTRAL_API_KEY
+MISTRAL_MODEL=mistral-large-latest
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+BRIDGE_CLIENT_ID
+BRIDGE_CLIENT_SECRET
+BREVO_API_KEY
 ```
 
 Ne pas ajouter `SUPABASE_ACCESS_TOKEN` dans Vercel.
@@ -77,16 +80,25 @@ customer.subscription.updated
 charge.refunded
 ```
 
-Le module `API & Integrations` expose un diagnostic serveur des connexions actives. Les routes Stripe et OpenAI exigent une session CENTRIX et ne revelent jamais les secrets au navigateur.
+Le module `API & Integrations` expose un diagnostic serveur des connexions actives. Les routes Stripe, Mistral, Bridge et Brevo exigent une session CENTRIX et ne revelent jamais les secrets au navigateur.
 
-## OpenAI
+## Mistral AI
 
 Configurer uniquement sur le serveur Vercel :
 
 ```text
-OPENAI_API_KEY
-OPENAI_MODEL=gpt-5.1
-OPENAI_PROJECT_ID
+MISTRAL_API_KEY
+MISTRAL_MODEL=mistral-large-latest
 ```
 
-Ne jamais utiliser de variable `NEXT_PUBLIC_*` pour une cle OpenAI. CENTRIX applique une authentification Supabase, un quota par utilisateur, un controle d'origine, une limite de taille, un timeout et `store: false` avant chaque appel OpenAI.
+Ne jamais utiliser de variable `NEXT_PUBLIC_*` pour une cle IA. CENTRIX applique une authentification Supabase, un quota par utilisateur, un controle d'origine, une limite de taille et un timeout avant chaque appel Mistral.
+
+## Brevo
+
+CENTRIX utilise Brevo comme fournisseur unique pour les emails applicatifs et marketing.
+
+```text
+BREVO_API_KEY
+```
+
+Les emails transactionnels applicatifs partent depuis `noreply@app-centrix.fr`. Les emails natifs Supabase Auth doivent etre configures cote Supabase si vous souhaitez les router via le SMTP Brevo.

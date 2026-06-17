@@ -137,7 +137,7 @@ function buildMistralPayload(body: Record<string, unknown>) {
   };
 }
 
-function toOpenAiCompatiblePayload(payload: AiResponsePayload) {
+function toCentrixAiPayload(payload: AiResponsePayload) {
   const content = payload.choices?.[0]?.message?.content ?? "";
   return {
     ...payload,
@@ -146,7 +146,7 @@ function toOpenAiCompatiblePayload(payload: AiResponsePayload) {
   };
 }
 
-function toOpenAiCompatibleStream(source: ReadableStream<Uint8Array>) {
+function toCentrixAiStream(source: ReadableStream<Uint8Array>) {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let buffer = "";
@@ -224,7 +224,7 @@ export async function callMistral(body: Record<string, unknown>, requestId: stri
     if (requestBody.stream && response.body) {
       return {
         ok: true as const,
-        response: new Response(toOpenAiCompatibleStream(response.body), {
+        response: new Response(toCentrixAiStream(response.body), {
           headers: response.headers,
           status: response.status,
           statusText: response.statusText
@@ -233,7 +233,7 @@ export async function callMistral(body: Record<string, unknown>, requestId: stri
     }
 
     const payload = await response.json() as AiResponsePayload;
-    return { ok: true as const, response: Response.json(toOpenAiCompatiblePayload(payload), { headers: { "Cache-Control": "no-store" } }) };
+    return { ok: true as const, response: Response.json(toCentrixAiPayload(payload), { headers: { "Cache-Control": "no-store" } }) };
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "AbortError";
     console.error("Mistral request unavailable", { requestId, timedOut });
@@ -246,10 +246,6 @@ export async function callMistral(body: Record<string, unknown>, requestId: stri
 export function extractMistralText(payload: AiResponsePayload) {
   return payload.output_text ?? payload.output?.[0]?.content?.[0]?.text ?? payload.choices?.[0]?.message?.content ?? "";
 }
-
-export const callOpenAi = callMistral;
-export const extractOpenAiText = extractMistralText;
-export const getOpenAiModel = getMistralModel;
 
 export function safeParseJsonObject(value: string) {
   try {

@@ -27,7 +27,7 @@ export default function CookiesPage() {
         {
           title: "Integrations tierces",
           body: "Certaines integrations peuvent utiliser leurs propres technologies lorsque l'utilisateur les active.",
-          items: ["Stripe", "Google", "Mistral", "Resend", "Twilio", "DocuSign", "Bridge"]
+          items: ["Stripe", "Google", "Mistral", "Brevo", "Bridge"]
         },
         {
           title: "Gestion des preferences",

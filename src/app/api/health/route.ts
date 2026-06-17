@@ -58,7 +58,7 @@ export async function GET() {
       tables,
       integrations: {
         bridge: Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET),
-        email: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
+        email: Boolean(process.env.BREVO_API_KEY),
         google: isGoogleAuthEnabled(),
         mistral: Boolean(process.env.MISTRAL_API_KEY),
         stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET)

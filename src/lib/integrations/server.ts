@@ -96,8 +96,7 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
   const hasStripe = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const hasBridge = Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET);
-  const hasEmailing = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
-  const hasSms = Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
+  const hasEmailing = Boolean(process.env.BREVO_API_KEY);
   const hasSignatures = Boolean(process.env.DOCUSIGN_ACCOUNT_ID && process.env.DOCUSIGN_ACCESS_TOKEN);
   const googleOAuth = await getGoogleOAuthStatus();
 
@@ -133,11 +132,11 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
     },
     emailing: {
       configured: hasEmailing,
-      detail: hasEmailing ? "Envoi transactionnel Resend disponible." : "Ajoutez RESEND_API_KEY et EMAIL_FROM dans Vercel."
+      detail: hasEmailing ? "Envoi transactionnel Brevo disponible." : "Ajoutez BREVO_API_KEY dans Vercel."
     },
     sms: {
-      configured: hasSms,
-      detail: hasSms ? "Envoi SMS Twilio disponible." : "Ajoutez les variables Twilio dans Vercel."
+      configured: false,
+      detail: "SMS et WhatsApp sont desactives pour cette version de CENTRIX."
     },
     signatures: {
       configured: hasSignatures,

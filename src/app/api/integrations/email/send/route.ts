@@ -6,9 +6,8 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const context = await getConnectorContext();
   if (!context) return connectorError("Session et workspace CENTRIX requis.", 401);
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) return connectorError("Configurez RESEND_API_KEY et EMAIL_FROM dans Vercel.", 503);
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return connectorError("Configurez BREVO_API_KEY dans Vercel.", 503);
 
   const body = await request.json().catch(() => null) as { to?: string; subject?: string; html?: string; text?: string } | null;
   const to = cleanText(body?.to, 320);
@@ -17,13 +16,19 @@ export async function POST(request: NextRequest) {
   const text = cleanText(body?.text, 20_000);
   if (!to || !subject || (!html && !text)) return connectorError("Destinataire, objet et contenu requis.");
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [to], subject, html: html || undefined, text: text || undefined })
+    headers: { "api-key": apiKey, "Content-Type": "application/json", accept: "application/json" },
+    body: JSON.stringify({
+      sender: { email: "noreply@app-centrix.fr", name: "CENTRIX" },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html || undefined,
+      textContent: text || undefined
+    })
   });
-  const payload = await response.json().catch(() => ({})) as { id?: string; message?: string };
-  await logConnectorDelivery(context, "resend", "email.send", response.ok ? "delivered" : "failed", to, payload.id ?? null, { subject });
-  if (!response.ok) return connectorError(payload.message ?? "Envoi email impossible.", response.status);
-  return Response.json({ ok: true, id: payload.id });
+  const payload = await response.json().catch(() => ({})) as { messageId?: string; code?: string; message?: string };
+  await logConnectorDelivery(context, "brevo", "email.send", response.ok ? "delivered" : "failed", to, payload.messageId ?? null, { subject });
+  if (!response.ok) return connectorError(payload.message ?? "Envoi email Brevo impossible.", response.status);
+  return Response.json({ ok: true, provider: "brevo", id: payload.messageId });
 }

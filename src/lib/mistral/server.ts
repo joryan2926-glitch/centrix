@@ -5,4 +5,4 @@ export {
   getMistralModel,
   safeParseJsonObject,
   sanitizeText
-} from "@/lib/openai/server";
+} from "@/lib/mistral/core";
