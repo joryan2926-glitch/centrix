@@ -23,6 +23,7 @@ import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { googleCalendarOAuthAction } from "@/app/auth/actions";
 import { fromDateTimeLocal, formatAgendaDate, formatAgendaTime, toDateTimeLocal } from "@/lib/agenda/format";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 import { buildEvent, duplicateEvent, eventStatusLabels, eventTypeLabels, filterEvents, getAgendaDashboard, hasReservationConflict, priorityTone, statusTone } from "@/services/agenda/calculations";
 import { deleteAgendaWorkflow, upsertAgendaTask, upsertAgendaWorkflow } from "@/services/agenda/supabase";
 import { useAgendaData } from "@/hooks/agenda/useAgendaData";
@@ -41,7 +42,7 @@ const AgendaCalendar = dynamic(() => import("@/components/agenda/AgendaCalendar"
   loading: () => <Skeleton className="h-[680px]" />,
   ssr: false
 });
-const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+const googleAuthEnabled = isGoogleAuthEnabled();
 
 const views = [
   { id: "calendar", label: "Calendrier", icon: CalendarDays },

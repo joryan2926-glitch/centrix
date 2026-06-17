@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,7 +58,7 @@ export async function GET() {
       tables,
       integrations: {
         email: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
-        google: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true",
+        google: isGoogleAuthEnabled(),
         openai: Boolean(process.env.OPENAI_API_KEY),
         stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET)
       }

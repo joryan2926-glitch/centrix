@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Chrome, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { CentrixLogo } from "@/components/ui";
 import { googleOAuthAction, resetPasswordAction, signInAction, signUpAction, updatePasswordAction } from "@/app/auth/actions";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 import type { AuthMode } from "@/types/auth";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Toast } from "@/ui/Toast";
 
-const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+const googleAuthEnabled = isGoogleAuthEnabled();
 
 type AuthCardProps = {
   mode: AuthMode;

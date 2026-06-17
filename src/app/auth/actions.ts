@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { ensureUserOnboarding } from "@/lib/auth/onboarding";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export type AuthActionState = {
@@ -117,7 +118,7 @@ export async function googleCalendarOAuthAction(): Promise<AuthActionState> {
 }
 
 async function startGoogleOAuth(next: string, forceCalendarConsent: boolean): Promise<AuthActionState> {
-  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+  if (!isGoogleAuthEnabled()) {
     return { ok: false, title: "Google desactive", detail: "Google OAuth est temporairement desactive dans CENTRIX." };
   }
 

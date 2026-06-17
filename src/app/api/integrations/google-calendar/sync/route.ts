@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { connectorError, getConnectorContext, logConnectorDelivery } from "@/lib/integrations/connectors";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ function googleMeetingId(workspaceId: string, eventId: string) {
 }
 
 export async function POST() {
-  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+  if (!isGoogleAuthEnabled()) {
     return connectorError("Google Calendar est temporairement desactive.", 503);
   }
 

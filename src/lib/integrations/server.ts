@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export type ExternalIntegrationStatus = {
@@ -62,7 +63,7 @@ export function getTrustedRedirectUrl(candidate: string | undefined, fallback: s
 }
 
 async function getGoogleOAuthStatus(): Promise<ExternalIntegrationStatus> {
-  if (process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED !== "true") {
+  if (!isGoogleAuthEnabled()) {
     return { configured: false, detail: "Google OAuth est temporairement desactive dans CENTRIX." };
   }
 

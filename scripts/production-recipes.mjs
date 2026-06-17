@@ -162,7 +162,7 @@ async function runIntegrationRecipes() {
   checks.push(await endpointCheck("OpenAI", `${target}/api/openai/health`, external));
   checks.push(await endpointCheck("Twilio", `${target}/api/integrations/sms/health`, external));
   checks.push(await configCheck("Resend email", ["RESEND_API_KEY", "EMAIL_FROM"]));
-  checks.push(await configCheck("Google Calendar", ["NEXT_PUBLIC_GOOGLE_AUTH_ENABLED"], { enabledValue: "true" }));
+  checks.push(await googleConfigCheck());
   checks.push(await configCheck("DocuSign", ["DOCUSIGN_ACCOUNT_ID", "DOCUSIGN_ACCESS_TOKEN"]));
   checks.push(await configCheck("Bridge banking", ["BRIDGE_CLIENT_ID", "BRIDGE_CLIENT_SECRET"]));
 
@@ -197,6 +197,20 @@ async function configCheck(name, keys, options = {}) {
     configured,
     keys: Object.fromEntries(keys.map((key) => [key, Boolean(env[key])])),
     note: configured && !enabled ? `Variable ${keys[0]} configuree mais pas activee.` : undefined
+  };
+}
+
+async function googleConfigCheck() {
+  const disabled = env.NEXT_PUBLIC_CENTRIX_DISABLE_GOOGLE_AUTH === "true";
+  return {
+    name: "Google Calendar",
+    status: disabled ? "partial" : "passed",
+    configured: !disabled,
+    keys: {
+      NEXT_PUBLIC_CENTRIX_DISABLE_GOOGLE_AUTH: Boolean(env.NEXT_PUBLIC_CENTRIX_DISABLE_GOOGLE_AUTH),
+      NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: Boolean(env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED)
+    },
+    note: disabled ? "Google OAuth est desactive par kill switch." : "Google OAuth est actif cote application."
   };
 }
 
