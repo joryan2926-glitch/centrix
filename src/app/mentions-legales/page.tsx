@@ -2,41 +2,52 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Mentions legales | CENTRIX",
-  description: "Mentions legales de la plateforme SaaS CENTRIX."
+  title: "Mentions légales | CENTRIX",
+  description: "Mentions légales de la plateforme SaaS CENTRIX éditée par L&R Solutions."
 };
 
 export default function MentionsLegalesPage() {
   return (
     <LegalPage
-      eyebrow="Informations editeur"
-      title="Mentions legales"
-      description="Cette page regroupe les informations d'identification de l'editeur de la plateforme CENTRIX, les coordonnees de contact et les informations d'hebergement."
-      updatedAt="16 juin 2026"
+      eyebrow="Informations éditeur"
+      title="Mentions légales CENTRIX"
+      description="CENTRIX est une plateforme SaaS propriétaire éditée par L&R Solutions, société actuellement en cours de constitution."
+      updatedAt="17 juin 2026"
       sections={[
         {
-          title: "Editeur du service",
-          body: "CENTRIX est une plateforme SaaS de gestion d'entreprise. Les informations societaires definitives doivent etre completees avant commercialisation.",
+          title: "Éditeur",
+          body: "CENTRIX est une plateforme SaaS propriétaire éditée par L&R Solutions, société actuellement en cours de constitution.",
           items: [
-            "Denomination : CENTRIX SAS",
-            "Siege social : a completer",
-            "SIRET : a completer",
-            "Responsable de publication : a completer",
-            "Contact : contact@app-centrix.fr"
+            "Éditeur : L&R Solutions (société en formation)",
+            "Adresse : 25 Rue Élise Gervais, 42000 Saint-Étienne, France",
+            "Année de création : 2026"
           ]
         },
         {
-          title: "Hebergement",
-          body: "La plateforme est destinee a etre hebergee sur une infrastructure cloud professionnelle avec supervision, securite applicative et sauvegardes.",
-          items: ["Hebergeur applicatif : Vercel", "Base de donnees et stockage : Supabase", "Nom de domaine : app-centrix.fr"]
+          title: "Propriété intellectuelle",
+          body: "La plateforme CENTRIX, son architecture, son interface, ses fonctionnalités, ses modules, ses bases de données, ses contenus, ses éléments graphiques, son identité visuelle, son code source, ses logos, ses marques, ses textes, ses documents et l'ensemble de ses composants sont la propriété exclusive de L&R Solutions.",
+          items: [
+            "Tous droits réservés.",
+            "Toute reproduction, diffusion, modification, extraction, copie, rétro-ingénierie, décompilation, commercialisation ou exploitation, totale ou partielle, sans autorisation écrite préalable de L&R Solutions est strictement interdite."
+          ]
         },
         {
-          title: "Propriete intellectuelle",
-          body: "L'interface, la marque, les composants, les textes, les graphismes et les fonctionnalites CENTRIX sont proteges. Toute reproduction non autorisee est interdite."
+          title: "Utilisation de la plateforme",
+          body: "CENTRIX est une solution professionnelle privée. L'accès aux services est réservé aux utilisateurs autorisés disposant d'un compte valide.",
+          items: [
+            "Toute tentative d'accès non autorisé, de contournement des mesures de sécurité, d'extraction massive de données ou de copie des fonctionnalités pourra entraîner la suspension immédiate du compte ainsi que des poursuites civiles et pénales."
+          ]
         },
         {
-          title: "Responsabilite",
-          body: "CENTRIX met a disposition des outils de pilotage et d'automatisation. L'utilisateur reste responsable de la verification juridique, fiscale, sociale et comptable des donnees produites."
+          title: "Confidentialité et données",
+          body: "Les données hébergées sur CENTRIX demeurent la propriété de leurs utilisateurs respectifs.",
+          items: [
+            "L&R Solutions met en œuvre les mesures techniques et organisationnelles nécessaires afin d'assurer la sécurité, l'intégrité et la confidentialité des données traitées sur la plateforme."
+          ]
+        },
+        {
+          title: "Droits réservés",
+          body: "© 2026 CENTRIX – Tous droits réservés. Une solution développée et exploitée par L&R Solutions. Propriété privée – Usage professionnel exclusivement autorisé dans le cadre des conditions d'utilisation de la plateforme."
         }
       ]}
     />

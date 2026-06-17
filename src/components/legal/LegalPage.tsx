@@ -17,8 +17,8 @@ type LegalPageProps = {
 };
 
 const legalLinks = [
-  { href: "/mentions-legales", label: "Mentions legales" },
-  { href: "/confidentialite", label: "Confidentialite" },
+  { href: "/mentions-legales", label: "Mentions légales" },
+  { href: "/confidentialite", label: "Confidentialité" },
   { href: "/conditions-utilisation", label: "CGU" },
   { href: "/conditions-vente", label: "CGV" },
   { href: "/cookies", label: "Cookies" }
@@ -42,7 +42,7 @@ export function LegalPage({ description, eyebrow, sections, title, updatedAt }: 
 
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[280px_1fr] lg:px-8 lg:py-14">
         <aside className="h-fit rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)] lg:sticky lg:top-6">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-600">Legal CENTRIX</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-600">Légal CENTRIX</p>
           <nav className="mt-4 grid gap-1">
             {legalLinks.map((link) => (
               <Link key={link.href} href={link.href} className="rounded-[12px] px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">
@@ -54,7 +54,7 @@ export function LegalPage({ description, eyebrow, sections, title, updatedAt }: 
             <ShieldCheck size={18} className="text-blue-200" />
             <p className="mt-3 text-sm font-bold">Documents informatifs</p>
             <p className="mt-2 text-xs leading-5 text-blue-100/72">
-              Ces pages doivent etre relues par un conseil juridique avant lancement commercial final.
+              Ces pages doivent être relues par un conseil juridique avant lancement commercial final.
             </p>
           </div>
         </aside>
@@ -65,7 +65,7 @@ export function LegalPage({ description, eyebrow, sections, title, updatedAt }: 
           </div>
           <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">{description}</p>
-          <p className="mt-5 text-sm font-semibold text-slate-500">Derniere mise a jour : {updatedAt}</p>
+          <p className="mt-5 text-sm font-semibold text-slate-500">Dernière mise à jour : {updatedAt}</p>
 
           <div className="mt-10 space-y-8">
             {sections.map((section) => (

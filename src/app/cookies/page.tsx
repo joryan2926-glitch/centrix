@@ -11,27 +11,27 @@ export default function CookiesPage() {
     <LegalPage
       eyebrow="Cookies"
       title="Politique cookies"
-      description="Cette page explique les cookies et technologies similaires susceptibles d'etre utilises par CENTRIX pour faire fonctionner, securiser et ameliorer le service."
-      updatedAt="16 juin 2026"
+      description="Cette page explique les cookies et technologies similaires susceptibles d'être utilisés par CENTRIX pour faire fonctionner, sécuriser et améliorer le service."
+      updatedAt="17 juin 2026"
       sections={[
         {
           title: "Cookies essentiels",
-          body: "Ces cookies sont necessaires au fonctionnement de la plateforme et ne peuvent pas etre desactives sans empecher l'acces au service.",
-          items: ["Session d'authentification", "Securite", "Preference de workspace", "Protection contre les abus"]
+          body: "Ces cookies sont nécessaires au fonctionnement de la plateforme et ne peuvent pas être désactivés sans empêcher l'accès au service.",
+          items: ["Session d'authentification", "Sécurité", "Préférence de workspace", "Protection contre les abus"]
         },
         {
-          title: "Mesure et amelioration",
-          body: "Des donnees techniques peuvent etre utilisees pour comprendre les performances, detecter les erreurs et ameliorer l'experience utilisateur.",
-          items: ["Erreurs applicatives", "Temps de chargement", "Evenements de navigation internes", "Usage des modules"]
+          title: "Mesure et amélioration",
+          body: "Des données techniques peuvent être utilisées pour comprendre les performances, détecter les erreurs et améliorer l'expérience utilisateur.",
+          items: ["Erreurs applicatives", "Temps de chargement", "Événements de navigation internes", "Usage des modules"]
         },
         {
-          title: "Integrations tierces",
-          body: "Certaines integrations peuvent utiliser leurs propres technologies lorsque l'utilisateur les active.",
-          items: ["Stripe", "Google", "Mistral", "Brevo", "Bridge"]
+          title: "Intégrations tierces",
+          body: "Certaines intégrations peuvent utiliser leurs propres technologies lorsque l'utilisateur les active.",
+          items: ["Stripe", "Google", "Mistral", "Brevo", "Bridge", "DocuSign"]
         },
         {
-          title: "Gestion des preferences",
-          body: "Un centre de preferences cookies pourra etre active pour permettre aux utilisateurs de gerer les traceurs non essentiels avant le lancement commercial final."
+          title: "Gestion des préférences",
+          body: "Un centre de préférences cookies pourra être activé pour permettre aux utilisateurs de gérer les traceurs non essentiels avant le lancement commercial final."
         }
       ]}
     />
