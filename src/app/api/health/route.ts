@@ -57,6 +57,7 @@ export async function GET() {
       supabase: true,
       tables,
       integrations: {
+        bridge: Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET),
         email: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
         google: isGoogleAuthEnabled(),
         openai: Boolean(process.env.OPENAI_API_KEY),

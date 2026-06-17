@@ -61,6 +61,19 @@ type Draft = {
   category: FinanceCategoryKey;
 };
 
+type BankingStatus = {
+  configured: boolean;
+  connected: boolean;
+  lastError?: string | null;
+  lastSyncedAt?: string | null;
+  status?: string;
+  summary?: {
+    accounts: number;
+    totalBalance: number;
+    transactions: number;
+  };
+};
+
 const emptyDraft: Draft = {
   label: "Nouvelle transaction",
   counterparty: "Fournisseur",
@@ -78,7 +91,7 @@ export function ComptabiliteWorkspace() {
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FinanceFilters>({ query: "", type: "all", status: "all", category: "all" });
-  const [bankingStatus, setBankingStatus] = useState<{ configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null>(null);
+  const [bankingStatus, setBankingStatus] = useState<BankingStatus | null>(null);
   const [bankingAction, setBankingAction] = useState<"connect" | "sync" | null>(null);
 
   const dashboard = useMemo(() => getFinanceDashboard(data), [data]);
@@ -119,7 +132,18 @@ export function ComptabiliteWorkspace() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Synchronisation bancaire impossible.");
       await refresh();
-      setBankingStatus((current) => ({ configured: current?.configured ?? true, connected: true, lastSyncedAt: payload.syncedAt }));
+      setBankingStatus((current) => ({
+        configured: current?.configured ?? true,
+        connected: true,
+        lastError: null,
+        lastSyncedAt: payload.syncedAt,
+        status: "connected",
+        summary: {
+          accounts: payload.accounts ?? current?.summary?.accounts ?? 0,
+          totalBalance: current?.summary?.totalBalance ?? 0,
+          transactions: payload.transactions ?? current?.summary?.transactions ?? 0
+        }
+      }));
       notify("Banque synchronisee", `${payload.accounts} compte(s) et ${payload.transactions} transaction(s) actualises.`);
     } catch (error) {
       notify("Synchronisation impossible", error instanceof Error ? error.message : "Reessayez dans un instant.");
@@ -448,7 +472,7 @@ function AccountingView({ data, dashboard }: { data: ReturnType<typeof useFinanc
 function BankingView({ action, data, status, onAddManualAccount, onConnect, onSync }: {
   action: "connect" | "sync" | null;
   data: ReturnType<typeof useFinanceData>["data"];
-  status: { configured: boolean; connected: boolean; lastSyncedAt?: string | null } | null;
+  status: BankingStatus | null;
   onAddManualAccount: () => void;
   onConnect: () => void;
   onSync: () => void;
@@ -462,6 +486,7 @@ function BankingView({ action, data, status, onAddManualAccount, onConnect, onSy
             <h2 className="mt-3 text-lg font-semibold text-white">Connexion bancaire securisee</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Bridge heberge l&apos;authentification bancaire. CENTRIX ne stocke jamais vos identifiants de banque.</p>
             {status?.lastSyncedAt ? <p className="mt-2 text-xs text-slate-500">Derniere synchronisation {formatFinanceDate(status.lastSyncedAt)}</p> : null}
+            {status?.lastError ? <p className="mt-3 rounded-[8px] border border-rose-300/20 bg-rose-400/10 p-3 text-sm text-rose-100">{status.lastError}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={onAddManualAccount}>
@@ -480,6 +505,11 @@ function BankingView({ action, data, status, onAddManualAccount, onConnect, onSy
         </div>
         {status?.configured === false ? <p className="mt-4 rounded-[8px] border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">Ajoutez BRIDGE_CLIENT_ID et BRIDGE_CLIENT_SECRET dans Vercel pour activer la connexion reelle.</p> : null}
       </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <FinanceKpiCard icon={<Landmark size={19} />} label="Comptes Bridge" value={String(status?.summary?.accounts ?? data.bankAccounts.length)} detail="Synchronises" />
+        <FinanceKpiCard icon={<Banknote size={19} />} label="Solde bancaire" value={formatFinanceCurrency(status?.summary?.totalBalance ?? data.bankAccounts.reduce((sum, account) => sum + account.balance, 0))} detail="Soldes agreges" />
+        <FinanceKpiCard icon={<ReceiptText size={19} />} label="Transactions Bridge" value={String(status?.summary?.transactions ?? data.transactions.filter((transaction) => transaction.tags.includes("Bridge")).length)} detail="Operations importees" />
+      </div>
       <div className="grid gap-4 xl:grid-cols-2">
         {data.bankAccounts.map((account) => (
           <Card key={account.id} className="p-5" interactive>

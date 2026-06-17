@@ -13,6 +13,14 @@ export async function POST() {
   try {
     return Response.json(await syncBridgeBankingData(supabase, workspace));
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "Synchronisation bancaire impossible." }, { status: 503 });
+    const message = error instanceof Error ? error.message : "Synchronisation bancaire impossible.";
+    await supabase.from("bridge_connections").upsert({
+      external_user_id: workspace.userId,
+      last_error: message,
+      status: "attention_required",
+      user_id: workspace.userId,
+      workspace_id: workspace.workspaceId
+    }, { onConflict: "workspace_id,user_id" });
+    return Response.json({ error: message }, { status: 503 });
   }
 }

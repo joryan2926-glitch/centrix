@@ -3,6 +3,7 @@ import type { WorkspaceContext } from "@/types/data-platform";
 
 const bridgeBaseUrl = "https://api.bridgeapi.io/v3";
 const bridgeVersion = "2025-01-15";
+const bridgeRequestTimeoutMs = 30_000;
 
 type BridgeRecord = Record<string, unknown>;
 
@@ -34,7 +35,8 @@ async function bridgeRequest(path: string, init: RequestInit = {}, accessToken?:
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...init.headers
     },
-    cache: "no-store"
+    cache: "no-store",
+    signal: AbortSignal.timeout(bridgeRequestTimeoutMs)
   });
 
   const payload = response.status === 204 ? null : await response.json().catch(() => null);
@@ -150,14 +152,27 @@ export async function syncBridgeBankingData(supabase: SupabaseClient, workspace:
       workspace_id: workspace.workspaceId
     };
   });
+  const expenseRows = transactionRows.filter((transaction) => transaction.type === "expense");
+  const revenueRows = transactionRows.filter((transaction) => transaction.type === "revenue");
+  const totalBalance = accountRows.reduce((sum, account) => sum + account.balance, 0);
 
   const results = await Promise.all([
     accountRows.length ? supabase.from("bank_accounts").upsert(accountRows, { onConflict: "id" }) : Promise.resolve({ error: null }),
     transactionRows.length ? supabase.from("transactions").upsert(transactionRows, { onConflict: "id" }) : Promise.resolve({ error: null }),
+    expenseRows.length ? supabase.from("expenses").upsert(expenseRows, { onConflict: "id" }) : Promise.resolve({ error: null }),
+    revenueRows.length ? supabase.from("revenues").upsert(revenueRows, { onConflict: "id" }) : Promise.resolve({ error: null }),
     supabase.from("bridge_connections").upsert({
+      accounts_count: accountRows.length,
       external_user_id: workspace.userId,
       last_synced_at: now,
+      last_error: null,
+      metadata: {
+        accountIds: accountRows.map((account) => account.id),
+        transactionIds: transactionRows.map((transaction) => transaction.id).slice(0, 50)
+      },
       status: "connected",
+      total_balance: totalBalance,
+      transactions_count: transactionRows.length,
       user_id: workspace.userId,
       workspace_id: workspace.workspaceId
     }, { onConflict: "workspace_id,user_id" })
@@ -166,6 +181,46 @@ export async function syncBridgeBankingData(supabase: SupabaseClient, workspace:
   if (error) throw new Error(error.message);
 
   return { accounts: accountRows.length, transactions: transactionRows.length, syncedAt: now };
+}
+
+export async function getBridgeBankingSummary(supabase: SupabaseClient, workspace: WorkspaceContext) {
+  const [connection, accounts, transactions] = await Promise.all([
+    supabase
+      .from("bridge_connections")
+      .select("status,last_synced_at,accounts_count,transactions_count,total_balance,last_error")
+      .eq("workspace_id", workspace.workspaceId)
+      .eq("user_id", workspace.userId)
+      .maybeSingle(),
+    supabase
+      .from("bank_accounts")
+      .select("id,balance,lastSyncAt,bankName,label,bridge_status")
+      .eq("workspace_id", workspace.workspaceId),
+    supabase
+      .from("transactions")
+      .select("id,date,amountIncludingTax,bridge_transaction_id")
+      .eq("workspace_id", workspace.workspaceId)
+      .not("bridge_transaction_id", "is", null)
+  ]);
+
+  const accountRows = accounts.data ?? [];
+  const transactionRows = transactions.data ?? [];
+  const totalBalance = accountRows.reduce((sum, account) => sum + Number(account.balance ?? 0), 0);
+  const lastSyncedAt = connection.data?.last_synced_at
+    ?? accountRows.map((account) => String(account.lastSyncAt ?? "")).filter(Boolean).sort().at(-1)
+    ?? null;
+
+  return {
+    configured: hasBridgeCredentials(),
+    connected: connection.data?.status === "connected",
+    lastError: connection.data?.last_error ?? null,
+    lastSyncedAt,
+    status: connection.data?.status ?? "disconnected",
+    summary: {
+      accounts: accountRows.length,
+      transactions: transactionRows.length,
+      totalBalance
+    }
+  };
 }
 
 async function ensureFinanceCompany(supabase: SupabaseClient, workspace: WorkspaceContext) {

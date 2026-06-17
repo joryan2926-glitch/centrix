@@ -7,7 +7,9 @@ import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 export async function GET(request: NextRequest) {
   const redirect = new URL("/comptabilite?banking=connected", request.url);
   const success = request.nextUrl.searchParams.get("success");
-  if (success !== "true") {
+  const status = request.nextUrl.searchParams.get("status");
+  const error = request.nextUrl.searchParams.get("error");
+  if (success === "false" || status === "cancelled" || error) {
     redirect.searchParams.set("banking", "cancelled");
     return NextResponse.redirect(redirect);
   }
