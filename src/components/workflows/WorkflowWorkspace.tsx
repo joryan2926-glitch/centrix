@@ -72,7 +72,7 @@ export function WorkflowWorkspace({ initialView = "dashboard" }: { initialView?:
       if (!response.ok) throw new Error(payload.error);
       notify(payload.title ?? "Suggestion IA", payload.detail ?? "Nouvelle recommandation workflow disponible.");
     } catch (error) {
-      notify("OpenAI non configure", error instanceof Error ? error.message : "Ajoutez OPENAI_API_KEY pour activer les suggestions IA.");
+      notify("Mistral non configure", error instanceof Error ? error.message : "Ajoutez MISTRAL_API_KEY pour activer les suggestions IA.");
     }
   }
 

@@ -5,7 +5,7 @@ export const aiAutomationFallbackData: AiAutomationData = {
     {
       id: "conv-board",
       title: "Synthese business hebdo",
-      model: "gpt-5.1",
+      model: "mistral-large-latest",
       tokensUsed: 1840,
       createdAt: "2026-05-24T08:00:00.000Z",
       updatedAt: "2026-05-26T09:00:00.000Z"

@@ -22,16 +22,18 @@ type AiGateFailure = {
   response: Response;
 };
 
-type OpenAiErrorPayload = {
+type AiProviderErrorPayload = {
   error?: { message?: string; type?: string };
+  message?: string;
 };
 
-export type OpenAiResponsePayload = {
+export type AiResponsePayload = {
+  choices?: Array<{ message?: { content?: string }; delta?: { content?: string } }>;
   output_text?: string;
   output?: Array<{ content?: Array<{ text?: string }> }>;
 };
 
-const OPENAI_URL = "https://api.openai.com/v1/responses";
+const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 const DEFAULT_TIMEOUT_MS = 45_000;
 
 function jsonError(error: string, status: number, requestId?: string, headers?: HeadersInit) {
@@ -47,16 +49,16 @@ function jsonError(error: string, status: number, requestId?: string, headers?: 
   );
 }
 
-function safeOpenAiError(status: number) {
+function safeAiError(status: number) {
   if (status === 400) return "La requete IA est invalide.";
-  if (status === 401 || status === 403) return "La configuration OpenAI doit etre verifiee.";
+  if (status === 401 || status === 403) return "La configuration Mistral doit etre verifiee.";
   if (status === 429) return "Le quota IA est temporairement atteint. Reessayez dans un instant.";
-  if (status >= 500) return "OpenAI est temporairement indisponible.";
+  if (status >= 500) return "Mistral est temporairement indisponible.";
   return "La generation IA a echoue.";
 }
 
-export function getOpenAiModel() {
-  return process.env.OPENAI_MODEL ?? "gpt-5.1";
+export function getMistralModel() {
+  return process.env.MISTRAL_MODEL ?? "mistral-large-latest";
 }
 
 export async function gateAiRequest(request: NextRequest, options: AiGateOptions): Promise<AiGateSuccess | AiGateFailure> {
@@ -102,10 +104,92 @@ export async function gateAiRequest(request: NextRequest, options: AiGateOptions
   return { ok: true, requestId, user };
 }
 
-export async function callOpenAi(body: Record<string, unknown>, requestId: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
-  const apiKey = process.env.OPENAI_API_KEY;
+function normalizeInputToMessages(body: Record<string, unknown>) {
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [];
+  const instructions = sanitizeText(body.instructions, 8_000);
+  if (instructions) messages.push({ role: "system", content: instructions });
+
+  const input = body.input;
+  if (typeof input === "string") {
+    messages.push({ role: "user", content: sanitizeText(input, 16_000) });
+  } else if (Array.isArray(input)) {
+    for (const item of input) {
+      if (!item || typeof item !== "object") continue;
+      const role = "role" in item ? String(item.role) : "user";
+      if (role !== "system" && role !== "user" && role !== "assistant") continue;
+      const content = sanitizeText("content" in item ? item.content : "", 16_000);
+      if (content) messages.push({ role, content });
+    }
+  }
+
+  return messages.length ? messages : [{ role: "user" as const, content: "Reponds de facon concise." }];
+}
+
+function buildMistralPayload(body: Record<string, unknown>) {
+  const text = body.text && typeof body.text === "object" ? body.text as { format?: { type?: string } } : null;
+  return {
+    max_tokens: Number(body.max_output_tokens ?? 900),
+    messages: normalizeInputToMessages(body),
+    model: String(body.model ?? getMistralModel()),
+    response_format: text?.format?.type === "json_object" ? { type: "json_object" } : undefined,
+    stream: Boolean(body.stream),
+    temperature: Number(body.temperature ?? 0.3)
+  };
+}
+
+function toOpenAiCompatiblePayload(payload: AiResponsePayload) {
+  const content = payload.choices?.[0]?.message?.content ?? "";
+  return {
+    ...payload,
+    output_text: content,
+    output: [{ content: [{ text: content }] }]
+  };
+}
+
+function toOpenAiCompatibleStream(source: ReadableStream<Uint8Array>) {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = "";
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = source.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const raw = line.slice(6).trim();
+            if (!raw) continue;
+            if (raw === "[DONE]") {
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              continue;
+            }
+
+            const event = JSON.parse(raw) as AiResponsePayload;
+            const delta = event.choices?.[0]?.delta?.content ?? "";
+            if (delta) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "response.output_text.delta", delta })}\n\n`));
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+        controller.close();
+      }
+    }
+  });
+}
+
+export async function callMistral(body: Record<string, unknown>, requestId: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) {
-    return { ok: false as const, response: jsonError("OPENAI_API_KEY manquante cote serveur.", 503, requestId) };
+    return { ok: false as const, response: jsonError("MISTRAL_API_KEY manquante cote serveur.", 503, requestId) };
   }
 
   const controller = new AbortController();
@@ -115,40 +199,57 @@ export async function callOpenAi(body: Record<string, unknown>, requestId: strin
     "Content-Type": "application/json",
     "X-Client-Request-Id": requestId
   };
-  if (process.env.OPENAI_PROJECT_ID) headers["OpenAI-Project"] = process.env.OPENAI_PROJECT_ID;
 
   try {
-    const response = await fetch(OPENAI_URL, {
+    const requestBody = buildMistralPayload(body);
+    const response = await fetch(MISTRAL_URL, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
       cache: "no-store",
       signal: controller.signal
     });
 
     if (!response.ok) {
-      const payload = await response.json().catch(() => null) as OpenAiErrorPayload | null;
-      console.error("OpenAI request failed", {
+      const payload = await response.json().catch(() => null) as AiProviderErrorPayload | null;
+      console.error("Mistral request failed", {
         requestId,
         status: response.status,
-        type: payload?.error?.type
+        type: payload?.error?.type,
+        message: payload?.message
       });
-      return { ok: false as const, response: jsonError(safeOpenAiError(response.status), response.status, requestId) };
+      return { ok: false as const, response: jsonError(safeAiError(response.status), response.status, requestId) };
     }
 
-    return { ok: true as const, response };
+    if (requestBody.stream && response.body) {
+      return {
+        ok: true as const,
+        response: new Response(toOpenAiCompatibleStream(response.body), {
+          headers: response.headers,
+          status: response.status,
+          statusText: response.statusText
+        })
+      };
+    }
+
+    const payload = await response.json() as AiResponsePayload;
+    return { ok: true as const, response: Response.json(toOpenAiCompatiblePayload(payload), { headers: { "Cache-Control": "no-store" } }) };
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "AbortError";
-    console.error("OpenAI request unavailable", { requestId, timedOut });
-    return { ok: false as const, response: jsonError(timedOut ? "La generation IA a expire." : "OpenAI est indisponible.", timedOut ? 504 : 502, requestId) };
+    console.error("Mistral request unavailable", { requestId, timedOut });
+    return { ok: false as const, response: jsonError(timedOut ? "La generation IA a expire." : "Mistral est indisponible.", timedOut ? 504 : 502, requestId) };
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export function extractOpenAiText(payload: OpenAiResponsePayload) {
-  return payload.output_text ?? payload.output?.[0]?.content?.[0]?.text ?? "";
+export function extractMistralText(payload: AiResponsePayload) {
+  return payload.output_text ?? payload.output?.[0]?.content?.[0]?.text ?? payload.choices?.[0]?.message?.content ?? "";
 }
+
+export const callOpenAi = callMistral;
+export const extractOpenAiText = extractMistralText;
+export const getOpenAiModel = getMistralModel;
 
 export function safeParseJsonObject(value: string) {
   try {

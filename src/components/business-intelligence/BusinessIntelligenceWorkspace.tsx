@@ -83,7 +83,7 @@ export function BusinessIntelligenceWorkspace({ initialView = "dashboard" }: { i
         ]
       }), { title: "Rapport IA genere", detail: "Insight analytics ajoute au dashboard." });
     } catch (error) {
-      notify("OpenAI non configure", error instanceof Error ? error.message : "Ajoutez OPENAI_API_KEY pour activer les insights IA.");
+      notify("Mistral non configure", error instanceof Error ? error.message : "Ajoutez MISTRAL_API_KEY pour activer les insights IA.");
     } finally {
       setGenerating(false);
     }

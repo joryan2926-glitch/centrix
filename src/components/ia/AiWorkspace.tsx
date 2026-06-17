@@ -140,7 +140,7 @@ export function AiWorkspace() {
       const assistantMessage = createMessage(
         conversation.id,
         "assistant",
-        answer || "Mode demo: connectez OPENAI_API_KEY pour obtenir une reponse business en streaming."
+        answer || "Mode demo: connectez MISTRAL_API_KEY pour obtenir une reponse business en streaming."
       );
       mutate(
         (current) => ({
@@ -156,7 +156,7 @@ export function AiWorkspace() {
       );
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Generation indisponible.";
-      const fallback = createMessage(conversation.id, "assistant", `Mode securise: ${detail} Configurez OPENAI_API_KEY pour activer le streaming OpenAI.`);
+      const fallback = createMessage(conversation.id, "assistant", `Mode securise: ${detail} Configurez MISTRAL_API_KEY pour activer le streaming Mistral.`);
       mutate((current) => ({ ...current, messages: [...current.messages, fallback] }));
       notify("IA en mode fallback", detail);
     } finally {

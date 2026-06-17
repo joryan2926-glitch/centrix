@@ -159,7 +159,7 @@ async function verifyPermissions() {
 async function runIntegrationRecipes() {
   const checks = [];
   checks.push(await endpointCheck("Stripe billing", `${target}/api/stripe/health`, external, true));
-  checks.push(await endpointCheck("OpenAI", `${target}/api/openai/health`, external));
+  checks.push(await endpointCheck("Mistral AI", `${target}/api/mistral/health`, external));
   checks.push(await endpointCheck("Twilio", `${target}/api/integrations/sms/health`, external));
   checks.push(await configCheck("Resend email", ["RESEND_API_KEY", "EMAIL_FROM"]));
   checks.push(await googleConfigCheck());
@@ -341,7 +341,7 @@ async function academyCrud({ workspaceId }) {
 async function aiWorkflowsCrud({ workspaceId, userId }) {
   const workflow = await insert("workflows", { workspace_id: workspaceId, name: `${marker} workflow`, description: "Recette workflow", status: "draft", trigger_type: "manual", steps: [], created_by: userId, metadata: { module: "workflows", marker } });
   await update("workflows", workflow.id, { status: "active" });
-  const conversation = await insert("ai_conversations", { id: rid("conv"), workspace_id: workspaceId, title: `${marker} conversation`, model: "gpt-5.1", tokensUsed: 0 });
+  const conversation = await insert("ai_conversations", { id: rid("conv"), workspace_id: workspaceId, title: `${marker} conversation`, model: "mistral-large-latest", tokensUsed: 0 });
   await insert("ai_messages", { id: rid("msg"), workspace_id: workspaceId, conversationId: conversation.id, role: "user", content: "Recette IA", tokens: 2 });
   return { workflow: workflow.id, conversation: conversation.id };
 }

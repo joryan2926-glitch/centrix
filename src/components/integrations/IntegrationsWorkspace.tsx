@@ -259,7 +259,7 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
 function ExternalStatusGrid({ status }: { status: ExternalIntegrationsStatus | null }) {
   const providers = [
     { key: "supabase", label: "Supabase Cloud", icon: <Server size={18} /> },
-    { key: "openai", label: "OpenAI", icon: <Bot size={18} /> },
+    { key: "mistral", label: "Mistral AI", icon: <Bot size={18} /> },
     { key: "stripe", label: "Stripe Billing", icon: <CreditCard size={18} /> },
     { key: "stripeWebhook", label: "Stripe Webhooks", icon: <Webhook size={18} /> },
     { key: "stripeConnect", label: "Stripe Connect", icon: <PlugZap size={18} /> },

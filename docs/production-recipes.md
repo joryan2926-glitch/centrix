@@ -22,7 +22,7 @@ npm run recette:prod:external
 Ajoute les diagnostics providers :
 
 - Stripe Billing health
-- OpenAI health
+- Mistral health
 - Twilio health
 
 Les envois reels restent des actions explicites :
@@ -59,11 +59,11 @@ La recette CRUD couvre :
 Dernier diagnostic externe :
 
 - Stripe : prix live OK, abonnements mensuels OK, webhook configure mais il manque `customer.subscription.created`.
-- OpenAI : cle configuree, endpoint joignable, mais l'API retourne `429`.
+- Mistral : cle configuree via `MISTRAL_API_KEY`, endpoint IA joignable selon quota provider.
 - Twilio : SID/token configures, mais Twilio retourne `20003` et aucun `TWILIO_FROM_NUMBER` actif.
-- Google Calendar : desactive via `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`.
+- Google Calendar : actif cote application, reconnecter les utilisateurs pour le scope Calendar si besoin.
 - DocuSign : en attente de configuration.
-- Bridge banking : en attente de configuration.
+- Bridge banking : configure via Vercel lorsque `BRIDGE_CLIENT_ID` et `BRIDGE_CLIENT_SECRET` sont presents.
 
 ## Conditions Pour Passer En Vert Total
 
@@ -71,9 +71,9 @@ Stripe :
 
 - Ajouter `customer.subscription.created` dans les evenements du webhook production `/api/stripe/webhook`.
 
-OpenAI :
+Mistral :
 
-- Verifier quota/billing/rate limit de la cle `OPENAI_API_KEY`.
+- Verifier quota/billing/rate limit de la cle `MISTRAL_API_KEY`.
 - Relancer `npm run recette:prod:external`.
 
 Twilio :
@@ -84,7 +84,6 @@ Twilio :
 
 Google Calendar :
 
-- Activer `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true`.
 - Reconnecter les utilisateurs Google avec le scope Calendar.
 
 DocuSign :

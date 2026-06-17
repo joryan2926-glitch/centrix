@@ -15,7 +15,7 @@ Environnement : production `https://app-centrix.fr`
 | Supabase et tables essentielles | Conforme |
 | Isolation workspace et RLS | Presente dans les migrations, recette authentifiee a finaliser |
 | Stripe Billing | Partiel, prix valides mais webhook incomplet |
-| OpenAI | Bloque par quota API 429 |
+| Mistral | Configure via MISTRAL_API_KEY |
 | Google Calendar | Desactive |
 | SMS et signature electronique | Non configures |
 
@@ -40,7 +40,7 @@ Environnement : production `https://app-centrix.fr`
 | Marketing digital | A recetter avec compte QA | Campagnes et donnees marketing connectees. Envoi et automatisations externes a valider avec les fournisseurs. |
 | Reseaux sociaux | Partiel | Moteur de publication et migration dediee disponibles. Tokens des plateformes requis; TikTok et YouTube ne sont pas finalises. |
 | Automatisations et workflows | A recetter avec compte QA | CRUD, historique et suggestion IA disponibles. Les executions vers des fournisseurs externes dependent de leurs configurations. |
-| IA Business et BI predictive | Bloque externe | Endpoints proteges et architecture disponibles. OpenAI retourne actuellement HTTP 429. |
+| IA Business et BI predictive | Actif selon quota provider | Endpoints proteges et architecture disponibles avec Mistral. |
 | Documents et cloud | Partiel | Supabase Storage et metadonnees disponibles. Apercu PDF, OCR et signature avancee restent a finaliser. |
 | Juridique et creation d'entreprise | Partiel | CRUD et parcours disponibles. Generation/signature/depot officiel ne constituent pas encore une teleprocedure juridique certifiee. |
 | Support et portail client | A recetter avec compte QA | Tables, tickets, messages et portail disponibles. Recette croisee entreprise/client requise. |
@@ -63,14 +63,13 @@ Environnement : production `https://app-centrix.fr`
 - APIs IA, workflows, BI, donnees, operations et Stripe sans session : reponse 401
 - `/api/health` : `ready: true`
 - `/api/stripe/health` : quatre Price IDs valides, endpoint global non pret a cause du webhook incomplet
-- `/api/openai/health` : configuration presente, quota API indisponible
+- `/api/mistral/health` : configuration Mistral presente si `MISTRAL_API_KEY` est defini
 
 ## Conditions avant validation premiers clients
 
 1. Creer un compte QA admin, un compte manager et un compte client.
 2. Executer les scenarios CRUD authentifies et verifier l'isolation entre deux workspaces.
 3. Ajouter `customer.subscription.created` au webhook Stripe et tester un paiement complet.
-4. Recharger le quota OpenAI puis tester IA, BI et workflows.
+4. Verifier le quota Mistral puis tester IA, BI et workflows.
 5. Reconnecter Google Calendar lorsque l'integration doit etre activee.
 6. Configurer et recetter les fournisseurs sociaux, SMS, signature et banque selon les besoins commerciaux.
-

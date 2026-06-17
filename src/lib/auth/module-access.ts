@@ -58,6 +58,7 @@ const routePermissions: Array<[string, string]> = [
   ["/predictive-ai", "analytics"],
   ["/notifications", "notifications"]
   ,["/api/ia", "ai"]
+  ,["/api/mistral", "ai"]
   ,["/api/openai", "ai"]
   ,["/api/workflows", "workflows"]
   ,["/api/social", "marketing"]

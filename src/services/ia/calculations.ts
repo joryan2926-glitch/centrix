@@ -47,7 +47,7 @@ export function createConversation(title: string): AiConversation {
   return {
     id: `conv-${crypto.randomUUID()}`,
     title,
-    model: "gpt-5.1",
+    model: "mistral-large-latest",
     tokensUsed: 0,
     createdAt: now,
     updatedAt: now

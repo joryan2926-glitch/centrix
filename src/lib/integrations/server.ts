@@ -10,7 +10,7 @@ export type ExternalIntegrationStatus = {
 
 export type ExternalIntegrationsStatus = {
   supabase: ExternalIntegrationStatus;
-  openai: ExternalIntegrationStatus;
+  mistral: ExternalIntegrationStatus;
   stripe: ExternalIntegrationStatus;
   stripeWebhook: ExternalIntegrationStatus;
   stripeConnect: ExternalIntegrationStatus;
@@ -92,7 +92,7 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   );
-  const hasOpenAi = Boolean(process.env.OPENAI_API_KEY);
+  const hasMistral = Boolean(process.env.MISTRAL_API_KEY);
   const hasStripe = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
   const hasBridge = Boolean(process.env.BRIDGE_CLIENT_ID && process.env.BRIDGE_CLIENT_SECRET);
@@ -106,9 +106,9 @@ export async function getExternalIntegrationsStatus(): Promise<ExternalIntegrati
       configured: hasSupabase,
       detail: hasSupabase ? "Base, Auth et Realtime disponibles." : "Variables Supabase manquantes."
     },
-    openai: {
-      configured: hasOpenAi,
-      detail: hasOpenAi ? `Modele ${process.env.OPENAI_MODEL ?? "gpt-5.1"} configure.` : "Ajoutez OPENAI_API_KEY dans Vercel."
+    mistral: {
+      configured: hasMistral,
+      detail: hasMistral ? `Modele ${process.env.MISTRAL_MODEL ?? "mistral-large-latest"} configure.` : "Ajoutez MISTRAL_API_KEY dans Vercel."
     },
     stripe: {
       configured: hasStripe,

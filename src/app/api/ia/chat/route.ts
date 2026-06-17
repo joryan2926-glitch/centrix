@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { callOpenAi, gateAiRequest, getOpenAiModel, sanitizeText } from "@/lib/openai/server";
+import { callMistral, gateAiRequest, getMistralModel, sanitizeText } from "@/lib/mistral/server";
 
 export const runtime = "nodejs";
 
@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Conversation trop volumineuse. Reduisez le contexte." }, { status: 413 });
   }
 
-  const result = await callOpenAi({
-    model: getOpenAiModel(),
+  const result = await callMistral({
+    model: getMistralModel(),
     stream: true,
     store: false,
     instructions: systemPrompt,
