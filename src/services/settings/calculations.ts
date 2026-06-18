@@ -1,10 +1,10 @@
 import type { ActivityLog, AdminNotification, AdminRole, ModuleKey, SettingsData, UserRole } from "@/types/settings";
 
 export const roleLabels: Record<AdminRole, string> = {
-  super_admin: "Super admin",
-  admin: "Admin",
-  manager: "Manager",
-  employee: "Employe",
+  super_admin: "Administrateur CENTRIX",
+  admin: "Responsable d'entreprise",
+  manager: "Responsable d'equipe",
+  employee: "Collaborateur",
   guest: "Invite"
 };
 
@@ -27,7 +27,7 @@ export function getAdminDashboard(data: SettingsData) {
   const activeSubscriptions = data.subscriptions.filter((subscription) => subscription.status === "active" || subscription.status === "trialing").length;
   const userConnections = data.securityLogs.filter((log) => log.event === "login").length;
   const securityWarnings = data.securityLogs.filter((log) => log.severity === "warning").length;
-  const storageUsed = 35600000000;
+  const storageUsed = 0;
 
   return {
     activeUsers,
@@ -36,7 +36,7 @@ export function getAdminDashboard(data: SettingsData) {
     activeSubscriptions,
     recentActivities: data.activityLogs.length,
     userConnections,
-    securityScore: Math.max(72, 98 - securityWarnings * 8)
+    securityScore: data.securityLogs.length ? Math.max(0, 100 - securityWarnings * 8) : 0
   };
 }
 

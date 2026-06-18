@@ -27,7 +27,7 @@ function RoleDenied({ moduleKey }: { moduleKey: string }) {
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-rose-50 text-rose-600"><LockKeyhole size={24} /></div>
       <h1 className="mt-5 text-2xl font-black text-slate-950">Acces reserve</h1>
       <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-        Votre role ne permet pas d&apos;ouvrir le module <strong>{moduleKey}</strong>. Demandez un acces workspace admin si necessaire.
+        Votre profil CENTRIX ne permet pas d&apos;ouvrir le module <strong>{moduleKey}</strong>. Demandez un acces responsable d&apos;entreprise si necessaire.
       </p>
       <Link className="mt-6 inline-block" href="/dashboard"><Button variant="primary">Retour au dashboard</Button></Link>
     </Card>

@@ -128,7 +128,7 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
       <Card className="p-5 sm:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <Badge tone="violet">Admin control plane</Badge>
+            <Badge tone="violet">Pilotage entreprise</Badge>
             <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">Parametres & Administration</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
               Console SaaS enterprise pour gerer comptes, utilisateurs, securite, entreprise, abonnement, modules, notifications et audit systeme.

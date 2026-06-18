@@ -118,11 +118,11 @@ export function AdminWorkspace() {
       <Card className="p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <Badge tone="cyan">SUPER_ADMIN uniquement</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Portail administration CENTRIX</h1>
+            <Badge tone="cyan">Administrateur CENTRIX</Badge>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Portail interne CENTRIX</h1>
             <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-              Espace separe pour administrer la plateforme CENTRIX au niveau global. Les administrateurs workspace restent
-              limites a leur entreprise, leurs equipes et leurs parametres.
+              Espace reserve a L&amp;R Solutions pour piloter la plateforme globale. Les responsables d&apos;entreprise gerent
+              uniquement leur organisation depuis le portail entreprise.
             </p>
           </div>
           <div className="grid h-14 w-14 place-items-center rounded-[18px] border border-blue-200 bg-blue-50 text-blue-700 shadow-[0_14px_40px_rgba(37,99,235,0.14)]">
@@ -142,7 +142,7 @@ export function AdminWorkspace() {
                     <Icon size={20} />
                   </div>
                   <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-                    Admin
+                    Interne
                   </span>
                 </div>
                 <h2 className="mt-5 text-lg font-black text-slate-950">{section.title}</h2>
@@ -159,8 +159,8 @@ export function AdminWorkspace() {
             <Workflow size={18} />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-950">Couverture RBAC active</h2>
-            <p className="text-sm font-semibold text-slate-600">Les menus et routes sont filtres automatiquement par role.</p>
+            <h2 className="text-lg font-black text-slate-950">Experiences CENTRIX actives</h2>
+            <p className="text-sm font-semibold text-slate-600">Les portails sont adaptes automatiquement au profil connecte.</p>
           </div>
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-2">

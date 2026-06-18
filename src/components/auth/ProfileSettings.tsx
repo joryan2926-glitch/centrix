@@ -104,12 +104,12 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
             <div className="flex items-center gap-3">
               <ShieldCheck size={22} className="text-emerald-600" />
               <div>
-                <h2 className="text-lg font-black text-slate-950">Role & abonnement</h2>
+                <h2 className="text-lg font-black text-slate-950">Profil & abonnement</h2>
                 <p className="text-sm text-slate-500">Acces courant</p>
               </div>
             </div>
             <div className="mt-5 grid gap-3">
-              <Info label="Role" value={profile.role} />
+              <Info label="Profil" value={profile.role} />
               <Info label="Abonnement" value={profile.abonnement} />
             </div>
           </Card>

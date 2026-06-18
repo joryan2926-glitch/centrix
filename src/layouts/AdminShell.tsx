@@ -18,7 +18,7 @@ const adminNavigation = [
   { label: "Vue globale", href: "/admin", icon: Home },
   { label: "Utilisateurs", href: "/operations/users", icon: Users },
   { label: "Workspaces", href: "/multi-entreprises", icon: Building2 },
-  { label: "Roles & acces", href: "/permissions", icon: ShieldCheck },
+  { label: "Responsabilites & acces", href: "/permissions", icon: ShieldCheck },
   { label: "Abonnements", href: "/subscriptions", icon: CreditCard },
   { label: "Support global", href: "/support", icon: Headphones },
   { label: "Integrations", href: "/integrations", icon: GitBranch },
@@ -45,8 +45,8 @@ export function AdminShell({ children }: AdminShellProps) {
           </Link>
 
           <div className="mt-6 rounded-[18px] border border-blue-300/15 bg-blue-500/10 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">Equipe CENTRIX</p>
-            <p className="mt-2 truncate text-sm font-black text-white">{profile?.fullName ?? "Super Admin"}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">Equipe CENTRIX</p>
+              <p className="mt-2 truncate text-sm font-black text-white">{profile?.fullName ?? "Administrateur CENTRIX"}</p>
             <p className="mt-1 text-xs font-semibold text-blue-100/70">Portail interne separe de l&apos;espace client</p>
           </div>
 
@@ -99,7 +99,7 @@ export function AdminShell({ children }: AdminShellProps) {
           <div className="flex min-h-12 items-center justify-between gap-4">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">Portail administrateur CENTRIX</p>
-              <h1 className="mt-1 text-lg font-black text-white">Gestion globale plateforme</h1>
+              <h1 className="mt-1 text-lg font-black text-white">Pilotage interne L&amp;R Solutions</h1>
             </div>
             <div className="flex items-center gap-2">
               <Link className="hidden rounded-[11px] border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-bold text-blue-100 transition hover:bg-white/[0.10] sm:inline-flex" href="/dashboard">

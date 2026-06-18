@@ -35,7 +35,7 @@ async function getContext(context: { params: Promise<{ table: string }> }) {
     return {
       table,
       error: Response.json({
-        error: "Role insuffisant pour ce module.",
+        error: "Profil insuffisant pour ce module.",
         module: moduleKey,
         table
       }, { status: 403 })

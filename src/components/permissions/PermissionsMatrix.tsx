@@ -15,9 +15,9 @@ import { Toast } from "@/ui/Toast";
 
 const roleLabels: Record<ConfigurablePermissionRole, string> = {
   client: "Client",
-  employee: "Employe",
-  manager: "Manager",
-  user: "User"
+  employee: "Collaborateur",
+  manager: "Responsable d'entreprise",
+  user: "Utilisateur"
 };
 const actions = [
   ["can_read", "Lecture"],
@@ -121,7 +121,7 @@ export function PermissionsMatrix() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm font-semibold text-slate-500"><span>Les administrateurs conservent tous les droits.</span><span className="flex items-center gap-2"><Save size={15} /> Sauvegarde cloud immediate</span></div>
+        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm font-semibold text-slate-500"><span>Les responsables d&apos;entreprise conservent les droits de pilotage.</span><span className="flex items-center gap-2"><Save size={15} /> Sauvegarde cloud immediate</span></div>
       </Card>
     </div>
   );

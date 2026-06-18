@@ -1,4 +1,11 @@
 export type CentrixRole = "SUPER_ADMIN" | "WORKSPACE_ADMIN" | "USER";
+export type CentrixExperience = "centrix_admin" | "company_owner" | "collaborator";
+
+export const centrixExperienceLabels: Record<CentrixExperience, string> = {
+  centrix_admin: "Administrateur CENTRIX",
+  collaborator: "Collaborateur",
+  company_owner: "Responsable d'entreprise"
+};
 
 export function normalizeRole(role?: string | null): CentrixRole {
   const value = String(role ?? "user").toLowerCase();
@@ -9,6 +16,17 @@ export function normalizeRole(role?: string | null): CentrixRole {
 
 export function canAccessAdminPortal(role?: string | null) {
   return normalizeRole(role) === "SUPER_ADMIN";
+}
+
+export function getCentrixExperience(role?: string | null): CentrixExperience {
+  const normalized = normalizeRole(role);
+  if (normalized === "SUPER_ADMIN") return "centrix_admin";
+  if (normalized === "WORKSPACE_ADMIN") return "company_owner";
+  return "collaborator";
+}
+
+export function getCentrixExperienceLabel(role?: string | null) {
+  return centrixExperienceLabels[getCentrixExperience(role)];
 }
 
 export function canManageWorkspace(role?: string | null) {

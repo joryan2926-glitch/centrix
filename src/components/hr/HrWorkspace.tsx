@@ -562,7 +562,7 @@ function EmployeeDetail({
             <Input label="Email" value={employee.email} onChange={(value) => updateEmployee(employee.id, { email: value })} />
             <Input label="Telephone" value={employee.phone} onChange={(value) => updateEmployee(employee.id, { phone: value })} />
             <Input label="Role" value={employee.role} onChange={(value) => updateEmployee(employee.id, { role: value })} />
-            <Input label="Manager" value={employee.manager} onChange={(value) => updateEmployee(employee.id, { manager: value })} />
+            <Input label="Responsable" value={employee.manager} onChange={(value) => updateEmployee(employee.id, { manager: value })} />
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-xs text-slate-500">Departement</span>

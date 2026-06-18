@@ -94,9 +94,9 @@ export function AppShell({ children }: AppShellProps) {
 
   const userMenuItems = [
     { label: "Mon profil", href: "/profile", icon: UserRound },
-    ...(canOpenAdmin ? [{ label: "Admin CENTRIX", href: "/admin", icon: Settings }] : []),
+    ...(canOpenAdmin ? [{ label: "Portail CENTRIX", href: "/admin", icon: Settings }] : []),
     ...(canOpenWorkspaceAdmin ? [
-      { label: "Admin entreprise", href: "/workspace-admin", icon: ShieldCheck },
+      { label: "Portail entreprise", href: "/workspace-admin", icon: ShieldCheck },
       { label: "Mon abonnement", href: "/subscriptions", icon: CreditCard },
       { label: "Mon équipe", href: "/operations/users", icon: Users },
       { label: "Paramètres", href: "/settings", icon: Settings },

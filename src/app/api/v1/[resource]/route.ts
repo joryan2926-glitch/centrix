@@ -1,31 +1,20 @@
 import type { NextRequest } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
-const resources: Record<string, Array<Record<string, string | number | boolean>>> = {
-  crm: [
-    { id: "lead-1", name: "Nova Atlas", status: "qualified", amount: 42000 },
-    { id: "lead-2", name: "Blue Market", status: "proposal", amount: 18000 }
-  ],
-  billing: [
-    { id: "inv-1", number: "INV-2048", status: "paid", amount: 2490 },
-    { id: "inv-2", number: "INV-2049", status: "pending", amount: 1490 }
-  ],
-  hr: [
-    { id: "emp-1", name: "Lea Martin", role: "Admin", active: true }
-  ],
-  agenda: [
-    { id: "evt-1", title: "Comite revenus", status: "confirmed" }
-  ],
-  marketing: [
-    { id: "camp-1", name: "Launch Q3", leads: 184 }
-  ],
-  analytics: [
-    { id: "metric-1", name: "MRR", value: 946000 }
-  ],
-  support: [
-    { id: "ticket-1", title: "Erreur synchronisation", priority: "urgent" }
-  ]
+const resourceTables: Record<string, string> = {
+  agenda: "calendar_events",
+  analytics: "analytics",
+  billing: "invoices",
+  clients: "clients",
+  crm: "prospects",
+  documents: "documents",
+  hr: "employees",
+  marketing: "marketing_campaigns",
+  projects: "projects",
+  support: "support_tickets",
+  tasks: "tasks"
 };
 
 export async function GET(request: NextRequest, context: { params: Promise<{ resource: string }> }) {
@@ -35,15 +24,37 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
   }
 
   const { resource } = await context.params;
-  const data = resources[resource];
-  if (!data) {
-    return Response.json({ error: "Ressource API inconnue.", available: Object.keys(resources) }, { status: 404 });
+  const table = resourceTables[resource];
+  if (!table) {
+    return Response.json({ error: "Ressource API inconnue.", available: Object.keys(resourceTables) }, { status: 404 });
+  }
+
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    return Response.json({ error: "Supabase non configure.", data: [] }, { status: 503 });
+  }
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) {
+    return Response.json({ error: "Session Supabase requise." }, { status: 401 });
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("workspace_id").eq("id", authData.user.id).maybeSingle<{ workspace_id: string | null }>();
+  if (!profile?.workspace_id) {
+    return Response.json({ error: "Workspace introuvable." }, { status: 403 });
   }
 
   const searchParams = request.nextUrl.searchParams;
   const limit = Math.min(Number(searchParams.get("limit") ?? 25), 100);
   const query = searchParams.get("q")?.toLowerCase() ?? "";
-  const filtered = query ? data.filter((item) => JSON.stringify(item).toLowerCase().includes(query)) : data;
+  const requestQuery = supabase.from(table).select("*").eq("workspace_id", profile.workspace_id).limit(limit);
+
+  const { data, error } = await requestQuery;
+  if (error) {
+    return Response.json({ error: error.message, data: [] }, { status: 200 });
+  }
+
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const filtered = query ? rows.filter((item) => JSON.stringify(item).toLowerCase().includes(query)) : rows;
 
   return Response.json({
     object: "list",
@@ -61,10 +72,30 @@ export async function POST(request: NextRequest, context: { params: Promise<{ re
   }
 
   const { resource } = await context.params;
-  if (!resources[resource]) {
-    return Response.json({ error: "Ressource API inconnue.", available: Object.keys(resources) }, { status: 404 });
+  const table = resourceTables[resource];
+  if (!table) {
+    return Response.json({ error: "Ressource API inconnue.", available: Object.keys(resourceTables) }, { status: 404 });
+  }
+
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    return Response.json({ error: "Supabase non configure." }, { status: 503 });
+  }
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) {
+    return Response.json({ error: "Session Supabase requise." }, { status: 401 });
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("workspace_id").eq("id", authData.user.id).maybeSingle<{ workspace_id: string | null }>();
+  if (!profile?.workspace_id) {
+    return Response.json({ error: "Workspace introuvable." }, { status: 403 });
   }
 
   const body = await request.json().catch(() => ({}));
-  return Response.json({ object: resource, id: `${resource}-${crypto.randomUUID()}`, ...body }, { status: 201 });
+  const { data, error } = await supabase.from(table).insert({ ...body, workspace_id: profile.workspace_id }).select("*").single();
+  if (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
+
+  return Response.json({ object: resource, data }, { status: 201 });
 }

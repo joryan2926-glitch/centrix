@@ -1,4 +1,5 @@
 import { ProfileSettings } from "@/components/auth/ProfileSettings";
+import { getCentrixExperienceLabel } from "@/lib/auth/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export default async function ProfilePage() {
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
         entreprise: workspace?.name ?? "",
         nom: profile?.full_name ?? user?.user_metadata?.name ?? user?.email ?? "",
         preferences: { notifications: true, weeklyDigest: true },
-        role: profile?.role ?? "user"
+        role: getCentrixExperienceLabel(profile?.role ?? "user")
       }}
     />
   );

@@ -36,10 +36,10 @@ type View = (typeof views)[number]["id"];
 type CompanyDraft = Pick<EnterpriseCompany, "name" | "siret" | "vatNumber" | "address" | "iban" | "industry">;
 
 const roleLabels: Record<EnterpriseRole, string> = {
-  super_admin: "Super admin",
-  company_admin: "Admin entreprise",
-  manager: "Manager",
-  employee: "Employe",
+  super_admin: "Administrateur CENTRIX",
+  company_admin: "Responsable d'entreprise",
+  manager: "Responsable d'equipe",
+  employee: "Collaborateur",
   viewer: "Lecture seule"
 };
 

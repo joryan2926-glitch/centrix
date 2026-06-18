@@ -176,7 +176,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
     icon: Settings,
     label: "Parametres",
     items: [
-      { label: "Administration entreprise", href: "/workspace-admin", icon: ShieldCheck, moduleKey: "settings" },
+      { label: "Portail entreprise", href: "/workspace-admin", icon: ShieldCheck, moduleKey: "settings" },
       { label: "Parametres", href: "/settings", icon: Settings, moduleKey: "settings" },
       { label: "Entreprise", href: "/entreprise", icon: Building2, moduleKey: "legal" },
       { label: "Juridique", href: "/juridique", icon: Gavel, moduleKey: "legal" },
@@ -199,7 +199,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
     icon: Building2,
     label: "Enterprise",
     items: [
-      { label: "Admin CENTRIX", href: "/admin", icon: ShieldCheck, moduleKey: "administration" },
+      { label: "Portail CENTRIX", href: "/admin", icon: ShieldCheck, moduleKey: "administration" },
       { label: "Multi-entreprises", href: "/multi-entreprises", icon: Building2, moduleKey: "multi-company" },
       { label: "Multi-filiales", href: "/entreprises", icon: Building2, moduleKey: "multi-company" },
       { label: "Franchises", href: "/franchises", icon: Network, moduleKey: "franchises" },

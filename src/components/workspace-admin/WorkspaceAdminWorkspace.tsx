@@ -14,7 +14,7 @@ const workspaceAdminSections = [
   },
   {
     title: "Equipe",
-    description: "Collaborateurs, invitations, roles et organisation interne.",
+    description: "Collaborateurs, invitations, responsabilites et organisation interne.",
     href: "/operations/users",
     icon: Users
   },
@@ -50,10 +50,10 @@ export function WorkspaceAdminWorkspace() {
       <Card className="p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <Badge tone="cyan">Responsable entreprise</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">Administration de votre entreprise</h1>
+            <Badge tone="cyan">Responsable d&apos;entreprise</Badge>
+            <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">Pilotage de votre entreprise</h1>
             <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-              Configurez votre workspace, vos equipes, les acces collaborateurs et les integrations externes sans acceder au portail interne CENTRIX.
+              Configurez votre entreprise, vos equipes, les acces collaborateurs et les integrations externes sans acceder au portail interne CENTRIX.
             </p>
           </div>
           <div className="grid h-14 w-14 place-items-center rounded-[18px] border border-blue-200 bg-blue-50 text-blue-700 shadow-[0_14px_40px_rgba(37,99,235,0.14)]">

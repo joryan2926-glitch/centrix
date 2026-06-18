@@ -78,7 +78,7 @@ async function writeHistory(supabase: SupabaseClient, workspaceId: string, modul
 }
 
 async function syncModulePermission(supabase: SupabaseClient, workspaceId: string, draft: OperationalRecordDraft) {
-  const roleMap: Record<string, string> = { Admin: "admin", Client: "client", Employe: "employee", Manager: "manager", "Super Admin": "super_admin", User: "user" };
+  const roleMap: Record<string, string> = { "Administrateur CENTRIX": "super_admin", Client: "client", Collaborateur: "employee", "Responsable d'entreprise": "admin", "Responsable d'equipe": "manager", Utilisateur: "user" };
   const role = roleMap[String(draft.metadata.role ?? "")];
   const moduleKey = String(draft.metadata.module ?? "").trim();
   if (!role || !moduleKey) return;
