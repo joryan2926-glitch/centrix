@@ -63,7 +63,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     defaultOpen: true,
     icon: Home,
-    label: "Tableau de bord",
+    label: "Accueil",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Home, moduleKey: "dashboard", favorite: true, keywords: ["dashboard", "kpi", "activite"] },
       { label: "Activite recente", href: "/operations/activities", icon: Activity, moduleKey: "dashboard" },
@@ -73,7 +73,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     defaultOpen: true,
     icon: Contact,
-    label: "Relation client",
+    label: "CRM",
     items: [
       { label: "CRM", href: "/crm", icon: BriefcaseBusiness, moduleKey: "crm", favorite: true },
       { label: "Clients", href: "/clients", icon: Contact, moduleKey: "clients", favorite: true },
@@ -87,7 +87,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     defaultOpen: true,
     icon: BadgeDollarSign,
-    label: "Ventes & finance",
+    label: "Finance",
     items: [
       { label: "Devis", href: "/operations/quotes", icon: ScrollText, moduleKey: "quotes" },
       { label: "Factures", href: "/facturation", icon: ReceiptText, moduleKey: "billing", favorite: true },
@@ -115,7 +115,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: Megaphone,
-    label: "Marketing & communication",
+    label: "Marketing",
     items: [
       { label: "Marketing digital", href: "/marketing-digital", icon: Megaphone, moduleKey: "marketing" },
       { label: "Campagnes email", href: "/operations/emailing", icon: Mail, moduleKey: "emailing" },
@@ -127,7 +127,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: Bot,
-    label: "IA & analytics",
+    label: "IA",
     items: [
       { label: "Assistant IA", href: "/ia", icon: Bot, moduleKey: "ai", badge: "AI", favorite: true },
       { label: "Business Intelligence", href: "/business-intelligence", icon: BrainCircuit, moduleKey: "analytics" },
@@ -140,7 +140,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: UsersRound,
-    label: "Ressources humaines",
+    label: "RH",
     items: [
       { label: "Employes", href: "/hr", icon: UsersRound, moduleKey: "hr" },
       { label: "RH", href: "/rh", icon: Users, moduleKey: "hr" },
@@ -174,7 +174,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: Settings,
-    label: "Administration",
+    label: "Parametres",
     items: [
       { label: "Parametres", href: "/settings", icon: Settings, moduleKey: "settings" },
       { label: "Entreprise", href: "/entreprise", icon: Building2, moduleKey: "legal" },

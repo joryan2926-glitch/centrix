@@ -139,16 +139,13 @@ export function AppShell({ children }: AppShellProps) {
           </Button>
         </div>
 
-        <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.06] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-100/72">Workspace</p>
               <p className="mt-1 max-w-[160px] truncate text-sm font-bold text-white">{authLoading ? "Synchronisation..." : profile?.workspaceName ?? "CENTRIX Scale"}</p>
             </div>
-            <span className="rounded-full bg-blue-400/15 px-2.5 py-1 text-xs font-black text-blue-100">{activePlan.toUpperCase()}</span>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full w-4/5 rounded-full bg-[#3b82f6]" />
+            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-100/72">{activePlan}</span>
           </div>
         </div>
 
@@ -156,7 +153,7 @@ export function AppShell({ children }: AppShellProps) {
           {sidebarGroups.map((group) => {
             const GroupIcon = group.icon;
             const lockedCount = group.items.filter((item) => item.locked).length;
-            const collapsed = collapsedGroups[group.label] ?? (!group.defaultOpen && !group.active);
+            const collapsed = collapsedGroups[group.label] ?? !group.active;
 
             return (
               <div key={group.label} className="rounded-[13px] border border-white/[0.05] bg-white/[0.025] p-1">
@@ -217,7 +214,7 @@ export function AppShell({ children }: AppShellProps) {
           })}
         </nav>
 
-        <div className="mt-3 rounded-[14px] border border-blue-300/15 bg-[#0d1b36] p-3">
+        <div className="mt-3 hidden rounded-[14px] border border-blue-300/15 bg-[#0d1b36] p-3 xl:block">
           <p className="text-sm font-bold text-white">{profile?.role === "admin" ? "Plan Enterprise" : "Acces equipe"}</p>
           <p className="mt-1 text-xs leading-5 text-blue-100/72">{profile?.workspaceName ? `${profile.workspaceName} synchronise avec Supabase Auth.` : "Modules metier, IA et donnees consolidees."}</p>
         </div>

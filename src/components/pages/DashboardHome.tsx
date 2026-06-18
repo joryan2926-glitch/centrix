@@ -3,14 +3,14 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, ArrowDown, ArrowUp, ArrowUpRight, BellRing, Bot, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, CreditCard, Eye, EyeOff, FilePlus2, GripVertical, PlusCircle, ReceiptText, ShieldCheck, Sparkles, Target, UserPlus, UsersRound, WandSparkles, Workflow, Zap } from "lucide-react";
+import { Activity, ArrowDown, ArrowUp, ArrowUpRight, BellRing, Bot, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, CreditCard, GripVertical, ReceiptText, ShieldCheck, Sparkles, Target, UserPlus, UsersRound, Zap } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CentrixLogo, DataTable } from "@/components/ui";
 import { InteractiveChart } from "@/components/saas/InteractiveChart";
 import { useLiveNotifications } from "@/hooks/useLiveNotifications";
 import { useSaasCoreDashboard } from "@/hooks/saas-core/useSaasCoreDashboard";
 import { downloadJsonFile } from "@/lib/download";
-import { dashboardWidgetIds, type DashboardWidgetId, useDashboardStore } from "@/stores/dashboardStore";
+import { type DashboardWidgetId, useDashboardStore } from "@/stores/dashboardStore";
 import { Badge } from "@/ui/Badge";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -50,10 +50,9 @@ function formatKiloCurrency(value: number) {
 export function DashboardHome() {
   const { data, snapshot, loading, mode, toast, sync } = useSaasCoreDashboard();
   const { items: notifications, unreadCount } = useLiveNotifications();
-  const { density, hiddenWidgets, mode: dashboardMode, moveWidget, order, reset, setDensity, setMode, toggleWidget } = useDashboardStore();
+  const { moveWidget } = useDashboardStore();
   const [period, setPeriod] = useState<AnalyticsPeriod>("mois");
   const [draggedDeal, setDraggedDeal] = useState<{ cardId: string; columnId: string } | null>(null);
-  const revenueSeries = data.analytics.map((point) => ({ label: point.label, value: point.revenue }));
   const acquisitionSeries = data.analytics.map((point) => ({ label: point.label, value: point.leads }));
   const cashflowSeries = snapshot?.cashflowSeries ?? data.analytics.map((point) => ({ label: point.label, value: point.revenue - point.expenses }));
   const forecastSeries = snapshot?.forecastSeries ?? data.analytics.map((point, index) => ({ label: point.label, value: point.revenue * (1 + index * 0.06) }));
@@ -307,17 +306,8 @@ export function DashboardHome() {
     }),
     [activeConnections, acquisitionSeries, advancedAnalyticsData, aiDashboardInsights, calendarItems, cashflowSeries, crmPipeline, data.events, data.tasks, forecastSeries, miniAnalytics, movePipelineCard, moveWidget, notifications, period, pipelineColumns, recentTasks, snapshot?.cashflow, snapshot?.forecastRevenue, snapshot?.profitability, teamPerformance, unreadCount]
   );
-  const visibleOrder = order.filter((id) => dashboardWidgetIds.includes(id) && !hiddenWidgets.includes(id));
-  const quickActions = [
-    { label: "Nouveau client", href: "/crm", icon: UserPlus },
-    { label: "Nouvelle facture", href: "/facturation", icon: FilePlus2 },
-    { label: "Nouveau devis", href: "/facturation", icon: PlusCircle },
-    { label: "Rendez-vous", href: "/agenda", icon: CalendarDays },
-    { label: "Generer avec IA", href: "/ia", icon: WandSparkles },
-    { label: "Creer workflow", href: "/workflows", icon: Workflow }
-  ];
   return (
-    <div className="mx-auto max-w-[1540px] space-y-7">
+    <div className="mx-auto max-w-[1480px] space-y-5">
       {toast ? <Toast title={toast.title} detail={toast.detail} /> : null}
       <motion.section
         initial={{ opacity: 0, y: 18 }}
@@ -379,127 +369,77 @@ export function DashboardHome() {
       </motion.section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {loading ? [0, 1, 2, 3].map((item) => <Skeleton key={item} className="h-40" />) : data.metrics.map((stat, index) => (
+        {loading ? [0, 1, 2, 3].map((item) => <Skeleton key={item} className="h-40" />) : data.metrics.slice(0, 4).map((stat, index) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.055, duration: 0.38 }}>
             <MetricCard metric={stat} />
           </motion.div>
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1fr_420px]">
-        <Card className="p-4" interactive>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-black text-slate-950">Quick actions</h2>
-              <p className="mt-1 text-sm font-semibold text-slate-500">Actions business frequentes</p>
-            </div>
-            <Badge tone="cyan">{mode}</Badge>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Button key={action.label} className="justify-start" onClick={() => { window.location.href = action.href; }}>
-                  <Icon size={16} />
-                  {action.label}
-                </Button>
-              );
-            })}
-          </div>
-        </Card>
-
-        <Card className="p-5" interactive>
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-blue-600 text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)]">
-              <Bot size={20} />
-            </div>
-            <div>
-              <h2 className="text-base font-black text-slate-950">Assistant IA dashboard</h2>
-              <p className="text-sm font-semibold text-slate-500">Alertes, anomalies et recommandations</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            {aiDashboardInsights.map((insight) => (
-              <div key={insight} className="rounded-[14px] border border-blue-100 bg-blue-50/70 p-3 text-sm font-bold text-slate-700">
-                {insight}
+      <section className="grid gap-5 xl:grid-cols-[1.45fr_0.55fr]">
+        {widgets.advancedAnalytics}
+        <div className="grid gap-5">
+          <Card className="p-5" interactive>
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-blue-600 text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)]">
+                <Bot size={18} />
               </div>
-            ))}
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.45fr_0.55fr]">
-        <InteractiveChart data={revenueSeries} subtitle="MRR, expansion comptes, cashflow et previsionnel synchronises" title="Analytics business global" valueSuffix="K EUR" />
-        <Card className="p-6" interactive>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-black text-slate-950">Revenus</h2>
-              <p className="mt-1 text-sm text-slate-500">MRR + abonnements</p>
-            </div>
-            <CircleDollarSign size={22} className="text-emerald-600" />
-          </div>
-          <p className="mt-6 text-5xl font-black text-slate-950">{euroCompact.format(snapshot?.monthlyRevenue ?? 0)}</p>
-          <p className="mt-2 text-sm font-semibold text-emerald-600">{`${(snapshot?.growthRate ?? 0).toFixed(1)}% ce mois-ci`}</p>
-          <div className="mt-6 space-y-3">
-            {[
-              { label: "Encaisse", value: snapshot?.paidRevenue ?? 0 },
-              { label: "Devis", value: snapshot?.quotesTotal ?? 0 },
-              { label: "Forecast", value: snapshot?.forecastRevenue ?? 0 }
-            ].map((plan) => {
-              const width = Math.min(100, Math.round((plan.value / Math.max(snapshot?.forecastRevenue ?? 1, 1)) * 100));
-              return (
-              <div key={plan.label} className="grid grid-cols-[90px_1fr_48px] items-center gap-3 text-sm">
-                <span className="font-semibold text-slate-600">{plan.label}</span>
-                <span className="h-2 rounded-full bg-slate-100">
-                  <span className="block h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ width: `${width}%` }} />
-                </span>
-                <span className="text-right font-black text-blue-700">{width}%</span>
-              </div>
-            ); })}
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-3">
-          <Card className="p-4" interactive>
-            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-black text-slate-950">Widgets modulables</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-500">Afficher, masquer et reordonner le cockpit.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(["overview", "analytics"] as const).map((item) => (
-                  <button key={item} className={`rounded-full border px-4 py-2 text-xs font-black transition ${dashboardMode === item ? "border-blue-200 bg-blue-600 text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)]" : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-700"}`} onClick={() => setMode(item)} type="button">
-                    {item === "overview" ? "Vue globale" : "Mode analytics"}
-                  </button>
-                ))}
-                {(["comfortable", "compact"] as const).map((item) => (
-                  <button key={item} className={`rounded-full border px-4 py-2 text-xs font-black transition ${density === item ? "border-blue-200 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-700"}`} onClick={() => setDensity(item)} type="button">
-                    {item === "comfortable" ? "Confort" : "Compact"}
-                  </button>
-                ))}
-                <Button onClick={reset}>Reset layout</Button>
+                <h2 className="text-base font-black text-slate-950">IA CENTRIX</h2>
+                <p className="text-sm font-semibold text-slate-500">Recommandations basees sur vos donnees</p>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {dashboardWidgetIds.map((id) => {
-                const hidden = hiddenWidgets.includes(id);
+            <div className="mt-4 space-y-2">
+              {aiDashboardInsights.map((insight) => (
+                <div key={insight} className="rounded-[14px] border border-blue-100 bg-blue-50/70 p-3 text-sm font-bold leading-5 text-slate-700">
+                  {insight}
+                </div>
+              ))}
+            </div>
+          </Card>
+          {widgets.quickAgenda}
+        </div>
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
+        {widgets.businessPipeline}
+        <div className="grid gap-5">
+          <Card className="p-5" interactive>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-950">Revenus</h2>
+                <p className="mt-1 text-sm text-slate-500">Facturation et encaissements</p>
+              </div>
+              <CircleDollarSign size={22} className="text-emerald-600" />
+            </div>
+            <p className="mt-5 text-4xl font-black text-slate-950">{euroCompact.format(snapshot?.monthlyRevenue ?? 0)}</p>
+            <p className="mt-2 text-sm font-semibold text-emerald-600">{`${(snapshot?.growthRate ?? 0).toFixed(1)}% ce mois-ci`}</p>
+            <div className="mt-5 space-y-3">
+              {[
+                { label: "Encaisse", value: snapshot?.paidRevenue ?? 0 },
+                { label: "Devis", value: snapshot?.quotesTotal ?? 0 },
+                { label: "Forecast", value: snapshot?.forecastRevenue ?? 0 }
+              ].map((plan) => {
+                const width = Math.min(100, Math.round((plan.value / Math.max(snapshot?.forecastRevenue ?? 1, 1)) * 100));
                 return (
-                  <button key={id} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-black transition ${hidden ? "border-slate-200 bg-white text-slate-500" : "border-blue-200 bg-blue-50 text-blue-800"}`} onClick={() => toggleWidget(id)} type="button">
-                    {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
-                    {id}
-                  </button>
+                  <div key={plan.label} className="grid grid-cols-[78px_1fr_44px] items-center gap-3 text-sm">
+                    <span className="font-semibold text-slate-600">{plan.label}</span>
+                    <span className="h-2 rounded-full bg-slate-100">
+                      <span className="block h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ width: `${width}%` }} />
+                    </span>
+                    <span className="text-right font-black text-blue-700">{width}%</span>
+                  </div>
                 );
               })}
             </div>
           </Card>
+          {widgets.notifications}
         </div>
-        {visibleOrder.map((id) => (
-          <motion.div key={id} layout className={["advancedAnalytics", "businessPipeline", "activityFeed"].includes(id) || (dashboardMode === "analytics" && ["cashflow", "forecast", "acquisition"].includes(id)) ? "xl:col-span-3" : id === "activity" || id === "automations" ? "xl:col-span-3 2xl:col-span-1" : ""}>
-            {widgets[id]}
-          </motion.div>
-        ))}
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[1fr_0.8fr]">
+        {widgets.activityFeed}
+        {widgets.tasks}
       </section>
     </div>
   );
