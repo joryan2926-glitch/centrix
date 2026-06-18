@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, BriefcaseBusiness, ChevronDown, ChevronRight, CreditCard, LockKeyhole, LogOut, Menu, Settings, UserRound, Users, X } from "lucide-react";
+import { Bot, BriefcaseBusiness, ChevronDown, ChevronRight, CreditCard, LogOut, Menu, Settings, UserRound, Users, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,7 +14,6 @@ import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigat
 import { signOutAction } from "@/app/auth/actions";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { getRequiredPlanForModule, planRank } from "@/lib/auth/plan-catalog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/ui/Button";
 
@@ -30,8 +29,6 @@ export function AppShell({ children }: AppShellProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { loading: authLoading, profile } = useAuth();
-  const activePlan = profile?.plan ?? "free";
-  const isSuperAdmin = profile?.role === "super_admin";
   const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/conditions-vente", "/cookies"].includes(pathname) || pathname.startsWith("/auth/");
   const profileInitials = profile?.fullName
     .split(" ")
@@ -62,42 +59,28 @@ export function AppShell({ children }: AppShellProps) {
   }, [isPublicPage, router]);
 
   const sidebarGroups = useMemo(() => {
-    const canAccessModule = (moduleKey?: string) => {
-      if (isSuperAdmin) return true;
-      const requiredPlan = getRequiredPlanForModule(moduleKey ?? "dashboard");
-      return planRank[activePlan] >= planRank[requiredPlan];
-    };
-
     return navigationGroups
-      .filter((group) => !group.enterpriseOnly || isSuperAdmin || planRank[activePlan] >= planRank.business)
+      .filter(() => true)
       .map((group) => {
         const items = group.items.map((item) => {
-          const requiredPlan = getRequiredPlanForModule(item.moduleKey ?? "dashboard");
-          const locked = !canAccessModule(item.moduleKey);
           return {
             ...item,
-            href: locked && requiredPlan !== "free" ? `/upgrade?plan=${requiredPlan}&module=${item.moduleKey ?? item.label}` : item.href,
-            locked,
+            href: item.href,
+            locked: false,
             originalHref: item.href,
-            requiredPlan
+            requiredPlan: "free"
           };
         });
         const active = group.items.some((item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
         return { ...group, active, items };
       });
-  }, [activePlan, isSuperAdmin, pathname]);
+  }, [pathname]);
 
   const mobileNavigation = useMemo(() => {
-    const accessibleFavorites = favoriteNavigation.filter((item) => {
-      if (isSuperAdmin) return true;
-      return planRank[activePlan] >= planRank[getRequiredPlanForModule(item.moduleKey ?? "dashboard")];
-    });
-    const accessibleNavigation = navigation.filter((item) => {
-      if (isSuperAdmin) return true;
-      return planRank[activePlan] >= planRank[getRequiredPlanForModule(item.moduleKey ?? "dashboard")];
-    });
+    const accessibleFavorites = favoriteNavigation;
+    const accessibleNavigation = navigation;
     return [...accessibleFavorites, ...accessibleNavigation].filter((item, index, list) => list.findIndex((entry) => entry.href === item.href) === index).slice(0, 5);
-  }, [activePlan, isSuperAdmin]);
+  }, []);
 
   const activeNavigationItem = useMemo(
     () => navigation.find((item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))),
@@ -145,14 +128,12 @@ export function AppShell({ children }: AppShellProps) {
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-100/72">Workspace</p>
               <p className="mt-1 max-w-[160px] truncate text-sm font-bold text-white">{authLoading ? "Synchronisation..." : profile?.workspaceName ?? "CENTRIX Scale"}</p>
             </div>
-            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-100/72">{activePlan}</span>
           </div>
         </div>
 
         <nav className="mt-4 flex-1 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:none]">
           {sidebarGroups.map((group) => {
             const GroupIcon = group.icon;
-            const lockedCount = group.items.filter((item) => item.locked).length;
             const collapsed = collapsedGroups[group.label] ?? !group.active;
 
             return (
@@ -169,7 +150,6 @@ export function AppShell({ children }: AppShellProps) {
                     <GroupIcon size={15} />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[0.72rem] font-black uppercase tracking-[0.14em]">{group.label}</span>
-                  {lockedCount ? <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[0.62rem] font-black text-amber-100">{lockedCount}</span> : null}
                   {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 </button>
 
@@ -195,14 +175,10 @@ export function AppShell({ children }: AppShellProps) {
                       >
                         {active ? <motion.span layoutId="sidebar-active" className="absolute inset-0 rounded-[10px] bg-white" transition={{ type: "spring", stiffness: 420, damping: 34 }} /> : null}
                         <span className={cn("relative z-10 grid h-7 w-7 place-items-center rounded-[8px]", active ? "bg-blue-50" : item.locked ? "bg-white/[0.035]" : "bg-white/[0.06]")}>
-                          {item.locked ? <LockKeyhole size={14} /> : <Icon size={16} className={cn("transition-transform duration-200 group-hover:scale-110", active ? "text-[#2563EB]" : "")} />}
+                          <Icon size={16} className={cn("transition-transform duration-200 group-hover:scale-110", active ? "text-[#2563EB]" : "")} />
                         </span>
                         <span className="relative z-10 min-w-0 flex-1 truncate">{item.label}</span>
-                        {item.locked ? (
-                          <span className="relative z-10 rounded-full bg-amber-300/15 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-amber-100">
-                            Upgrade
-                          </span>
-                        ) : item.badge ? (
+                        {item.badge ? (
                           <span className="relative z-10 rounded-full bg-blue-600 px-2 py-0.5 text-[0.65rem] font-black text-white">{item.badge}</span>
                         ) : null}
                       </Link>
@@ -215,7 +191,7 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         <div className="mt-3 hidden rounded-[14px] border border-blue-300/15 bg-[#0d1b36] p-3 xl:block">
-          <p className="text-sm font-bold text-white">{profile?.role === "admin" ? "Plan Enterprise" : "Acces equipe"}</p>
+          <p className="text-sm font-bold text-white">Acces complet</p>
           <p className="mt-1 text-xs leading-5 text-blue-100/72">{profile?.workspaceName ? `${profile.workspaceName} synchronise avec Supabase Auth.` : "Modules metier, IA et donnees consolidees."}</p>
         </div>
         </div>
@@ -277,7 +253,7 @@ export function AppShell({ children }: AppShellProps) {
                   <div className="absolute right-0 top-11 z-50 w-72 overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.16)]">
                     <div className="border-b border-slate-100 px-4 py-3">
                       <p className="truncate text-sm font-black text-slate-950">{profile?.fullName ?? "Utilisateur CENTRIX"}</p>
-                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">{profile?.workspaceName ?? "CENTRIX"} - {activePlan.toUpperCase()}</p>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">{profile?.workspaceName ?? "CENTRIX"}</p>
                     </div>
                     <div className="p-2">
                       {userMenuItems.map((item) => {
