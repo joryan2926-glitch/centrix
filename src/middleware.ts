@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canAccessAdminPortal } from "@/lib/auth/rbac";
 import { isProtectedRoute } from "@/lib/auth/session";
 import { updateSupabaseSession } from "@/lib/supabase-middleware";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const { response, user } = await updateSupabaseSession(request);
+  const { response, supabase, user } = await updateSupabaseSession(request);
 
   if (isProtectedRoute(pathname) && !user) {
     const loginUrl = request.nextUrl.clone();
@@ -18,6 +19,23 @@ export async function middleware(request: NextRequest) {
     dashboardUrl.pathname = "/dashboard";
     dashboardUrl.search = "";
     return NextResponse.redirect(dashboardUrl);
+  }
+
+  if (pathname.startsWith("/admin")) {
+    if (!user || !supabase) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle<{ role: string | null }>();
+    if (!canAccessAdminPortal(profile?.role)) {
+      const unauthorizedUrl = request.nextUrl.clone();
+      unauthorizedUrl.pathname = "/unauthorized";
+      unauthorizedUrl.search = "";
+      return NextResponse.redirect(unauthorizedUrl);
+    }
   }
 
   response.headers.set("X-Frame-Options", "DENY");

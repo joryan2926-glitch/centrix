@@ -3,9 +3,10 @@
 import type { User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PlanCode } from "@/lib/auth/plan-catalog";
+import { canManageWorkspace as canManageWorkspaceRole, normalizeRole, type CentrixRole } from "@/lib/auth/rbac";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
 
-export type AuthRole = "super_admin" | "admin" | "manager" | "employee" | "client" | "user";
+export type AuthRole = "super_admin" | "workspace_admin" | "admin" | "manager" | "employee" | "client" | "user";
 
 export type AuthProfile = {
   id: string;
@@ -13,6 +14,7 @@ export type AuthProfile = {
   email: string;
   avatarUrl: string | null;
   role: AuthRole;
+  rbacRole: CentrixRole;
   plan: PlanCode;
   workspaceId: string | null;
   workspaceName: string | null;
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName: user.user_metadata?.name ?? user.email ?? "Utilisateur CENTRIX",
         id: user.id,
         plan: "free",
+        rbacRole: "USER",
         role: "user",
         workspaceId: null,
         workspaceName: null
@@ -87,13 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? await supabase.rpc("workspace_effective_plan", { target_workspace_id: data.workspace_id })
       : { data: "free" };
 
+    const role = (data.role as AuthRole | null) ?? "user";
     setProfile({
       avatarUrl: data.avatar_url ?? null,
       email: data.email ?? user.email ?? "",
       fullName: data.full_name ?? user.user_metadata?.name ?? "Utilisateur CENTRIX",
       id: data.id,
       plan: String(effectivePlan.data ?? "free") as PlanCode,
-      role: (data.role as AuthRole | null) ?? "user",
+      rbacRole: normalizeRole(role),
+      role,
       workspaceId: data.workspace_id ?? null,
       workspaceName: workspace?.name ?? null
     });
@@ -111,13 +116,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       authenticated: Boolean(user),
-      canManageBilling: profile?.role === "super_admin" || profile?.role === "admin",
-      canManageWorkspace: profile?.role === "super_admin" || profile?.role === "admin" || profile?.role === "manager",
+      canManageBilling: canManageWorkspaceRole(profile?.role),
+      canManageWorkspace: canManageWorkspaceRole(profile?.role),
       hasRole: (roles: AuthRole | AuthRole[]) => {
         const allowedRoles = Array.isArray(roles) ? roles : [roles];
         return profile?.role ? allowedRoles.includes(profile.role) : false;
       },
-      isAdmin: profile?.role === "super_admin" || profile?.role === "admin",
+      isAdmin: canManageWorkspaceRole(profile?.role),
       loading: supabaseLoading || profileLoading,
       profile,
       refresh,

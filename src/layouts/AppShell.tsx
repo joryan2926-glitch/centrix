@@ -14,6 +14,7 @@ import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigat
 import { signOutAction } from "@/app/auth/actions";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { canAccessAdminPortal, canAccessNavigationGroup, canAccessNavigationItem, canManageWorkspace } from "@/lib/auth/rbac";
 import { cn } from "@/lib/utils";
 import { Button } from "@/ui/Button";
 
@@ -29,6 +30,8 @@ export function AppShell({ children }: AppShellProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { loading: authLoading, profile } = useAuth();
+  const canOpenAdmin = canAccessAdminPortal(profile?.role);
+  const canOpenWorkspaceAdmin = canManageWorkspace(profile?.role);
   const isPublicPage = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/conditions-vente", "/cookies"].includes(pathname) || pathname.startsWith("/auth/");
   const profileInitials = profile?.fullName
     .split(" ")
@@ -60,9 +63,9 @@ export function AppShell({ children }: AppShellProps) {
 
   const sidebarGroups = useMemo(() => {
     return navigationGroups
-      .filter(() => true)
+      .filter((group) => canAccessNavigationGroup(profile?.role, group.label))
       .map((group) => {
-        const items = group.items.map((item) => {
+        const items = group.items.filter((item) => canAccessNavigationItem(profile?.role, item.moduleKey)).map((item) => {
           return {
             ...item,
             href: item.href,
@@ -71,16 +74,17 @@ export function AppShell({ children }: AppShellProps) {
             requiredPlan: "free"
           };
         });
-        const active = group.items.some((item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+        const active = items.some((item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
         return { ...group, active, items };
-      });
-  }, [pathname]);
+      })
+      .filter((group) => group.items.length > 0);
+  }, [pathname, profile?.role]);
 
   const mobileNavigation = useMemo(() => {
-    const accessibleFavorites = favoriteNavigation;
-    const accessibleNavigation = navigation;
+    const accessibleFavorites = favoriteNavigation.filter((item) => canAccessNavigationItem(profile?.role, item.moduleKey));
+    const accessibleNavigation = navigation.filter((item) => canAccessNavigationItem(profile?.role, item.moduleKey));
     return [...accessibleFavorites, ...accessibleNavigation].filter((item, index, list) => list.findIndex((entry) => entry.href === item.href) === index).slice(0, 5);
-  }, []);
+  }, [profile?.role]);
 
   const activeNavigationItem = useMemo(
     () => navigation.find((item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))),
@@ -89,10 +93,13 @@ export function AppShell({ children }: AppShellProps) {
 
   const userMenuItems = [
     { label: "Mon profil", href: "/profile", icon: UserRound },
-    { label: "Mon abonnement", href: "/subscriptions", icon: CreditCard },
-    { label: "Mon équipe", href: "/operations/users", icon: Users },
-    { label: "Paramètres", href: "/settings", icon: Settings },
-    { label: "Facturation", href: "/billing", icon: BriefcaseBusiness }
+    ...(canOpenAdmin ? [{ label: "Admin CENTRIX", href: "/admin", icon: Settings }] : []),
+    ...(canOpenWorkspaceAdmin ? [
+      { label: "Mon abonnement", href: "/subscriptions", icon: CreditCard },
+      { label: "Mon équipe", href: "/operations/users", icon: Users },
+      { label: "Paramètres", href: "/settings", icon: Settings },
+      { label: "Facturation", href: "/billing", icon: BriefcaseBusiness }
+    ] : [])
   ];
 
   if (isPublicPage) {

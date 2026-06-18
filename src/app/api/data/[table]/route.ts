@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
+import { canAccessModule } from "@/lib/auth/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { isAllowedDataTable } from "@/repositories/supabaseRepository";
+import { dataTableModuleMap, isAllowedDataTable } from "@/repositories/supabaseRepository";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,18 @@ async function getContext(context: { params: Promise<{ table: string }> }) {
 
   if (!profile?.workspace_id) {
     return { table, error: Response.json({ error: "Workspace CENTRIX introuvable." }, { status: 403 }) };
+  }
+
+  const moduleKey = dataTableModuleMap[table];
+  if (!canAccessModule(profile.role, moduleKey)) {
+    return {
+      table,
+      error: Response.json({
+        error: "Role insuffisant pour ce module.",
+        module: moduleKey,
+        table
+      }, { status: 403 })
+    };
   }
 
   return { table, supabase, user: authData.user, workspaceId: profile.workspace_id, error: null };

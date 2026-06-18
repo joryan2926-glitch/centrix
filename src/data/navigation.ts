@@ -198,6 +198,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
     icon: Building2,
     label: "Enterprise",
     items: [
+      { label: "Admin CENTRIX", href: "/admin", icon: ShieldCheck, moduleKey: "administration" },
       { label: "Multi-entreprises", href: "/multi-entreprises", icon: Building2, moduleKey: "multi-company" },
       { label: "Multi-filiales", href: "/entreprises", icon: Building2, moduleKey: "multi-company" },
       { label: "Franchises", href: "/franchises", icon: Network, moduleKey: "franchises" },
