@@ -12,6 +12,7 @@ export function EmptyState({ icon, title, detail }: EmptyStateProps) {
       <div>
         <div className="mx-auto grid h-11 w-11 place-items-center rounded-[8px] bg-white/[0.06] text-cyan-100">{icon}</div>
         <p className="mt-3 font-semibold text-white">{title}</p>
+        <p className="mt-1 text-sm font-semibold text-cyan-100">Commencez par créer votre premier élément</p>
         <p className="mt-1 text-sm text-slate-400">{detail}</p>
       </div>
     </div>

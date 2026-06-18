@@ -78,7 +78,8 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
   }
 
   function addWebhook() {
-    const webhook = createWebhook("Nouveau webhook", "https://example.com/webhook/centrix");
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const webhook = createWebhook("Nouveau webhook", `${origin}/api/webhooks/centrix`);
     mutate(
       (current) => ({ ...current, webhooks: [webhook, ...current.webhooks], notifications: [createIntegrationNotification("Webhook cree", webhook.url, "success"), ...current.notifications] }),
       { title: "Webhook cree", detail: "Endpoint pret avec signature et retries." }
@@ -94,11 +95,11 @@ export function IntegrationsWorkspace({ initialView = "dashboard" }: { initialVi
 
   async function runPlayground() {
     setPlaygroundLoading(true);
-    const response = await fetch("/api/v1/crm?limit=3", { headers: { Authorization: "Bearer demo" } });
+    const response = await fetch("/api/v1/crm?limit=3");
     const payload = await response.json();
     setPlaygroundResponse(JSON.stringify(payload, null, 2));
     setPlaygroundLoading(false);
-    notify("Playground execute", "Requete REST demo terminee.");
+    notify("Playground execute", "Requete REST executee sur les donnees Supabase accessibles.");
   }
 
   if (loading) {

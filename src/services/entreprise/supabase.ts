@@ -4,18 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { EnterpriseLegalData } from "@/types/entreprise";
 
-const storageKey = "centrix-enterprise-legal-data-v1";
-
 function readLocal(): EnterpriseLegalData {
   if (typeof window === "undefined") return enterpriseLegalFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : enterpriseLegalFallbackData;
+  return enterpriseLegalFallbackData;
 }
 
 function writeLocal(data: EnterpriseLegalData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 function toPostgrestTextList(ids: string[]) {

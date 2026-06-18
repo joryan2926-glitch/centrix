@@ -8,8 +8,54 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { SupabaseProvider } from "@/providers/SupabaseProvider";
 
 export const metadata: Metadata = {
-  title: "CENTRIX | SaaS Operating OS",
-  description: "Plateforme SaaS premium pour piloter CRM, finance, RH, marketing et IA business."
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://app-centrix.fr"),
+  title: {
+    default: "CENTRIX | Plateforme SaaS tout-en-un pour entreprises",
+    template: "%s | CENTRIX"
+  },
+  description: "CENTRIX centralise CRM, facturation, finance, projets, RH, documents, automatisations, IA business et analytics dans une plateforme SaaS premium.",
+  applicationName: "CENTRIX",
+  authors: [{ name: "L&R Solutions" }],
+  creator: "L&R Solutions",
+  publisher: "L&R Solutions",
+  alternates: {
+    canonical: "/"
+  },
+  keywords: [
+    "CENTRIX",
+    "SaaS entreprise",
+    "CRM",
+    "facturation",
+    "comptabilite",
+    "gestion entreprise",
+    "automatisation",
+    "IA business",
+    "dashboard entreprise"
+  ],
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "/",
+    siteName: "CENTRIX",
+    title: "CENTRIX | Plateforme SaaS tout-en-un pour entreprises",
+    description: "Pilotez toute votre entreprise depuis une interface SaaS premium : CRM, ventes, finance, projets, RH, marketing, documents, IA et automatisations."
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CENTRIX | Plateforme SaaS tout-en-un pour entreprises",
+    description: "La plateforme SaaS premium pour centraliser les opérations, la finance, le CRM, les projets et l'IA business."
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1
+    }
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

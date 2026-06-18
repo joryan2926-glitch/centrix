@@ -6,15 +6,15 @@
 
 :root {
   color-scheme: light;
-  --bg: #f4f7fb;
+  --bg: #f6f8fc;
   --surface: #ffffff;
   --surface-strong: #ffffff;
-  --line: rgba(15, 23, 42, 0.09);
+  --line: rgba(15, 23, 42, 0.095);
   --centrix-blue: #2563eb;
   --centrix-sky: #0ea5e9;
   --centrix-navy: #071226;
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.065);
-  --shadow-lifted: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 48px rgba(15, 23, 42, 0.10);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.035), 0 10px 26px rgba(15, 23, 42, 0.055);
+  --shadow-lifted: 0 2px 4px rgba(15, 23, 42, 0.04), 0 18px 44px rgba(15, 23, 42, 0.095);
 }
 
 * {
@@ -28,7 +28,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f4f7fb;
+  background: #f6f8fc;
   color: #0f172a;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
@@ -75,16 +75,17 @@ label {
 @layer utilities {
   .bg-app-light {
     background:
-      linear-gradient(180deg, #f8faff 0%, #f4f7fb 42%, #f1f5f9 100%),
-      radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.07), transparent 26%);
+      linear-gradient(180deg, #fbfcff 0%, #f6f8fc 42%, #eef3fa 100%),
+      radial-gradient(circle at 20% 0%, rgba(37, 99, 235, 0.08), transparent 28%),
+      radial-gradient(circle at 82% 0%, rgba(14, 165, 233, 0.06), transparent 26%);
   }
 
   .bg-grid-light {
     background-image:
-      linear-gradient(rgba(15, 23, 42, 0.032) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(15, 23, 42, 0.032) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: linear-gradient(to bottom, black, transparent 72%);
+      linear-gradient(rgba(15, 23, 42, 0.026) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.026) 1px, transparent 1px);
+    background-size: 84px 84px;
+    mask-image: linear-gradient(to bottom, black, transparent 64%);
   }
 
   .centrix-orbit {
@@ -134,7 +135,7 @@ label {
   }
 
   .premium-panel {
-    border: 1px solid rgba(203, 213, 225, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.86);
     background: #ffffff;
     box-shadow: var(--shadow-soft);
   }
@@ -177,6 +178,11 @@ label {
   color: #0f172a;
   letter-spacing: 0;
   text-wrap: balance;
+}
+
+.centrix-content section,
+.centrix-content article {
+  backdrop-filter: none;
 }
 
 .centrix-content .text-cyan-100,
@@ -276,6 +282,10 @@ label {
   background-color: rgba(239, 246, 255, 0.72);
 }
 
+.centrix-content [class*="backdrop-blur"] {
+  backdrop-filter: blur(8px);
+}
+
 .centrix-content form label > span:first-child {
   color: #334155;
   font-size: 0.78rem;
@@ -285,7 +295,7 @@ label {
 .centrix-content [class*="rounded-[24px]"],
 .centrix-content [class*="rounded-[22px]"],
 .centrix-content [class*="rounded-[20px]"] {
-  border-radius: 18px;
+  border-radius: 16px;
 }
 
 .centrix-content [class*="shadow-[0_24px_80px"],

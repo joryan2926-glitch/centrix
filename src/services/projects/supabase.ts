@@ -3,17 +3,15 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { Project, ProjectTask, ProjectsData } from "@/types/projects";
 
-const storageKey = "centrix-projects-data-v1";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readLocal(): ProjectsData {
   if (typeof window === "undefined") return projectsFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : projectsFallbackData;
+  return projectsFallbackData;
 }
 
 function writeLocal(data: ProjectsData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadProjectsData(): Promise<{ data: ProjectsData; mode: "local" | "supabase" }> {

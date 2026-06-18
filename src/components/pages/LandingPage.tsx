@@ -86,7 +86,7 @@ export function LandingPage() {
             <div className="rounded-[22px] bg-[#071225] p-4 text-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
               <div className="flex items-center justify-between">
                 <CentrixLogo inverse compact />
-                <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">Live</span>
+                <span className="rounded-full bg-blue-400/15 px-3 py-1 text-xs font-bold text-blue-100">Production</span>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {["MRR 84.2K", "Score IA 91", "Pipeline 428K"].map((metric) => (
@@ -189,7 +189,7 @@ export function LandingPage() {
         <Card className="p-6 lg:p-8">
           <h2 className="text-3xl font-black text-slate-950">Ils construisent plus vite avec CENTRIX.</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {["NovaCore a centralise ventes et finance en 10 jours.", "Blue Atlas pilote 4 societes depuis un seul workspace.", "Orion Cloud automatise support, facturation et CRM."].map((quote) => (
+            {["Centralisez ventes et finance dans un seul cockpit.", "Pilotez plusieurs societes depuis un workspace unique.", "Automatisez support, facturation et CRM sans changer d'outil."].map((quote) => (
               <div key={quote} className="rounded-[18px] border border-slate-200 bg-white/76 p-5 text-sm leading-6 text-slate-600">
                 &ldquo;{quote}&rdquo;
               </div>

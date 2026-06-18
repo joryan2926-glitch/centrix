@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { isGoogleAuthEnabled } from "@/lib/integrations/google";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
@@ -23,8 +22,6 @@ export type ExternalIntegrationsStatus = {
 };
 
 export async function requireExternalApiUser() {
-  if (DEMO_MODE) return { id: "demo", email: "admin@centrix.fr" };
-
   const supabase = await createServerSupabaseClient();
   if (!supabase) return null;
 

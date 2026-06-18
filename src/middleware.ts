@@ -2,21 +2,20 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getRouteModuleKey } from "@/lib/auth/module-access";
 import { getRequiredPlanForModule } from "@/lib/auth/plan-catalog";
 import { isProtectedRoute } from "@/lib/auth/session";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { updateSupabaseSession } from "@/lib/supabase-middleware";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, supabase, user } = await updateSupabaseSession(request);
 
-  if (!DEMO_MODE && isProtectedRoute(pathname) && !user) {
+  if (isProtectedRoute(pathname) && !user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (!DEMO_MODE && user && ["/login", "/register"].includes(pathname)) {
+  if (user && ["/login", "/register"].includes(pathname)) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = "/dashboard";
     dashboardUrl.search = "";
@@ -24,7 +23,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const moduleKey = getRouteModuleKey(pathname);
-  if (!DEMO_MODE && user && supabase && moduleKey) {
+  if (user && supabase && moduleKey) {
     const { data: allowed, error } = await supabase.rpc("can_access_current_module", { target_module_key: moduleKey });
     if (error || allowed !== true) {
       const requiredPlan = getRequiredPlanForModule(moduleKey);

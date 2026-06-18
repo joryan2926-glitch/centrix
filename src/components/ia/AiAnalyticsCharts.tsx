@@ -33,7 +33,7 @@ export function AiAnalyticsCharts({ data }: AiAnalyticsChartsProps) {
         </div>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={usage.length ? usage : [{ name: "Demo", tokens: 1200, messages: 4 }]}>
+            <AreaChart data={usage}>
               <defs>
                 <linearGradient id="aiTokens" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="5%" stopColor="#5ee7ff" stopOpacity={0.46} />

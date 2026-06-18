@@ -4,6 +4,7 @@ export type NavigationItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  moduleKey?: string;
   badge?: string;
   keywords?: readonly string[];
   favorite?: boolean;
@@ -12,6 +13,9 @@ export type NavigationItem = {
 
 export type NavigationGroup = {
   label: string;
+  icon: LucideIcon;
+  enterpriseOnly?: boolean;
+  defaultOpen?: boolean;
   items: readonly NavigationItem[];
 };
 

@@ -4,18 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { SaaSBillingData, SaaSSubscription } from "@/types/billing";
 
-const storageKey = "centrix-saas-billing-data-v1";
-
 function readLocal(): SaaSBillingData {
   if (typeof window === "undefined") return saasBillingFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : saasBillingFallbackData;
+  return saasBillingFallbackData;
 }
 
 function writeLocal(data: SaaSBillingData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 export async function loadSaaSBillingData(): Promise<{ data: SaaSBillingData; mode: "local" | "supabase" }> {

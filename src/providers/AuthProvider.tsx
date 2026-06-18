@@ -2,8 +2,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { DEMO_AUTH_PROFILE, DEMO_AUTH_USER } from "@/lib/auth/demo-session";
-import { DEMO_MODE } from "@/lib/demo-mode";
+import type { PlanCode } from "@/lib/auth/plan-catalog";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
 
 export type AuthRole = "super_admin" | "admin" | "manager" | "employee" | "client" | "user";
@@ -14,6 +13,7 @@ export type AuthProfile = {
   email: string;
   avatarUrl: string | null;
   role: AuthRole;
+  plan: PlanCode;
   workspaceId: string | null;
   workspaceName: string | null;
 };
@@ -44,12 +44,12 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { loading: supabaseLoading, supabase, user } = useSupabaseContext();
-  const [profile, setProfile] = useState<AuthProfile | null>(DEMO_MODE || !supabase ? DEMO_AUTH_PROFILE : null);
-  const [profileLoading, setProfileLoading] = useState(Boolean(supabase && !DEMO_MODE));
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(Boolean(supabase));
 
   const loadProfile = useCallback(async () => {
-    if (DEMO_MODE || !supabase) {
-      setProfile(DEMO_AUTH_PROFILE);
+    if (!supabase) {
+      setProfile(null);
       setProfileLoading(false);
       return;
     }
@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: user.email ?? "",
         fullName: user.user_metadata?.name ?? user.email ?? "Utilisateur CENTRIX",
         id: user.id,
+        plan: "free",
         role: "user",
         workspaceId: null,
         workspaceName: null
@@ -82,12 +83,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const workspace = Array.isArray(data.workspaces) ? data.workspaces[0] : data.workspaces;
+    const effectivePlan = data.workspace_id
+      ? await supabase.rpc("workspace_effective_plan", { target_workspace_id: data.workspace_id })
+      : { data: "free" };
 
     setProfile({
       avatarUrl: data.avatar_url ?? null,
       email: data.email ?? user.email ?? "",
       fullName: data.full_name ?? user.user_metadata?.name ?? "Utilisateur CENTRIX",
       id: data.id,
+      plan: String(effectivePlan.data ?? "free") as PlanCode,
       role: (data.role as AuthRole | null) ?? "user",
       workspaceId: data.workspace_id ?? null,
       workspaceName: workspace?.name ?? null
@@ -116,9 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading: supabaseLoading || profileLoading,
       profile,
       refresh,
-      user: user ?? (DEMO_MODE || !supabase ? DEMO_AUTH_USER : null)
+      user: user ?? null
     }),
-    [profile, profileLoading, refresh, supabase, supabaseLoading, user]
+    [profile, profileLoading, refresh, supabaseLoading, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

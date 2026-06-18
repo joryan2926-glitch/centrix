@@ -4,16 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { AcademyData } from "@/types/academy";
 
-const storageKey = "centrix-academy-data-v1";
-
 function readLocal(): AcademyData {
   if (typeof window === "undefined") return academyFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : academyFallbackData;
+  return academyFallbackData;
 }
 
 function writeLocal(data: AcademyData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadAcademyData(): Promise<{ data: AcademyData; mode: "local" | "supabase" }> {

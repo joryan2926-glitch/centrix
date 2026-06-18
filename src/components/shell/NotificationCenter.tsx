@@ -21,9 +21,9 @@ export function NotificationCenter() {
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <p className="text-sm font-black text-slate-950">Centre notifications</p>
-              <p className="text-xs font-semibold text-slate-500">Activite live CENTRIX</p>
+              <p className="text-xs font-semibold text-slate-500">Activite CENTRIX</p>
             </div>
-            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700">{loading ? "Sync" : "Live"}</span>
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700">{loading ? "Sync" : `${unreadCount} nouveau${unreadCount > 1 ? "x" : ""}`}</span>
           </div>
           <div className="max-h-[440px] overflow-y-auto p-2">
             {items.map((item) => (

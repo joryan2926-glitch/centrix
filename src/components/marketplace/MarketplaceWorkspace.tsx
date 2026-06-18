@@ -47,7 +47,7 @@ export function MarketplaceWorkspace({ initialView = "dashboard" }: { initialVie
       if (!response.ok) throw new Error(payload.error);
       window.location.href = payload.url;
     } catch (error) {
-      notify("Stripe Connect demo", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer Connect.");
+      notify("Stripe Connect indisponible", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer Connect.");
     }
   }
 

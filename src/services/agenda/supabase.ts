@@ -3,17 +3,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { AgendaData, AgendaTask, CalendarEvent, EventComment, Reminder, Reservation } from "@/types/agenda";
 
-const storageKey = "centrix-agenda-data-v1";
-
 function readLocal(): AgendaData {
   if (typeof window === "undefined") return agendaFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : agendaFallbackData;
+  return agendaFallbackData;
 }
 
 function writeLocal(data: AgendaData) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadAgendaData(): Promise<{ data: AgendaData; mode: "local" | "supabase" }> {

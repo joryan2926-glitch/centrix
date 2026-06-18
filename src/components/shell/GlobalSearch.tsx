@@ -23,8 +23,8 @@ export function GlobalSearch() {
     <div className="relative flex-1 sm:max-w-2xl">
       <div
         className={cn(
-          "flex h-10 items-center gap-3 rounded-[10px] border bg-slate-50/70 px-3 text-sm font-medium text-slate-600 shadow-[inset_0_1px_1px_rgba(15,23,42,0.02)] transition-all duration-200",
-          open ? "border-blue-300 bg-white shadow-[0_0_0_3px_rgba(37,99,235,0.08)]" : "border-slate-200 hover:border-blue-300 hover:bg-white"
+          "flex h-10 items-center gap-3 rounded-[12px] border bg-white px-3 text-sm font-medium text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-all duration-200",
+          open ? "border-blue-300 bg-white shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_10px_26px_rgba(15,23,42,0.08)]" : "border-slate-200 hover:border-blue-300 hover:bg-white"
         )}
       >
         <Search size={17} />
@@ -41,7 +41,7 @@ export function GlobalSearch() {
             }
             if (event.key === "Escape") clear();
           }}
-          placeholder="Rechercher client, facture, projet, workflow, IA..."
+          placeholder="Rechercher clients, factures, projets, documents, IA..."
           value={query}
         />
         {loading ? <Loader2 className="animate-spin text-blue-600" size={16} /> : null}

@@ -3,25 +3,14 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { NotificationPreference, NotificationRule, NotificationsData, RealtimeNotification } from "@/types/notifications";
 
-const storageKey = "centrix-notifications-data";
-
 export function saveNotificationsData(data: NotificationsData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 function loadLocalData(): NotificationsData {
   if (typeof window === "undefined") return notificationsFallbackData;
 
-  const cached = window.localStorage.getItem(storageKey);
-  if (!cached) return notificationsFallbackData;
-
-  try {
-    return JSON.parse(cached) as NotificationsData;
-  } catch {
-    return notificationsFallbackData;
-  }
+  return notificationsFallbackData;
 }
 
 export async function loadNotificationsData(): Promise<{ data: NotificationsData; mode: "local" | "supabase" }> {

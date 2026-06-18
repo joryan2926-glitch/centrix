@@ -75,7 +75,7 @@ function defaultDraft(start?: string, end?: string): Draft {
     type: "client_meeting",
     start: toDateTimeLocal(startDate),
     end: toDateTimeLocal(endDate),
-    participants: "client@example.com, equipe@centrix.fr",
+    participants: "",
     location: "Salle Orbit",
     videoUrl: "https://meet.centrix.local"
   };
@@ -85,7 +85,7 @@ export function AgendaWorkspace() {
   const { data, loading, mode, toast, mutate, refresh, sync, notify } = useAgendaData();
   const [view, setView] = useState<View>("calendar");
   const [filters, setFilters] = useState<AgendaFilters>({ query: "", status: "all", type: "all" });
-  const [selectedId, setSelectedId] = useState("evt-demo-novacore");
+  const [selectedId, setSelectedId] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(defaultDraft());
   const [editingId, setEditingId] = useState<string | null>(null);

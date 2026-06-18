@@ -4,7 +4,6 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { WorkflowData } from "@/types/workflows";
 
-const storageKey = "centrix-workflow-data-v1";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type SupabaseRow = Record<string, unknown> & { metadata?: Record<string, unknown> | null };
 const legacyWorkflowIds: Record<string, string> = {
@@ -15,12 +14,11 @@ const legacyWorkflowIds: Record<string, string> = {
 
 function readLocal(): WorkflowData {
   if (typeof window === "undefined") return workflowFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return normalizeWorkflowData(local ? JSON.parse(local) : workflowFallbackData);
+  return normalizeWorkflowData(workflowFallbackData);
 }
 
 function writeLocal(data: WorkflowData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(normalizeWorkflowData(data)));
+  void data;
 }
 
 export async function loadWorkflowData(): Promise<{ data: WorkflowData; mode: "local" | "supabase" }> {

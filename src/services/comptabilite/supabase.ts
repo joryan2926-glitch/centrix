@@ -4,17 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { AccountingEntry, FinanceData, FinanceTransaction, TaxRecord } from "@/types/comptabilite";
 
-const storageKey = "centrix-finance-data-v1";
-
 function readLocal(): FinanceData {
   if (typeof window === "undefined") return financeFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : financeFallbackData;
+  return financeFallbackData;
 }
 
 function writeLocal(data: FinanceData) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadFinanceData(): Promise<{ data: FinanceData; mode: "local" | "supabase" }> {

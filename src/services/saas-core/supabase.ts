@@ -4,24 +4,12 @@ import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { DashboardAnalyticsPoint, ModuleConnection, ModuleEvent, ModuleTask, SaasCoreDashboard } from "@/types/saas-core";
 import type { Metric } from "@/types/navigation";
 
-const storageKey = "centrix-saas-core-dashboard";
-
 export function saveSaasCoreDashboard(data: SaasCoreDashboard) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 function loadLocalDashboard(): SaasCoreDashboard {
-  if (typeof window === "undefined") return saasCoreFallbackDashboard;
-  const cached = window.localStorage.getItem(storageKey);
-  if (!cached) return saasCoreFallbackDashboard;
-
-  try {
-    return JSON.parse(cached) as SaasCoreDashboard;
-  } catch {
-    return saasCoreFallbackDashboard;
-  }
+  return saasCoreFallbackDashboard;
 }
 
 export async function loadSaasCoreDashboard(): Promise<{ data: SaasCoreDashboard; mode: "local" | "supabase" }> {
@@ -53,14 +41,7 @@ export async function loadSaasCoreDashboard(): Promise<{ data: SaasCoreDashboard
 
   return {
     mode: "supabase",
-    data: {
-      ...data,
-      metrics: data.metrics.length ? data.metrics : saasCoreFallbackDashboard.metrics,
-      events: data.events.length ? data.events : saasCoreFallbackDashboard.events,
-      tasks: data.tasks.length ? data.tasks : saasCoreFallbackDashboard.tasks,
-      connections: data.connections.length ? data.connections : saasCoreFallbackDashboard.connections,
-      analytics: data.analytics.length ? data.analytics : saasCoreFallbackDashboard.analytics
-    }
+    data
   };
 }
 

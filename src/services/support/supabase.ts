@@ -4,7 +4,6 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { SupportData } from "@/types/support";
 
-const storageKey = "centrix-support-data-v1";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const legacyTicketIds: Record<string, string> = {
   "ticket-1024": "10241024-1024-4024-8024-102410241024",
@@ -16,14 +15,11 @@ type SupportTicketRow = Record<string, unknown> & { metadata?: Record<string, un
 
 function readLocal(): SupportData {
   if (typeof window === "undefined") return supportFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return normalizeSupportData(local ? JSON.parse(local) : supportFallbackData);
+  return normalizeSupportData(supportFallbackData);
 }
 
 function writeLocal(data: SupportData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(normalizeSupportData(data)));
-  }
+  void data;
 }
 
 export async function loadSupportData(): Promise<{ data: SupportData; mode: "local" | "supabase" }> {

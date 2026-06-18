@@ -4,16 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { MarketplaceData } from "@/types/marketplace";
 
-const storageKey = "centrix-marketplace-data-v1";
-
 function readLocal(): MarketplaceData {
   if (typeof window === "undefined") return marketplaceFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : marketplaceFallbackData;
+  return marketplaceFallbackData;
 }
 
 function writeLocal(data: MarketplaceData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadMarketplaceData(): Promise<{ data: MarketplaceData; mode: "local" | "supabase" }> {

@@ -83,7 +83,7 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
       if (!response.ok) throw new Error(payload.error ?? "Checkout indisponible.");
       window.location.href = payload.url;
     } catch (error) {
-      notify("Checkout en mode demo", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer Stripe Checkout.");
+      notify("Checkout indisponible", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer Stripe Checkout.");
     } finally {
       setLoadingAction(null);
     }
@@ -105,7 +105,7 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
       if (!response.ok) throw new Error(payload.error ?? "Portail indisponible.");
       window.location.href = payload.url;
     } catch (error) {
-      notify("Portail Stripe en mode demo", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer le portail client.");
+      notify("Portail Stripe indisponible", error instanceof Error ? error.message : "Configurez STRIPE_SECRET_KEY pour activer le portail client.");
     } finally {
       setLoadingAction(null);
     }

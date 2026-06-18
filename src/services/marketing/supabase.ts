@@ -4,17 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { MarketingActivity, MarketingData, SocialAccount, SocialPost } from "@/types/marketing";
 
-const storageKey = "centrix-marketing-data-v1";
-
 function readLocal(): MarketingData {
   if (typeof window === "undefined") return marketingFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : marketingFallbackData;
+  return marketingFallbackData;
 }
 
 function writeLocal(data: MarketingData) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadMarketingData(): Promise<{ data: MarketingData; mode: "local" | "supabase" }> {

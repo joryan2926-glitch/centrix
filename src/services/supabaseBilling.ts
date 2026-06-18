@@ -1,16 +1,12 @@
-import { billingDocuments } from "@/data/billing";
 import { getSupabaseClient } from "@/lib/supabase";
 import { calculateBillingTotals } from "@/services/billing";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { BillingDocument, BillingStatus } from "@/types/billing";
 
-const storageKey = "centrix-billing-documents";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readLocal() {
-  if (typeof window === "undefined") return billingDocuments;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? (JSON.parse(local) as BillingDocument[]) : billingDocuments;
+  return [] as BillingDocument[];
 }
 
 export async function loadBillingDocuments(): Promise<BillingDocument[]> {
@@ -33,9 +29,7 @@ export async function loadBillingDocuments(): Promise<BillingDocument[]> {
 }
 
 export async function saveBillingDocuments(documents: BillingDocument[]) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(documents));
-  }
+  void documents;
 }
 
 export async function upsertBillingDocument(document: BillingDocument) {

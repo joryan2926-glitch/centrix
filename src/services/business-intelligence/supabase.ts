@@ -4,16 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { BusinessIntelligenceData } from "@/types/business-intelligence";
 
-const storageKey = "centrix-business-intelligence-data-v1";
-
 function readLocal(): BusinessIntelligenceData {
   if (typeof window === "undefined") return businessIntelligenceFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : businessIntelligenceFallbackData;
+  return businessIntelligenceFallbackData;
 }
 
 function writeLocal(data: BusinessIntelligenceData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadBusinessIntelligenceData(): Promise<{ data: BusinessIntelligenceData; mode: "local" | "supabase" }> {

@@ -4,18 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { MultiEnterpriseData } from "@/types/entreprises";
 
-const storageKey = "centrix-multi-enterprise-data-v1";
-
 function readLocal(): MultiEnterpriseData {
   if (typeof window === "undefined") return multiEnterpriseFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : multiEnterpriseFallbackData;
+  return multiEnterpriseFallbackData;
 }
 
 function writeLocal(data: MultiEnterpriseData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 export async function loadMultiEnterpriseData(): Promise<{ data: MultiEnterpriseData; mode: "local" | "supabase" }> {

@@ -32,36 +32,9 @@ export const centrixModules: CentrixModule[] = [
 
 export const saasCoreFallbackDashboard: SaasCoreDashboard = {
   modules: centrixModules,
-  metrics: [
-    { label: "MRR", value: "84.2K EUR", delta: "+18.4%", tone: "cyan" },
-    { label: "Pipeline", value: "312K EUR", delta: "+32 deals", tone: "violet" },
-    { label: "Cashflow", value: "41.8K EUR", delta: "+9.7%", tone: "emerald" },
-    { label: "Modules actifs", value: "25/27", delta: "enterprise", tone: "rose" }
-  ],
-  analytics: [
-    { label: "Jan", revenue: 42, expenses: 25, leads: 74 },
-    { label: "Fev", revenue: 48, expenses: 27, leads: 82 },
-    { label: "Mar", revenue: 51, expenses: 29, leads: 96 },
-    { label: "Avr", revenue: 63, expenses: 34, leads: 118 },
-    { label: "Mai", revenue: 71, expenses: 38, leads: 142 },
-    { label: "Juin", revenue: 84, expenses: 41, leads: 168 },
-    { label: "Juil", revenue: 92, expenses: 44, leads: 194 }
-  ],
-  events: [
-    { id: "event-1", module: "billing", entityType: "invoice", entityId: "fac-041", title: "Facture Stripe synchronisee", detail: "Paiement relie au client NovaCore et ecriture comptable preparee.", severity: "success", status: "open", createdAt: "2026-05-27T08:30:00.000Z" },
-    { id: "event-2", module: "crm", entityType: "lead", entityId: "lead-92", title: "Lead IA score 92", detail: "Relance automatique creee et rendez-vous propose.", severity: "info", status: "open", createdAt: "2026-05-27T08:10:00.000Z" },
-    { id: "event-3", module: "security", entityType: "session", entityId: null, title: "Session securisee", detail: "Middleware Supabase Auth actif sur les modules proteges.", severity: "success", status: "resolved", createdAt: "2026-05-27T07:55:00.000Z" }
-  ],
-  tasks: [
-    { id: "task-1", module: "crm", title: "Relancer NovaCore", assignee: "Julien", priority: "high", status: "todo", dueAt: "2026-05-27T16:00:00.000Z" },
-    { id: "task-2", module: "accounting", title: "Verifier TVA mensuelle", assignee: "Finance", priority: "medium", status: "in_progress", dueAt: "2026-05-28T10:00:00.000Z" },
-    { id: "task-3", module: "marketing", title: "Publier campagne LinkedIn", assignee: "Marketing", priority: "medium", status: "todo", dueAt: "2026-05-29T09:00:00.000Z" },
-    { id: "task-4", module: "clients", title: "Valider onboarding Blue Atlas", assignee: "CS", priority: "high", status: "todo", dueAt: "2026-05-30T13:00:00.000Z" }
-  ],
-  connections: [
-    { id: "conn-1", sourceModule: "crm", targetModule: "billing", trigger: "Deal gagne", action: "Generer facture et document PDF", active: true },
-    { id: "conn-2", sourceModule: "billing", targetModule: "accounting", trigger: "Facture payee", action: "Creer revenu et ecriture comptable", active: true },
-    { id: "conn-3", sourceModule: "support", targetModule: "ai", trigger: "Ticket urgent", action: "Resume IA et recommandation SAV", active: true },
-    { id: "conn-4", sourceModule: "documents", targetModule: "clients", trigger: "Document partage", action: "Notifier portail client", active: true }
-  ]
+  metrics: [],
+  analytics: [],
+  events: [],
+  tasks: [],
+  connections: []
 };

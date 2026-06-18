@@ -3,8 +3,6 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { CrmActivity, CrmClient, CrmData, CrmLead, CrmNote, CrmTask } from "@/types/crm";
 
-const storageKey = "centrix-crm-data-v2";
-
 const emptyData: CrmData = {
   leads: [],
   clients: [],
@@ -16,12 +14,11 @@ const emptyData: CrmData = {
 function readLocal(): CrmData {
   if (typeof window === "undefined") return crmFallbackData;
 
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : crmFallbackData;
+  return crmFallbackData;
 }
 
 function writeLocal(data: CrmData) {
-  window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadCrmData(): Promise<{ data: CrmData; mode: "supabase" | "local" }> {

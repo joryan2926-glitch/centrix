@@ -4,16 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { ClientPortalData } from "@/types/client-portal";
 
-const storageKey = "centrix-client-portal-data-v1";
-
 function readLocal(): ClientPortalData {
   if (typeof window === "undefined") return clientPortalFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : clientPortalFallbackData;
+  return clientPortalFallbackData;
 }
 
 function writeLocal(data: ClientPortalData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadClientPortalData(): Promise<{ data: ClientPortalData; mode: "local" | "supabase" }> {

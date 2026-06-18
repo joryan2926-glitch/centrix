@@ -51,21 +51,21 @@ export function NotificationsWorkspace() {
     );
   };
 
-  const addDemoAlert = () => {
+  const createManualAlert = () => {
     mutate(
       (current) => ({
         ...current,
         notifications: [
           createNotification({
-            title: "Nouvelle alerte business",
-            detail: "Une opportunite a fort potentiel vient d'etre detectee par CENTRIX.",
-            module: "crm",
-            severity: "success"
+            title: "Notification manuelle",
+            detail: "Cette notification a ete creee par un utilisateur CENTRIX.",
+            module: "system",
+            severity: "info"
           }),
           ...current.notifications
         ]
       }),
-      { title: "Alerte creee", detail: "La notification realtime est disponible dans le dashboard." }
+      { title: "Notification creee", detail: "La notification sera synchronisee avec Supabase." }
     );
   };
 
@@ -119,7 +119,7 @@ export function NotificationsWorkspace() {
               <Radio size={17} />
               Sync {mode}
             </Button>
-            <Button variant="primary" onClick={addDemoAlert}>
+            <Button variant="primary" onClick={createManualAlert}>
               <Sparkles size={17} />
               Creer alerte
             </Button>
@@ -167,9 +167,9 @@ export function NotificationsWorkspace() {
               <h2 className="text-lg font-semibold text-slate-950">Scenarios automatiques</h2>
               <p className="mt-1 text-sm text-slate-500">Declencheurs connectes aux modules CENTRIX.</p>
             </div>
-            <Button onClick={addDemoAlert} variant="surface">
+            <Button onClick={createManualAlert} variant="surface">
               <Zap size={16} />
-              Tester
+              Creer
             </Button>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">

@@ -2,8 +2,6 @@
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { DEMO_AUTH_USER } from "@/lib/auth/demo-session";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 type SupabaseContextValue = {
@@ -22,12 +20,12 @@ const SupabaseContext = createContext<SupabaseContextValue>({
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
-  const [user, setUser] = useState<User | null>(DEMO_MODE || !supabase ? DEMO_AUTH_USER : null);
-  const [loading, setLoading] = useState(Boolean(supabase && !DEMO_MODE));
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
-    if (DEMO_MODE || !supabase) {
-      setUser(DEMO_AUTH_USER);
+    if (!supabase) {
+      setUser(null);
       setLoading(false);
       return undefined;
     }

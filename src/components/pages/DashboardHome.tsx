@@ -293,7 +293,7 @@ export function DashboardHome() {
       ),
       automations: (
         <Card className="p-6" interactive>
-          <WidgetToolbar id="automations" moveWidget={moveWidget} title="Automatisations live" icon={<Clock3 size={19} className="text-blue-600" />} />
+          <WidgetToolbar id="automations" moveWidget={moveWidget} title="Automatisations" icon={<Clock3 size={19} className="text-blue-600" />} />
           <div className="mt-5 space-y-3">
             {activeConnections.slice(0, 4).map((connection) => (
               <div key={connection.id} className="flex items-center gap-3 rounded-[16px] border border-slate-200 bg-white p-3 transition-colors duration-200 hover:bg-blue-50">
@@ -322,24 +322,23 @@ export function DashboardHome() {
       <motion.section
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[30px] border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.12),0_0_0_1px_rgba(255,255,255,0.86)_inset] sm:p-9"
+        className="relative overflow-hidden rounded-[18px] border border-slate-200 bg-white p-5 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.035),0_12px_34px_rgba(15,23,42,0.07)] sm:p-6"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(37,99,235,0.16),transparent_34%),linear-gradient(135deg,rgba(37,99,235,0.08),transparent_44%)]" />
-        <div className="absolute -right-24 -top-24 hidden h-72 w-72 rounded-full bg-blue-500/14 blur-3xl lg:block" />
-        <div className="absolute right-10 top-8 hidden h-48 w-48 rounded-full border border-blue-200 lg:block" />
-        <div className="relative z-10 grid gap-10 xl:grid-cols-[1fr_430px] xl:items-end">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(37,99,235,0.10),transparent_34%),linear-gradient(135deg,rgba(37,99,235,0.05),transparent_44%)]" />
+        <div className="absolute right-0 top-0 hidden h-40 w-40 rounded-full bg-blue-500/10 blur-3xl lg:block" />
+        <div className="relative z-10 grid gap-5 xl:grid-cols-[1fr_340px] xl:items-end">
           <div>
-            <div className="inline-flex items-center gap-3 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-blue-700 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <CentrixLogo compact />
               {workspaceLabel} - {mode}
             </div>
-            <h1 className="mt-8 max-w-4xl text-4xl font-black tracking-[-0.055em] text-slate-950 sm:text-6xl">
-              Pilotez CENTRIX comme une startup IA haut de gamme.
+            <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.045em] text-slate-950 sm:text-4xl">
+              Bonjour, bienvenue sur votre cockpit CENTRIX.
             </h1>
-            <p className="mt-5 max-w-3xl text-base font-bold leading-8 text-slate-600">
-              Vue globale connectee a Supabase: clients, prospects, factures, projets, agenda, support, notifications et analytics en temps reel.
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+              Vos indicateurs sont calcules depuis Supabase. Si aucune donnee n&apos;existe, CENTRIX affiche un etat vide professionnel.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <Button onClick={sync} variant="primary">
                 Analyse IA
                 <Sparkles size={17} />
@@ -348,32 +347,32 @@ export function DashboardHome() {
                 className="border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:text-blue-700"
                 onClick={() => downloadJsonFile(`centrix-rapport-executive-${new Date().toISOString().slice(0, 10)}.json`, { generatedAt: new Date().toISOString(), snapshot })}
               >
-                Rapport executive
+                Rapport
                 <ArrowUpRight size={17} />
               </Button>
             </div>
-            <div className="mt-6 grid gap-2 sm:grid-cols-3">
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
               <MiniStat icon={<CircleDollarSign size={15} />} label="CA" value={`${Math.round((snapshot?.invoicesTotal ?? 0) / 1000)}K`} />
               <MiniStat icon={<UsersRound size={15} />} label="Conversion" value={`${(snapshot?.conversionRate ?? 0).toFixed(1)}%`} />
               <MiniStat icon={<Zap size={15} />} label="Urgent" value={String(snapshot?.urgentTasks ?? 0)} />
             </div>
           </div>
 
-          <Card className="p-6 text-slate-950 shadow-[0_20px_54px_rgba(37,99,235,0.14)]">
+          <Card className="p-5 text-slate-950 shadow-[0_12px_34px_rgba(37,99,235,0.10)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-600">Business health</p>
-                <p className="mt-2 text-6xl font-black text-slate-950">{businessHealth}</p>
+                <p className="mt-1 text-5xl font-black tracking-[-0.05em] text-slate-950">{businessHealth}</p>
               </div>
-              <div className="grid h-16 w-16 place-items-center rounded-[18px] bg-blue-50 text-blue-600">
-                <Zap size={28} />
+              <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-blue-50 text-blue-600">
+                <Zap size={22} />
               </div>
             </div>
-            <div className="mt-6 h-3 rounded-full bg-slate-100">
+            <div className="mt-5 h-2 rounded-full bg-slate-100">
               <motion.div initial={{ width: 0 }} animate={{ width: `${businessHealth}%` }} transition={{ duration: 0.8 }} className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#0B7CFF] shadow-[0_0_18px_rgba(37,99,235,0.34)]" />
             </div>
             <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
-              {snapshot ? `${snapshot.clientsCount} clients, ${snapshot.projectsActive} projets actifs, ${snapshot.invoicesPending} factures en attente.` : "Aucune donnée disponible."}
+              {snapshot ? `${snapshot.clientsCount} clients, ${snapshot.projectsActive} projets actifs, ${snapshot.invoicesPending} factures en attente.` : "Aucune donnee disponible."}
             </p>
           </Card>
         </div>
@@ -638,9 +637,9 @@ function ActivityFeedWidget({ events }: { events: Array<{ id: string; title: str
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">Activite temps reel</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">Timeline live: clients, paiements, devis, equipe et automatisations.</p>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Timeline: clients, paiements, devis, equipe et automatisations.</p>
         </div>
-        <Badge tone="emerald">Live</Badge>
+        <Badge tone="emerald">{feed.length} events</Badge>
       </div>
       {feed.length ? <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {feed.map((event, index) => (
@@ -720,6 +719,7 @@ function EmptyDashboardState({ compact, detail, title }: { compact?: boolean; de
   return (
     <div className={compact ? "rounded-[16px] border border-dashed border-slate-200 bg-slate-50 p-4" : "mt-5 rounded-[20px] border border-dashed border-slate-200 bg-slate-50 p-6"}>
       <p className="text-sm font-black text-slate-800">{title}</p>
+      <p className="mt-1 text-sm font-black leading-6 text-blue-700">Commencez par créer votre premier élément</p>
       <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{detail}</p>
     </div>
   );

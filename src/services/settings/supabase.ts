@@ -4,19 +4,15 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { SettingsData } from "@/types/settings";
 
-const storageKey = "centrix-settings-admin-data-v1";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readLocal(): SettingsData {
   if (typeof window === "undefined") return settingsFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : settingsFallbackData;
+  return settingsFallbackData;
 }
 
 function writeLocal(data: SettingsData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 export async function loadSettingsData(): Promise<{ data: SettingsData; mode: "local" | "supabase" }> {

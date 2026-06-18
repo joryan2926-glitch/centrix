@@ -4,17 +4,14 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { HrData, HrEmployee } from "@/types/hr";
 
-const storageKey = "centrix-hr-data-v1";
-
 function readLocal(): HrData {
   if (typeof window === "undefined") return hrFallbackData;
 
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : hrFallbackData;
+  return hrFallbackData;
 }
 
 function writeLocal(data: HrData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadHrData(): Promise<{ data: HrData; mode: "local" | "supabase" }> {

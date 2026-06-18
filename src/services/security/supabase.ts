@@ -4,16 +4,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { SecurityData } from "@/types/security";
 
-const storageKey = "centrix-security-data-v1";
-
 function readLocal(): SecurityData {
   if (typeof window === "undefined") return securityFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : securityFallbackData;
+  return securityFallbackData;
 }
 
 function writeLocal(data: SecurityData) {
-  if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(data));
+  void data;
 }
 
 export async function loadSecurityData(): Promise<{ data: SecurityData; mode: "local" | "supabase" }> {

@@ -4,20 +4,16 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { CloudDocument, DocumentsCloudData } from "@/types/documents";
 
-const storageKey = "centrix-documents-cloud-data-v1";
 export const documentsBucket = "centrix-documents";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readLocal(): DocumentsCloudData {
   if (typeof window === "undefined") return documentsFallbackData;
-  const local = window.localStorage.getItem(storageKey);
-  return local ? JSON.parse(local) : documentsFallbackData;
+  return documentsFallbackData;
 }
 
 function writeLocal(data: DocumentsCloudData) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(data));
-  }
+  void data;
 }
 
 export async function loadDocumentsData(): Promise<{ data: DocumentsCloudData; mode: "local" | "supabase" }> {

@@ -1,11 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DEMO_WORKSPACE_CONTEXT } from "@/lib/auth/demo-session";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import type { WorkspaceContext, WorkspaceRole } from "@/types/data-platform";
 
 export async function resolveWorkspaceContext(supabase: SupabaseClient): Promise<WorkspaceContext | null> {
-  if (DEMO_MODE) return DEMO_WORKSPACE_CONTEXT;
-
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
   if (!user) return null;
