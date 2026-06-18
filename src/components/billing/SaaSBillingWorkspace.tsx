@@ -192,8 +192,8 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
               <p className="mt-5 text-3xl font-semibold text-white">{formatSaasCurrency(plan.monthlyPrice)}<span className="text-sm text-slate-500">/mois</span></p>
               <div className="mt-5 space-y-2 text-sm text-slate-300">{plan.features.map((feature) => <p key={feature}>- {feature}</p>)}</div>
               <div className="mt-5 grid gap-2 text-xs text-slate-500">
-                <span>{plan.userLimit} utilisateurs</span>
-                <span>{plan.storageLimitGb} Go stockage</span>
+                <span>{plan.userLimit ? `${plan.userLimit} utilisateurs` : "Utilisateurs illimites"}</span>
+                <span>{plan.storageLimitGb ? `${plan.storageLimitGb} Go stockage` : "Stockage illimite"}</span>
                 <span>{plan.modules.includes("all") ? "Tous modules" : plan.modules.join(", ")}</span>
               </div>
               <Button className="mt-5 w-full" disabled={loadingAction === plan.id} onClick={() => startCheckout(plan)} variant={plan.highlighted ? "primary" : "surface"}>

@@ -14,7 +14,7 @@ export function SaaSBillingCharts({ data }: { data: SaaSBillingData }) {
   const plans = data.plans.filter((plan) => plan.code !== "free").map((plan) => ({
     name: plan.name,
     price: plan.monthlyPrice,
-    users: plan.userLimit
+    users: plan.userLimit || 0
   }));
 
   return (

@@ -18,13 +18,6 @@ import { MetricCard } from "@/ui/MetricCard";
 import { Skeleton } from "@/ui/Skeleton";
 import { Toast } from "@/ui/Toast";
 
-const teamPerformance = [
-  { label: "Sales", value: 86 },
-  { label: "Finance", value: 74 },
-  { label: "Support", value: 92 },
-  { label: "Marketing", value: 68 }
-];
-
 type AnalyticsPeriod = "jour" | "semaine" | "mois" | "annee";
 
 type PipelineCard = {
@@ -72,23 +65,31 @@ export function DashboardHome() {
     status: task.status
   }));
   const activeConnections = data.connections.filter((connection) => connection.active);
-  const activeModules = data.modules.filter((module) => module.status === "active").length;
   const operationalScore = Math.min(38, Math.round(((snapshot?.clientsCount ?? 0) + (snapshot?.projectsActive ?? 0) + (snapshot?.tasksOpen ?? 0)) / 2));
   const revenueScore = Math.min(34, Math.round(((snapshot?.monthlyRevenue ?? 0) / Math.max(snapshot?.forecastRevenue ?? 1, 1)) * 34));
   const conversionScore = Math.min(28, Math.round(snapshot?.conversionRate ?? 0));
-  const businessHealth = snapshot ? Math.min(98, Math.max(8, operationalScore + revenueScore + conversionScore)) : Math.min(98, Math.round((activeModules / Math.max(data.modules.length, 1)) * 100));
+  const businessHealth = snapshot ? Math.min(98, Math.max(0, operationalScore + revenueScore + conversionScore)) : 0;
   const workspaceLabel = snapshot?.workspace?.workspaceName ?? "CENTRIX Workspace";
+  const teamPerformance = useMemo(
+    () => [
+      { label: "Sales", value: Math.round(snapshot?.conversionRate ?? 0) },
+      { label: "Finance", value: Math.round(snapshot?.profitability ?? 0) },
+      { label: "Support", value: snapshot?.supportOpen ? Math.max(0, 100 - snapshot.supportOpen * 8) : 0 },
+      { label: "Marketing", value: Math.min(100, Math.round(((snapshot?.prospectsCount ?? 0) / Math.max(snapshot?.clientsCount ?? 1, 1)) * 100)) }
+    ],
+    [snapshot?.clientsCount, snapshot?.conversionRate, snapshot?.profitability, snapshot?.prospectsCount, snapshot?.supportOpen]
+  );
   const crmPipeline = data.analytics.map((point) => ({
     company: point.label,
     stage: point.leads > 0 ? "Pipeline actif" : "Analyse",
     value: `${point.revenue.toFixed(1)}K EUR`,
-    progress: `${Math.min(96, Math.max(18, Math.round(point.revenue * 9 + point.leads * 4)))}%`
+    progress: `${Math.min(96, Math.max(0, Math.round(point.revenue * 9 + point.leads * 4)))}%`
   }));
   const calendarItems = useMemo(
     () =>
       snapshot?.meetingsUpcoming
         ? [`${snapshot.meetingsUpcoming} rendez-vous a venir`, `${snapshot.tasksOpen} taches ouvertes`, `${snapshot.supportOpen} tickets support ouverts`]
-        : ["Comite revenus - 10:30", "Demo client - 14:00", "Revue securite - 16:15"],
+        : [],
     [snapshot?.meetingsUpcoming, snapshot?.supportOpen, snapshot?.tasksOpen]
   );
   const advancedAnalyticsData = useMemo(
@@ -97,20 +98,20 @@ export function DashboardHome() {
         clients: point.leads,
         depenses: Number(point.expenses.toFixed(2)),
         label: point.label,
-        prevision: Number((forecastSeries[index]?.value ?? point.revenue * 1.12).toFixed(2)),
+        prevision: Number((forecastSeries[index]?.value ?? 0).toFixed(2)),
         revenus: Number(point.revenue.toFixed(2))
       })),
     [data.analytics, forecastSeries]
   );
   const miniAnalytics = useMemo(
     () => [
-      { icon: ArrowUpRight, label: "Croissance", tone: "text-emerald-600", value: `+${(snapshot?.growthRate ?? 18).toFixed(1)}%` },
+      { icon: ArrowUpRight, label: "Croissance", tone: "text-emerald-600", value: `+${(snapshot?.growthRate ?? 0).toFixed(1)}%` },
       { icon: UserPlus, label: "Nouveaux clients", tone: "text-blue-600", value: String(snapshot?.clientsCount ?? data.analytics.reduce((total, point) => total + point.leads, 0)) },
-      { icon: Target, label: "Conversion", tone: "text-violet-600", value: `${(snapshot?.conversionRate ?? 24).toFixed(1)}%` },
-      { icon: CheckCircle2, label: "Taches terminees", tone: "text-emerald-600", value: String(data.tasks.filter((task) => task.status.toLowerCase().includes("done") || task.status.toLowerCase().includes("termine")).length || 18) },
+      { icon: Target, label: "Conversion", tone: "text-violet-600", value: `${(snapshot?.conversionRate ?? 0).toFixed(1)}%` },
+      { icon: CheckCircle2, label: "Taches terminees", tone: "text-emerald-600", value: String(data.tasks.filter((task) => task.status.toLowerCase().includes("done") || task.status.toLowerCase().includes("termine")).length) },
       { icon: UsersRound, label: "Equipe", tone: "text-cyan-600", value: `${Math.round(teamPerformance.reduce((total, team) => total + team.value, 0) / teamPerformance.length)}%` }
     ],
-    [data.analytics, data.tasks, snapshot?.clientsCount, snapshot?.conversionRate, snapshot?.growthRate]
+    [data.analytics, data.tasks, snapshot?.clientsCount, snapshot?.conversionRate, snapshot?.growthRate, teamPerformance]
   );
   const basePipelineColumns = useMemo<PipelineColumn[]>(
     () =>
@@ -246,11 +247,11 @@ export function DashboardHome() {
           <WidgetToolbar id="profitability" moveWidget={moveWidget} title="Rentabilite" icon={<CircleDollarSign size={19} className="text-emerald-600" />} />
           <div className="mt-6 grid gap-5">
             <div>
-              <p className="text-5xl font-black tracking-[-0.05em] text-slate-950">{Math.round(snapshot?.profitability ?? 72)}%</p>
+              <p className="text-5xl font-black tracking-[-0.05em] text-slate-950">{Math.round(snapshot?.profitability ?? 0)}%</p>
               <p className="mt-2 text-sm font-bold text-slate-500">Marge estimee sur cashflow et revenus factures.</p>
             </div>
             <div className="h-3 rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-[0_0_18px_rgba(37,99,235,0.28)]" style={{ width: `${Math.min(100, Math.round(snapshot?.profitability ?? 72))}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-[0_0_18px_rgba(37,99,235,0.28)]" style={{ width: `${Math.min(100, Math.round(snapshot?.profitability ?? 0))}%` }} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <MiniStat icon={<CircleDollarSign size={15} />} label="Cashflow" value={`${Math.round((snapshot?.cashflow ?? 0) / 1000)}K`} />
@@ -304,7 +305,7 @@ export function DashboardHome() {
         </Card>
       )
     }),
-    [activeConnections, acquisitionSeries, advancedAnalyticsData, aiDashboardInsights, calendarItems, cashflowSeries, crmPipeline, data.events, data.tasks, forecastSeries, miniAnalytics, movePipelineCard, moveWidget, notifications, period, pipelineColumns, recentTasks, snapshot?.cashflow, snapshot?.forecastRevenue, snapshot?.profitability, unreadCount]
+    [activeConnections, acquisitionSeries, advancedAnalyticsData, aiDashboardInsights, calendarItems, cashflowSeries, crmPipeline, data.events, data.tasks, forecastSeries, miniAnalytics, movePipelineCard, moveWidget, notifications, period, pipelineColumns, recentTasks, snapshot?.cashflow, snapshot?.forecastRevenue, snapshot?.profitability, teamPerformance, unreadCount]
   );
   const visibleOrder = order.filter((id) => dashboardWidgetIds.includes(id) && !hiddenWidgets.includes(id));
   const quickActions = [
@@ -372,7 +373,7 @@ export function DashboardHome() {
               <motion.div initial={{ width: 0 }} animate={{ width: `${businessHealth}%` }} transition={{ duration: 0.8 }} className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#0B7CFF] shadow-[0_0_18px_rgba(37,99,235,0.34)]" />
             </div>
             <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
-              {snapshot ? `${snapshot.clientsCount} clients, ${snapshot.projectsActive} projets actifs, ${snapshot.invoicesPending} factures en attente.` : `${activeModules} modules actifs, realtime et connexions inter-modules prepares.`}
+              {snapshot ? `${snapshot.clientsCount} clients, ${snapshot.projectsActive} projets actifs, ${snapshot.invoicesPending} factures en attente.` : "Aucune donnée disponible."}
             </p>
           </Card>
         </div>
@@ -585,7 +586,7 @@ function BusinessPipelineWidget({ columns, movePipelineCard, setDraggedDeal }: {
           <p className="mt-1 text-2xl font-black text-blue-700">{formatKiloCurrency(totalValue)}</p>
         </div>
       </div>
-      <div className="mt-5 grid gap-3 overflow-x-auto pb-2 lg:grid-cols-5">
+      {columns.length ? <div className="mt-5 grid gap-3 overflow-x-auto pb-2 lg:grid-cols-5">
         {columns.map((column) => (
           <div
             key={column.id}
@@ -624,19 +625,13 @@ function BusinessPipelineWidget({ columns, movePipelineCard, setDraggedDeal }: {
             </div>
           </div>
         ))}
-      </div>
+      </div> : <EmptyDashboardState title="Aucun pipeline Supabase" detail="Ajoutez des prospects CRM ou des opportunites commerciales pour alimenter cette vue." />}
     </Card>
   );
 }
 
 function ActivityFeedWidget({ events }: { events: Array<{ id: string; title: string; module?: string }> }) {
-  const fallback = [
-    { id: "client", title: "Nouveau client ajoute au CRM", module: "CRM" },
-    { id: "payment", title: "Paiement recu sur facture premium", module: "Billing" },
-    { id: "quote", title: "Devis valide par Blue Factory", module: "Sales" },
-    { id: "automation", title: "Workflow relance facture execute", module: "Automation" }
-  ];
-  const feed = events.length ? events.slice(0, 7) : fallback;
+  const feed = events.slice(0, 7);
 
   return (
     <Card className="p-6" interactive>
@@ -647,7 +642,7 @@ function ActivityFeedWidget({ events }: { events: Array<{ id: string; title: str
         </div>
         <Badge tone="emerald">Live</Badge>
       </div>
-      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {feed.length ? <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {feed.map((event, index) => (
           <motion.div key={event.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} className="relative rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
             <div className="absolute left-4 top-4 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_5px_rgba(16,185,129,0.12)]" />
@@ -657,7 +652,7 @@ function ActivityFeedWidget({ events }: { events: Array<{ id: string; title: str
             </div>
           </motion.div>
         ))}
-      </div>
+      </div> : <EmptyDashboardState title="Aucune activite Supabase" detail="Les prochaines actions clients, paiements, tickets ou workflows apparaitront ici." />}
     </Card>
   );
 }
@@ -682,6 +677,7 @@ function QuickAgendaWidget({ items, tasks }: { items: string[]; tasks: Array<{ i
             <Badge tone={task.priority === "urgent" ? "rose" : "cyan"}>{task.priority}</Badge>
           </div>
         ))}
+        {!items.length && !tasks.length ? <EmptyDashboardState title="Agenda vide" detail="Les rendez-vous et taches Supabase apparaitront ici." compact /> : null}
       </div>
     </Card>
   );
@@ -714,8 +710,18 @@ function DashboardNotificationsWidget({ notifications, unreadCount }: { notifica
             </motion.div>
           );
         })}
+        {!notifications.length ? <EmptyDashboardState title="Aucune notification" detail="Les alertes temps reel Supabase seront affichees ici." compact /> : null}
       </div>
     </Card>
+  );
+}
+
+function EmptyDashboardState({ compact, detail, title }: { compact?: boolean; detail: string; title: string }) {
+  return (
+    <div className={compact ? "rounded-[16px] border border-dashed border-slate-200 bg-slate-50 p-4" : "mt-5 rounded-[20px] border border-dashed border-slate-200 bg-slate-50 p-6"}>
+      <p className="text-sm font-black text-slate-800">{title}</p>
+      <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{detail}</p>
+    </div>
   );
 }
 

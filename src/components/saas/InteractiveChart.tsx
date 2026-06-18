@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { ChartPoint } from "@/types/charts";
 import { Badge } from "@/ui/Badge";
 import { Card } from "@/ui/Card";
@@ -20,6 +20,10 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
   const areaGradientId = `area-${chartId}`;
   const active = data[activeIndex];
   const max = Math.max(...data.map((point) => point.value), 1);
+
+  useEffect(() => {
+    setActiveIndex(data.length - 1);
+  }, [data.length]);
 
   const linePath = useMemo(() => {
     const width = 640;
@@ -43,13 +47,22 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
           <h2 className="text-base font-black text-slate-950">{title}</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">{subtitle}</p>
         </div>
-        <Badge tone="cyan">
-          {active.label} - {active.value}
-          {valueSuffix}
-        </Badge>
+        {active ? (
+          <Badge tone="cyan">
+            {active.label} - {active.value}
+            {valueSuffix}
+          </Badge>
+        ) : null}
       </div>
 
-      {type === "line" ? (
+      {!data.length ? (
+        <div className="mt-6 rounded-[18px] border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+          <p className="text-sm font-black text-slate-800">Aucune donnée disponible</p>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Les graphiques se rempliront automatiquement avec les lignes Supabase.</p>
+        </div>
+      ) : null}
+
+      {data.length && type === "line" ? (
         <div className="mt-6 overflow-hidden rounded-[18px] border border-slate-200 bg-[#f8fafc] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.92)]">
           <svg viewBox="0 0 640 220" className="h-56 w-full" role="img" aria-label={title}>
             <defs>
@@ -95,7 +108,7 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
             })}
           </svg>
         </div>
-      ) : (
+      ) : data.length ? (
         <div className="mt-6 space-y-3">
           {data.map((point, index) => {
             const isActive = index === activeIndex;
@@ -122,7 +135,7 @@ export function InteractiveChart({ title, subtitle, data, type = "line", valueSu
             );
           })}
         </div>
-      )}
+      ) : null}
     </Card>
   );
 }

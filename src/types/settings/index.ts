@@ -1,5 +1,5 @@
 export type AdminRole = "super_admin" | "admin" | "manager" | "employee" | "guest";
-export type SubscriptionPlan = "starter" | "premium" | "business" | "enterprise";
+export type SubscriptionPlan = "free" | "starter" | "premium" | "business" | "enterprise";
 export type ModuleKey = "crm" | "billing" | "finance" | "hr" | "agenda" | "marketing" | "support" | "documents" | "ai" | "legal";
 
 export type UserSettings = {

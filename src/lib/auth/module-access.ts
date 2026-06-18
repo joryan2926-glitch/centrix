@@ -4,7 +4,7 @@ const routePermissions: Array<[string, string]> = [
   ["/admin", "settings"],
   ["/platform-settings", "settings"],
   ["/onboarding", "dashboard"],
-  ["/profile", "dashboard"],
+  ["/profile", "profile"],
   ["/entreprises", "multi-company"],
   ["/multi-entreprises", "multi-company"],
   ["/franchises", "franchises"],
@@ -30,15 +30,15 @@ const routePermissions: Array<[string, string]> = [
   ["/reservations", "agenda"],
   ["/marketing", "marketing"],
   ["/marketing-digital", "marketing"],
-  ["/reseaux-sociaux", "marketing"],
-  ["/social-media", "marketing"],
+  ["/reseaux-sociaux", "social"],
+  ["/social-media", "social"],
   ["/ia", "ai"],
   ["/ia-business", "ai"],
   ["/business-ai", "ai"],
   ["/documents", "documents"],
   ["/documents-cloud", "documents"],
   ["/support", "support"],
-  ["/client-portal", "support"],
+  ["/client-portal", "clients"],
   ["/marketplace", "marketplace"],
   ["/services", "marketplace"],
   ["/providers", "marketplace"],
@@ -48,7 +48,7 @@ const routePermissions: Array<[string, string]> = [
   ["/security", "security"],
   ["/cybersecurity", "security"],
   ["/integrations", "integrations"],
-  ["/api-management", "integrations"],
+  ["/api-management", "api"],
   ["/automatisations", "workflows"],
   ["/automation", "workflows"],
   ["/workflows", "workflows"],
@@ -62,10 +62,10 @@ const routePermissions: Array<[string, string]> = [
   ,["/api/ia", "ai"]
   ,["/api/mistral", "ai"]
   ,["/api/workflows", "workflows"]
-  ,["/api/social", "marketing"]
+  ,["/api/social", "social"]
   ,["/api/stripe", "billing"]
   ,["/api/data", "dashboard"]
-  ,["/api/v1", "integrations"]
+  ,["/api/v1", "api"]
   ,["/api/core", "dashboard"]
   ,["/api/business-intelligence", "analytics"]
   ,["/api/banking", "finance"]

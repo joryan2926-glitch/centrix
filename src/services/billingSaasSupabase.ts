@@ -43,14 +43,14 @@ export async function loadSaaSBillingData(): Promise<{ data: SaaSBillingData; mo
   return {
     data: {
       plans: plans.data?.length ? plans.data : saasBillingFallbackData.plans,
-      customers: customers.data?.length ? customers.data : saasBillingFallbackData.customers,
-      subscriptions: subscriptions.data?.length ? subscriptions.data : saasBillingFallbackData.subscriptions,
-      invoices: invoices.data?.length ? invoices.data : saasBillingFallbackData.invoices,
-      payments: payments.data?.length ? payments.data : saasBillingFallbackData.payments,
+      customers: customers.data ?? [],
+      subscriptions: subscriptions.data ?? [],
+      invoices: invoices.data ?? [],
+      payments: payments.data ?? [],
       coupons: coupons.data?.length ? coupons.data : saasBillingFallbackData.coupons,
-      usageLimits: usageLimits.data?.length ? usageLimits.data : saasBillingFallbackData.usageLimits,
-      notifications: notifications.data?.length ? notifications.data : saasBillingFallbackData.notifications,
-      stripeEvents: stripeEvents.data?.length ? stripeEvents.data : saasBillingFallbackData.stripeEvents
+      usageLimits: usageLimits.data ?? [],
+      notifications: notifications.data ?? [],
+      stripeEvents: stripeEvents.data ?? []
     },
     mode: "supabase"
   };
