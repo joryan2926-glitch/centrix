@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertCircle, Database, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { Skeleton } from "@/ui/Skeleton";
@@ -10,11 +11,13 @@ type DataStateProps = {
   empty?: boolean;
   emptyTitle?: string;
   emptyDetail?: string;
+  actionHref?: string;
+  actionLabel?: string;
   onRetry?: () => void;
   children: ReactNode;
 };
 
-export function DataState({ loading, error, empty, emptyTitle = "Aucune donnee", emptyDetail = "Ajoutez une premiere entree pour activer ce module.", onRetry, children }: DataStateProps) {
+export function DataState({ actionHref, actionLabel = "Creer un element", loading, error, empty, emptyTitle = "Aucune donnee", emptyDetail = "Ajoutez une premiere entree pour activer ce module.", onRetry, children }: DataStateProps) {
   if (loading) {
     return (
       <div className="grid gap-4">
@@ -51,6 +54,11 @@ export function DataState({ loading, error, empty, emptyTitle = "Aucune donnee",
         </div>
         <h3 className="mt-4 text-lg font-black text-slate-950">{emptyTitle}</h3>
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{emptyDetail}</p>
+        {actionHref ? (
+          <Link className="mt-5 inline-flex" href={actionHref}>
+            <Button variant="primary">{actionLabel}</Button>
+          </Link>
+        ) : null}
       </Card>
     );
   }

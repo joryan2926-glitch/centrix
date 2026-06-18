@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { crmFallbackData } from "@/data/crm";
+import { crmEmptyData } from "@/data/crm";
 import { getSupabaseClient } from "@/lib/supabase";
 import { saveCrmData, loadCrmData, syncCrmData } from "@/services/supabaseCrm";
 import type { CrmData } from "@/types/crm";
@@ -12,7 +12,7 @@ type Toast = {
 };
 
 export function useCrmData() {
-  const [data, setData] = useState<CrmData>(crmFallbackData);
+  const [data, setData] = useState<CrmData>(crmEmptyData);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"local" | "supabase">("local");
   const [toast, setToast] = useState<Toast | null>(null);

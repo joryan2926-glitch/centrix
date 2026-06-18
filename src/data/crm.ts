@@ -15,7 +15,7 @@ export const crmLeads: CrmLead[] = [
 export const crmClients: CrmClient[] = [
 ];
 
-export const crmFallbackData: CrmData = {
+export const crmEmptyData: CrmData = {
   leads: crmLeads,
   clients: crmClients,
   notes: [],

@@ -72,7 +72,7 @@ export function LandingPage() {
             <Link href="/dashboard"><Button className="w-full sm:w-auto"><Play size={17} /> Voir le cockpit</Button></Link>
           </motion.div>
           <motion.div variants={fadeUp} className="mt-8 grid gap-3 sm:grid-cols-3">
-            {["68 routes SaaS", "Realtime ready", "Supabase + Stripe"].map((item) => (
+            {["Business OS", "Donnees Supabase", "Integrations natives"].map((item) => (
               <div key={item} className="rounded-[14px] border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-700 shadow-[0_14px_36px_rgba(15,23,42,0.05)] backdrop-blur-xl">
                 {item}
               </div>
@@ -89,7 +89,7 @@ export function LandingPage() {
                 <span className="rounded-full bg-blue-400/15 px-3 py-1 text-xs font-bold text-blue-100">Production</span>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {["MRR 84.2K", "Score IA 91", "Pipeline 428K"].map((metric) => (
+                {["Relation client", "Finance", "Operations"].map((metric) => (
                   <div key={metric} className="rounded-[16px] border border-white/10 bg-white/[0.07] p-4">
                     <p className="text-xs text-blue-100/70">CENTRIX</p>
                     <p className="mt-2 text-xl font-black">{metric}</p>
@@ -98,9 +98,12 @@ export function LandingPage() {
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.7fr]">
                 <div className="rounded-[18px] border border-white/10 bg-white/[0.07] p-4">
-                  <div className="flex h-48 items-end gap-2">
-                    {[42, 62, 55, 74, 69, 88, 96].map((height, index) => (
-                      <motion.div key={index} initial={{ height: 12 }} animate={{ height }} transition={{ delay: index * 0.08 }} className="flex-1 rounded-t-[10px] bg-gradient-to-t from-blue-700 to-cyan-300" />
+                  <div className="grid h-48 gap-3 sm:grid-cols-2">
+                    {["Clients", "Factures", "Projets", "Documents"].map((module, index) => (
+                      <motion.div key={module} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} className="rounded-[14px] border border-white/10 bg-white/[0.06] p-4">
+                        <p className="text-sm font-black">{module}</p>
+                        <p className="mt-2 text-xs font-semibold text-blue-100/70">Connecte aux donnees reelles</p>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
@@ -146,9 +149,9 @@ export function LandingPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              ["Croissance", "+28%", BarChart3],
-              ["Automations", "1 284", Zap],
-              ["Securite", "99.9%", ShieldCheck]
+              ["Croissance", "Supabase", BarChart3],
+              ["Automations", "Workflows", Zap],
+              ["Securite", "RBAC", ShieldCheck]
             ].map(([label, value, Icon]) => (
               <div key={String(label)} className="rounded-[18px] border border-slate-200 bg-white/78 p-5">
                 <Icon className="text-blue-600" size={22} />

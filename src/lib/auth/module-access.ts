@@ -1,5 +1,6 @@
 const routePermissions: Array<[string, string]> = [
   ["/permissions", "settings"],
+  ["/workspace-admin", "settings"],
   ["/settings", "settings"],
   ["/admin", "settings"],
   ["/platform-settings", "settings"],

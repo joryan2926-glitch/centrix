@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, BriefcaseBusiness, ChevronDown, ChevronRight, CreditCard, LogOut, Menu, Settings, UserRound, Users, X } from "lucide-react";
+import { Bot, BriefcaseBusiness, ChevronDown, ChevronRight, CreditCard, LogOut, Menu, Settings, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { RoutePermissionGuard } from "@/components/auth/RoutePermissionGuard";
 import { NotificationCenter } from "@/components/shell/NotificationCenter";
 import { QuickActions } from "@/components/shell/QuickActions";
 import { CentrixLogo } from "@/components/ui";
+import { AdminShell } from "@/layouts/AdminShell";
 import { favoriteNavigation, navigation, navigationGroups } from "@/data/navigation";
 import { signOutAction } from "@/app/auth/actions";
 import { useAuth } from "@/hooks/useAuth";
@@ -95,6 +96,7 @@ export function AppShell({ children }: AppShellProps) {
     { label: "Mon profil", href: "/profile", icon: UserRound },
     ...(canOpenAdmin ? [{ label: "Admin CENTRIX", href: "/admin", icon: Settings }] : []),
     ...(canOpenWorkspaceAdmin ? [
+      { label: "Admin entreprise", href: "/workspace-admin", icon: ShieldCheck },
       { label: "Mon abonnement", href: "/subscriptions", icon: CreditCard },
       { label: "Mon équipe", href: "/operations/users", icon: Users },
       { label: "Paramètres", href: "/settings", icon: Settings },
@@ -104,6 +106,10 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isPublicPage) {
     return <div className="min-h-screen bg-[#f6f8fb] text-slate-900">{children}</div>;
+  }
+
+  if (pathname.startsWith("/admin")) {
+    return <AdminShell>{children}</AdminShell>;
   }
 
   return (

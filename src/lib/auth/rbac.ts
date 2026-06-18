@@ -16,8 +16,8 @@ export function canManageWorkspace(role?: string | null) {
   return normalized === "SUPER_ADMIN" || normalized === "WORKSPACE_ADMIN";
 }
 
-const userGroups = new Set(["Accueil", "CRM", "Finance", "Operations", "Marketing", "IA", "Reseau & services", "CENTRIX Academy"]);
-const workspaceAdminGroups = new Set([...userGroups, "RH", "Parametres"]);
+const userGroups = new Set(["Tableau de bord", "Relation client", "Finance", "Operations", "Marketing", "Intelligence artificielle"]);
+const workspaceAdminGroups = new Set([...userGroups, "Ressources humaines", "Parametres", "Reseau & services", "CENTRIX Academy"]);
 
 const userBlockedModules = new Set([
   "settings",
@@ -35,7 +35,7 @@ const userBlockedModules = new Set([
 
 export function canAccessNavigationGroup(role: string | null | undefined, groupLabel: string) {
   const normalized = normalizeRole(role);
-  if (normalized === "SUPER_ADMIN") return true;
+  if (normalized === "SUPER_ADMIN") return workspaceAdminGroups.has(groupLabel);
   if (normalized === "WORKSPACE_ADMIN") return workspaceAdminGroups.has(groupLabel);
   return userGroups.has(groupLabel);
 }

@@ -63,7 +63,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     defaultOpen: true,
     icon: Home,
-    label: "Accueil",
+    label: "Tableau de bord",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Home, moduleKey: "dashboard", favorite: true, keywords: ["dashboard", "kpi", "activite"] },
       { label: "Activite recente", href: "/operations/activities", icon: Activity, moduleKey: "dashboard" },
@@ -73,7 +73,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   {
     defaultOpen: true,
     icon: Contact,
-    label: "CRM",
+    label: "Relation client",
     items: [
       { label: "CRM", href: "/crm", icon: BriefcaseBusiness, moduleKey: "crm", favorite: true },
       { label: "Clients", href: "/clients", icon: Contact, moduleKey: "clients", favorite: true },
@@ -127,7 +127,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: Bot,
-    label: "IA",
+    label: "Intelligence artificielle",
     items: [
       { label: "Assistant IA", href: "/ia", icon: Bot, moduleKey: "ai", badge: "AI", favorite: true },
       { label: "Business Intelligence", href: "/business-intelligence", icon: BrainCircuit, moduleKey: "analytics" },
@@ -140,7 +140,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
   },
   {
     icon: UsersRound,
-    label: "RH",
+    label: "Ressources humaines",
     items: [
       { label: "Employes", href: "/hr", icon: UsersRound, moduleKey: "hr" },
       { label: "RH", href: "/rh", icon: Users, moduleKey: "hr" },
@@ -176,6 +176,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
     icon: Settings,
     label: "Parametres",
     items: [
+      { label: "Administration entreprise", href: "/workspace-admin", icon: ShieldCheck, moduleKey: "settings" },
       { label: "Parametres", href: "/settings", icon: Settings, moduleKey: "settings" },
       { label: "Entreprise", href: "/entreprise", icon: Building2, moduleKey: "legal" },
       { label: "Juridique", href: "/juridique", icon: Gavel, moduleKey: "legal" },

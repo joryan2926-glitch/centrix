@@ -1,4 +1,4 @@
-import { crmFallbackData } from "@/data/crm";
+import { crmEmptyData } from "@/data/crm";
 import { getSupabaseClient } from "@/lib/supabase";
 import { resolveWorkspaceContext } from "@/services/data-platform/workspace";
 import type { CrmActivity, CrmClient, CrmData, CrmLead, CrmNote, CrmTask } from "@/types/crm";
@@ -12,9 +12,9 @@ const emptyData: CrmData = {
 };
 
 function readLocal(): CrmData {
-  if (typeof window === "undefined") return crmFallbackData;
+  if (typeof window === "undefined") return crmEmptyData;
 
-  return crmFallbackData;
+  return crmEmptyData;
 }
 
 function writeLocal(data: CrmData) {

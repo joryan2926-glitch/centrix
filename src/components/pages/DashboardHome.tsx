@@ -48,7 +48,7 @@ function formatKiloCurrency(value: number) {
 }
 
 export function DashboardHome() {
-  const { data, snapshot, loading, mode, toast, sync } = useSaasCoreDashboard();
+  const { data, snapshot, loading, toast, sync } = useSaasCoreDashboard();
   const { items: notifications, unreadCount } = useLiveNotifications();
   const { moveWidget } = useDashboardStore();
   const [period, setPeriod] = useState<AnalyticsPeriod>("mois");
@@ -320,7 +320,7 @@ export function DashboardHome() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-blue-700 shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <CentrixLogo compact />
-              {workspaceLabel} - {mode}
+              {workspaceLabel} - Donnees reelles
             </div>
             <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.045em] text-slate-950 sm:text-4xl">
               Bonjour, bienvenue sur votre cockpit CENTRIX.

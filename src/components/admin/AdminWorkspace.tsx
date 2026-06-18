@@ -4,8 +4,14 @@ import {
   BarChart3,
   Building2,
   CreditCard,
+  Database,
   GitBranch,
   Headphones,
+  Bot,
+  FileSignature,
+  Mail,
+  Activity,
+  ClipboardCheck,
   ShieldCheck,
   Users,
   Workflow
@@ -46,6 +52,48 @@ const adminSections = [
     icon: GitBranch
   },
   {
+    title: "Stripe",
+    description: "Controler les paiements, webhooks, abonnements et evenements billing.",
+    href: "/billing",
+    icon: CreditCard
+  },
+  {
+    title: "Supabase",
+    description: "Suivre la base, les API, les tables, RLS et la sante des services.",
+    href: "/api-management",
+    icon: Database
+  },
+  {
+    title: "IA",
+    description: "Superviser Mistral, les usages IA, les generations et les erreurs.",
+    href: "/business-intelligence",
+    icon: Bot
+  },
+  {
+    title: "DocuSign",
+    description: "Suivre les connexions OAuth, enveloppes et signatures documentaires.",
+    href: "/integrations",
+    icon: FileSignature
+  },
+  {
+    title: "Brevo",
+    description: "Piloter les emails transactionnels, campagnes et deliverabilite.",
+    href: "/integrations",
+    icon: Mail
+  },
+  {
+    title: "Monitoring systeme",
+    description: "Verifier disponibilite, erreurs runtime et signaux de production.",
+    href: "/security",
+    icon: Activity
+  },
+  {
+    title: "Logs",
+    description: "Auditer les actions critiques, connexions et evenements systeme.",
+    href: "/operations/audit",
+    icon: ClipboardCheck
+  },
+  {
     title: "Statistiques globales",
     description: "Analyser la performance plateforme via les donnees Supabase.",
     href: "/business-intelligence",
@@ -59,6 +107,8 @@ const controlPoints = [
   "Suivi abonnements et paiements",
   "Pilotage support et incidents",
   "Controle integrations et webhooks",
+  "Monitoring Stripe, Supabase, IA, Brevo et DocuSign",
+  "Lecture des logs systeme",
   "Statistiques globales plateforme"
 ];
 
