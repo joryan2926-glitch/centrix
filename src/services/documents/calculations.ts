@@ -100,7 +100,7 @@ export function createShare(documentId: string, email: string, permission: Docum
     documentId,
     email,
     permission,
-    secureLink: `https://centrix.local/share/${crypto.randomUUID()}`,
+    secureLink: `/documents/share/${crypto.randomUUID()}`,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
     createdAt: new Date().toISOString()
   };

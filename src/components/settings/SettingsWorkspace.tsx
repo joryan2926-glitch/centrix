@@ -43,7 +43,7 @@ export function SettingsWorkspace({ initialView = "dashboard" }: { initialView?:
   const [query, setQuery] = useState("");
   const [userModalOpen, setUserModalOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [newUser, setNewUser] = useState({ name: "Nouvel utilisateur", email: "user@centrix.local", role: "employee" as AdminRole });
+  const [newUser, setNewUser] = useState({ name: "", email: "", role: "employee" as AdminRole });
 
   const dashboard = useMemo(() => getAdminDashboard(data), [data]);
   const profile = data.userSettings[0];

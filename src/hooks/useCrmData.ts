@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { crmEmptyData } from "@/data/crm";
 import { getSupabaseClient } from "@/lib/supabase";
+import { useSupabaseContext } from "@/providers/SupabaseProvider";
 import { saveCrmData, loadCrmData, syncCrmData } from "@/services/supabaseCrm";
 import type { CrmData } from "@/types/crm";
 
@@ -12,6 +13,7 @@ type Toast = {
 };
 
 export function useCrmData() {
+  const { loading: supabaseLoading, user } = useSupabaseContext();
   const [data, setData] = useState<CrmData>(crmEmptyData);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"local" | "supabase">("local");
@@ -23,6 +25,7 @@ export function useCrmData() {
   }, []);
 
   useEffect(() => {
+    if (supabaseLoading) return undefined;
     let active = true;
 
     loadCrmData().then((result) => {
@@ -35,7 +38,7 @@ export function useCrmData() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [supabaseLoading, user?.id]);
 
   const refresh = useCallback(async () => {
     const result = await loadCrmData();
@@ -68,7 +71,12 @@ export function useCrmData() {
       setData((current) => {
         const next = updater(current);
         saveCrmData(next);
-        if (mode === "supabase") syncCrmData(next).then((result) => setMode(result.mode));
+        syncCrmData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) {
+            notify("Synchronisation Supabase impossible", result.error);
+          }
+        });
         return next;
       });
 
@@ -76,7 +84,7 @@ export function useCrmData() {
         notify(message.title, message.detail);
       }
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {

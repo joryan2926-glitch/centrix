@@ -104,9 +104,9 @@ export function AuthCard({ mode }: AuthCardProps) {
           <h2 className="mt-2 text-2xl font-black text-slate-950 lg:mt-0">{copy[mode].title}</h2>
           <p className="mt-2 text-sm text-slate-500">{copy[mode].detail}</p>
           <div className="mt-8 space-y-4">
-            {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Julien Business" /> : null}
-            {mode === "register" ? <Field icon={<ShieldCheck size={17} />} label="Entreprise" name="company" placeholder="CENTRIX SAS" /> : null}
-            {mode !== "reset" ? <Field autoComplete="email" icon={<Mail size={17} />} label="Email" name="email" placeholder="admin@centrix.app" type="email" /> : null}
+            {mode === "register" ? <Field icon={<UserRound size={17} />} label="Nom" name="name" placeholder="Votre nom" /> : null}
+            {mode === "register" ? <Field icon={<ShieldCheck size={17} />} label="Entreprise" name="company" placeholder="Nom de votre entreprise" /> : null}
+            {mode !== "reset" ? <Field autoComplete="email" icon={<Mail size={17} />} label="Email" name="email" placeholder="votre@email.fr" type="email" /> : null}
             {mode !== "forgot" ? <Field autoComplete={mode === "login" ? "current-password" : "new-password"} icon={<LockKeyhole size={17} />} label={mode === "reset" ? "Nouveau mot de passe" : "Mot de passe"} minLength={8} name="password" placeholder="8 caracteres minimum" type="password" /> : null}
           </div>
           <Button className="mt-6 w-full" disabled={loading} variant="primary">

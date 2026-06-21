@@ -61,18 +61,24 @@ export function useSettingsData() {
       setData((current) => {
         const next = updater(current);
         saveSettingsData(next);
-        if (mode === "supabase") syncSettingsData(next).then((result) => setMode(result.mode));
+        syncSettingsData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {
     const result = await syncSettingsData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Administration synchronisee" : "Sauvegarde locale", "Les parametres SaaS sont a jour.");
+    notify(
+      result.mode === "supabase" ? "Administration synchronisee" : "Synchronisation parametres impossible",
+      "error" in result && result.error ? result.error : "Les parametres SaaS sont a jour."
+    );
   }, [data, notify]);
 
   return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);

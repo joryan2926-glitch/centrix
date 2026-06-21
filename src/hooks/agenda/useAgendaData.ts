@@ -49,12 +49,15 @@ export function useAgendaData() {
       setData((current) => {
         const next = updater(current);
         saveAgendaData(next);
-        if (mode === "supabase") syncAgendaData(next).then((result) => setMode(result.mode));
+        syncAgendaData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {

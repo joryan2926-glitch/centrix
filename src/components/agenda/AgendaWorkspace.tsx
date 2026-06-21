@@ -76,8 +76,8 @@ function defaultDraft(start?: string, end?: string): Draft {
     start: toDateTimeLocal(startDate),
     end: toDateTimeLocal(endDate),
     participants: "",
-    location: "Salle Orbit",
-    videoUrl: "https://meet.centrix.local"
+    location: "",
+    videoUrl: ""
   };
 }
 

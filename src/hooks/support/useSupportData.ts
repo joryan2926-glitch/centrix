@@ -68,18 +68,24 @@ export function useSupportData() {
       setData((current) => {
         const next = updater(current);
         saveSupportData(next);
-        if (mode === "supabase") syncSupportData(next).then((result) => setMode(result.mode));
+        syncSupportData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {
     const result = await syncSupportData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Support synchronise" : "Sauvegarde locale", "Les donnees support sont a jour.");
+    notify(
+      result.mode === "supabase" ? "Support synchronise" : "Synchronisation support impossible",
+      "error" in result && result.error ? result.error : "Les donnees support sont a jour."
+    );
   }, [data, notify]);
 
   return useMemo(() => ({ data, loading, mode, toast, mutate, sync, notify }), [data, loading, mode, toast, mutate, sync, notify]);

@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanCode } from "@/lib/auth/plan-catalog";
 import { canManageWorkspace as canManageWorkspaceRole, normalizeRole, type CentrixRole } from "@/lib/auth/rbac";
 import { useSupabaseContext } from "@/providers/SupabaseProvider";
@@ -48,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { loading: supabaseLoading, supabase, user } = useSupabaseContext();
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(Boolean(supabase));
+  const bootstrapAttemptedRef = useRef(false);
 
   const loadProfile = useCallback(async () => {
     if (!supabase) {
@@ -57,17 +58,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!user) {
+      bootstrapAttemptedRef.current = false;
       setProfile(null);
       setProfileLoading(false);
       return;
     }
 
     setProfileLoading(true);
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, email, avatar_url, role, workspace_id, workspaces(name)")
       .eq("id", user.id)
       .maybeSingle();
+
+    if ((!data?.workspace_id || error) && !bootstrapAttemptedRef.current) {
+      bootstrapAttemptedRef.current = true;
+      await fetch("/api/auth/bootstrap", { method: "POST" }).catch(() => null);
+      const retry = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, role, workspace_id, workspaces(name)")
+        .eq("id", user.id)
+        .maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error || !data) {
       setProfile({

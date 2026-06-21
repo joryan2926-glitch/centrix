@@ -37,7 +37,7 @@ export type ModulePermission = {
   id: string;
   workspace_id: string;
   module_key: string;
-  role: "super_admin" | "admin" | "manager" | "employee" | "user" | "client";
+  role: "super_admin" | "workspace_admin" | "admin" | "manager" | "employee" | "user" | "client";
   can_read: boolean;
   can_create: boolean;
   can_update: boolean;

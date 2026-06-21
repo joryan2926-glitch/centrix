@@ -356,7 +356,7 @@ export function ComptabiliteWorkspace() {
           </nav>
           <div className="mt-4 rounded-[8px] border border-cyan-200/20 bg-cyan-300/10 p-3">
             <p className="text-xs uppercase tracking-[0.16em] text-cyan-100">Entreprise</p>
-            <p className="mt-1 text-sm text-slate-300">{company?.legalName ?? "CENTRIX SAS"}</p>
+            <p className="mt-1 text-sm text-slate-300">{company?.legalName ?? "Entreprise non renseignee"}</p>
             <p className="mt-2 text-xs text-slate-500">{mode === "supabase" ? "Realtime actif" : "Mode local"}</p>
           </div>
         </Card>

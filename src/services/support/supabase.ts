@@ -66,9 +66,9 @@ export async function syncSupportData(data: SupportData) {
   const normalized = normalizeSupportData(data);
   writeLocal(normalized);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   const validTicketIds = new Set(normalized.tickets.filter((row) => isUuid(row.id)).map((row) => row.id));
 
   const results = await Promise.all([
@@ -114,8 +114,8 @@ function mapTicketRow(row: SupportTicketRow) {
     id: String(row.id),
     title: String(row.title ?? ""),
     description: String(row.description ?? ""),
-    clientName: String(row.clientName ?? metadata.clientName ?? "Client CENTRIX"),
-    clientEmail: String(row.clientEmail ?? metadata.clientEmail ?? "client@centrix.fr"),
+    clientName: String(row.clientName ?? metadata.clientName ?? "Client non renseigne"),
+    clientEmail: String(row.clientEmail ?? metadata.clientEmail ?? ""),
     priority: String(row.priority ?? "medium") as SupportData["tickets"][number]["priority"],
     categoryId: String(row.categoryId ?? row.category ?? metadata.categoryId ?? "cat-technical"),
     status: String(row.status ?? "open") as SupportData["tickets"][number]["status"],

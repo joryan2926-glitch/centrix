@@ -60,7 +60,7 @@ export async function saveFinanceData(data: FinanceData) {
 export async function syncFinanceData(data: FinanceData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 
@@ -81,7 +81,7 @@ export async function syncFinanceData(data: FinanceData) {
 
 export async function upsertFinanceTransaction(transaction: FinanceTransaction) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   await ensureFinanceBootstrap(workspace.workspaceId);
@@ -107,7 +107,7 @@ export async function upsertFinanceTransaction(transaction: FinanceTransaction) 
 
 export async function deleteFinanceTransaction(id: string) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 

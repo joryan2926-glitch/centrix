@@ -1,6 +1,6 @@
 import type { DataTableName } from "@/repositories/supabaseRepository";
 
-export type WorkspaceRole = "super_admin" | "admin" | "manager" | "employee" | "client";
+export type WorkspaceRole = "super_admin" | "workspace_admin" | "admin" | "manager" | "employee" | "user" | "client";
 export type WorkspaceMode = "local" | "supabase";
 
 export type WorkspaceContext = {

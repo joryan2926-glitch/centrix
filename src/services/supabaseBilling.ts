@@ -52,10 +52,10 @@ export async function syncBillingDocuments(documents: BillingDocument[]) {
   await saveBillingDocuments(documents);
 
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
 
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 
   const errors = await Promise.all(documents.filter((document) => isUuid(document.id)).map((document) => upsertBillingDocument(document)));
   const error = errors.find(Boolean) ?? null;

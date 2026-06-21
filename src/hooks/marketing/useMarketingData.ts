@@ -54,18 +54,24 @@ export function useMarketingData() {
       setData((current) => {
         const next = updater(current);
         saveMarketingData(next);
-        if (mode === "supabase") syncMarketingData(next).then((result) => setMode(result.mode));
+        syncMarketingData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {
     const result = await syncMarketingData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Marketing synchronise" : "Sauvegarde locale", "Les donnees marketing sont a jour.");
+    notify(
+      result.mode === "supabase" ? "Marketing synchronise" : "Synchronisation marketing impossible",
+      "error" in result && result.error ? result.error : "Les donnees marketing sont a jour."
+    );
   }, [data, notify]);
 
   return useMemo(() => ({ data, loading, mode, toast, mutate, notify, refresh, sync }), [data, loading, mode, toast, mutate, notify, refresh, sync]);

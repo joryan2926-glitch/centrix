@@ -12,7 +12,22 @@ export async function resolveWorkspaceContext(supabase: SupabaseClient): Promise
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.workspace_id) return null;
+  if (!profile?.workspace_id) {
+    const { data: ownedWorkspace } = await supabase
+      .from("workspaces")
+      .select("id, name")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (!ownedWorkspace?.id) return null;
+
+    return {
+      role: "admin",
+      userId: user.id,
+      workspaceId: String(ownedWorkspace.id),
+      workspaceName: String(ownedWorkspace.name ?? "CENTRIX Workspace")
+    };
+  }
   const workspace = Array.isArray(profile.workspaces) ? profile.workspaces[0] : profile.workspaces;
 
   return {

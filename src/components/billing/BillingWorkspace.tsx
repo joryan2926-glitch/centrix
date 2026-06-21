@@ -3,6 +3,7 @@
 import { CreditCard, Download, FileDown, History, Plus, ReceiptText, Save, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { frenchVatRates } from "@/data/billing";
+import { useSupabaseContext } from "@/providers/SupabaseProvider";
 import {
   buildDocumentNumber,
   calculateBillingTotals,
@@ -41,17 +42,19 @@ function statusTone(status: BillingStatus) {
 }
 
 export function BillingWorkspace() {
+  const { loading: supabaseLoading, user } = useSupabaseContext();
   const [documents, setDocuments] = useState<BillingDocument[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [syncState, setSyncState] = useState("Local");
   const [stripeLoading, setStripeLoading] = useState(false);
 
   useEffect(() => {
+    if (supabaseLoading) return;
     loadBillingDocuments().then((items) => {
       setDocuments(items);
       setSelectedId(items[0]?.id ?? "");
     });
-  }, []);
+  }, [supabaseLoading, user?.id]);
 
   const selected = useMemo(
     () => documents.find((document) => document.id === selectedId) ?? documents[0],
@@ -104,12 +107,12 @@ export function BillingWorkspace() {
       number: buildDocumentNumber("quote", documents.length),
       type: "quote",
       status: "draft",
-      clientName: "Nouveau client",
-      clientEmail: "finance@client.fr",
-      clientAddress: "Adresse client, France",
+      clientName: "",
+      clientEmail: "",
+      clientAddress: "",
       issueDate: now.toISOString().slice(0, 10),
       dueDate: due.toISOString().slice(0, 10),
-      notes: "Devis valable 30 jours. TVA francaise appliquee selon les taux en vigueur.",
+      notes: "",
       lines: [emptyLine()],
       history: [createHistory("Devis cree", "Nouveau devis ajoute dans CENTRIX.")],
       createdAt: now.toISOString(),

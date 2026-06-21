@@ -68,9 +68,9 @@ export async function saveMarketingData(data: MarketingData) {
 export async function syncMarketingData(data: MarketingData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
 
   const results = await Promise.all([
@@ -87,7 +87,7 @@ export async function syncMarketingData(data: MarketingData) {
 
 export async function upsertMarketingPost(post: SocialPost, activity?: MarketingActivity) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   await ensureMarketingBootstrap(workspace.workspaceId);
@@ -103,7 +103,7 @@ export async function upsertMarketingPost(post: SocialPost, activity?: Marketing
 
 export async function upsertMarketingAccount(account: SocialAccount, activity?: MarketingActivity) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 
@@ -117,7 +117,7 @@ export async function upsertMarketingAccount(account: SocialAccount, activity?: 
 
 export async function deleteMarketingPost(postId: string) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   const { error } = await supabase.from("marketing_posts").delete().eq("id", postId).eq("workspace_id", workspace.workspaceId);

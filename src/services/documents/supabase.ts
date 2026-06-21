@@ -59,9 +59,9 @@ export async function saveDocumentsData(data: DocumentsCloudData) {
 export async function syncDocumentsData(data: DocumentsCloudData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   const validDocumentIds = new Set(data.documents.filter((row) => isUuid(row.id)).map((row) => row.id));
 
   const results = await Promise.all([
@@ -84,7 +84,7 @@ export async function uploadDocumentAsset(file: File, folderName = "uploads") {
   const storagePath = `${folderName}/${crypto.randomUUID()}.${extension}`;
 
   if (!supabase) {
-    return { mode: "local" as const, storagePath: `local://${storagePath}`, url: null };
+    return { error: "Supabase non configure.", mode: "local" as const, storagePath: null, url: null };
   }
 
   const result = await supabase.storage.from(documentsBucket).upload(storagePath, file, {

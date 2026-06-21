@@ -19,6 +19,8 @@ export const operationParentModules: Record<string, string> = {
   collaboration: "projects",
   messaging: "projects",
   emailing: "marketing",
+  forms: "marketing",
+  "landing-pages": "marketing",
   sms: "marketing",
   advertising: "marketing",
   "content-generation": "ai",

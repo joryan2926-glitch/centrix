@@ -64,12 +64,15 @@ export function useDocumentsData() {
       setData((current) => {
         const next = updater(current);
         saveDocumentsData(next);
-        if (mode === "supabase") syncDocumentsData(next).then((result) => setMode(result.mode));
+        syncDocumentsData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const uploadFiles = useCallback(
@@ -81,8 +84,17 @@ export function useDocumentsData() {
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
         const result = await uploadDocumentAsset(file);
+        if ("error" in result && result.error) {
+          notify("Upload impossible", result.error);
+          continue;
+        }
         created.push(createDocumentFromFile(file, folderId, result.storagePath, result.url));
         setUploadProgress(Math.round(((index + 1) / files.length) * 100));
+      }
+
+      if (!created.length) {
+        setUploadProgress(0);
+        return;
       }
 
       mutate(
@@ -100,13 +112,16 @@ export function useDocumentsData() {
       );
       window.setTimeout(() => setUploadProgress(0), 900);
     },
-    [mutate]
+    [mutate, notify]
   );
 
   const sync = useCallback(async () => {
     const result = await syncDocumentsData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Documents synchronises" : "Sauvegarde locale", "Le cloud documentaire est a jour.");
+    notify(
+      result.mode === "supabase" ? "Documents synchronises" : "Synchronisation documents impossible",
+      "error" in result && result.error ? result.error : "Le cloud documentaire est a jour."
+    );
   }, [data, notify]);
 
   const removeDocumentAsset = useCallback(async (document: CloudDocument) => {

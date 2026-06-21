@@ -129,7 +129,9 @@ export function DocumentsWorkspace() {
   }
 
   function shareDocument(documentId: string) {
-    const share = createShare(documentId, "collaborateur@centrix.local", "read");
+    const email = window.prompt("Email du destinataire");
+    if (!email?.trim()) return;
+    const share = createShare(documentId, email.trim(), "read");
     mutate(
       (current) => ({
         ...current,

@@ -370,7 +370,7 @@ async function legalCrud({ workspaceId }) {
 }
 
 async function operationalCrud({ workspaceId }) {
-  const modules = ["alerts", "activities", "prospects", "quotes", "treasury", "contracts", "business-plan", "funding", "compliance", "formalities", "recruitment", "salaries", "leave", "expenses", "time", "tasks", "gantt", "collaboration", "messaging", "emailing", "sms", "advertising", "content-generation", "financial-analysis", "document-generator", "data-chat", "sav", "faq", "experts", "trainers", "consultants", "resources", "connections", "audit", "access", "permissions", "users", "roles"];
+  const modules = ["alerts", "activities", "prospects", "quotes", "treasury", "contracts", "business-plan", "funding", "compliance", "formalities", "recruitment", "salaries", "leave", "expenses", "time", "tasks", "gantt", "collaboration", "messaging", "emailing", "forms", "landing-pages", "sms", "advertising", "content-generation", "financial-analysis", "document-generator", "data-chat", "sav", "faq", "experts", "trainers", "consultants", "resources", "connections", "audit", "access", "permissions", "users", "roles"];
   for (const module_key of modules) {
     const row = await insert("module_records", { workspace_id: workspaceId, module_key, title: `${marker} ${module_key}`, description: "Recette sous-module", record_type: "Recette", status: "active", priority: "medium", amount: 1, owner_name: "Administrateur", due_at: today, tags: ["recette"], metadata: { marker } });
     await update("module_records", row.id, { status: "completed" });

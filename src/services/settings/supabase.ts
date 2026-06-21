@@ -60,9 +60,9 @@ export async function saveSettingsData(data: SettingsData) {
 export async function syncSettingsData(data: SettingsData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   const withWorkspace = <T extends object>(row: T) => ({ ...row, workspace_id: workspace.workspaceId });
 
   const results = await Promise.all([

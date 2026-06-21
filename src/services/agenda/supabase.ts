@@ -58,10 +58,10 @@ export async function saveAgendaData(data: AgendaData) {
 export async function syncAgendaData(data: AgendaData) {
   writeLocal(data);
   const supabase = getSupabaseClient();
-  if (!supabase) return { mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
 
   const workspace = await resolveWorkspaceContext(supabase);
-  if (!workspace) return { mode: "local" as const };
+  if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 
   const results = await Promise.all([
     ...data.calendars.map((row) => supabase.from("calendars").upsert({ ...row, workspace_id: workspace.workspaceId }, { onConflict: "id" })),
@@ -84,7 +84,7 @@ export async function upsertAgendaWorkflow(input: {
   reminder?: Reminder | null;
 }) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
   await ensureAgendaBootstrap(workspace.workspaceId);
@@ -102,7 +102,7 @@ export async function upsertAgendaWorkflow(input: {
 
 export async function deleteAgendaWorkflow(eventId: string) {
   const supabase = getSupabaseClient();
-  if (!supabase) return { error: null, mode: "local" as const };
+  if (!supabase) return { error: "Supabase non configure.", mode: "local" as const };
   const workspace = await resolveWorkspaceContext(supabase);
   if (!workspace) return { error: "Workspace introuvable.", mode: "local" as const };
 

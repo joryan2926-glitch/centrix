@@ -57,18 +57,24 @@ export function useFinanceData() {
       setData((current) => {
         const next = updater(current);
         saveFinanceData(next);
-        if (mode === "supabase") syncFinanceData(next).then((result) => setMode(result.mode));
+        syncFinanceData(next).then((result) => {
+          setMode(result.mode);
+          if ("error" in result && result.error) notify("Synchronisation Supabase impossible", result.error);
+        });
         return next;
       });
       if (message) notify(message.title, message.detail);
     },
-    [mode, notify]
+    [notify]
   );
 
   const sync = useCallback(async () => {
     const result = await syncFinanceData(data);
     setMode(result.mode);
-    notify(result.mode === "supabase" ? "Finance synchronisee" : "Sauvegarde locale", "Les donnees comptables sont a jour.");
+    notify(
+      result.mode === "supabase" ? "Finance synchronisee" : "Synchronisation finance impossible",
+      "error" in result && result.error ? result.error : "Les donnees comptables sont a jour."
+    );
   }, [data, notify]);
 
   return useMemo(() => ({ data, loading, mode, toast, mutate, notify, refresh, sync }), [data, loading, mode, toast, mutate, notify, refresh, sync]);

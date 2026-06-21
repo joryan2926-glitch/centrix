@@ -56,7 +56,7 @@ export function SupportWorkspace() {
   const [draft, setDraft] = useState<TicketDraft>({
     title: "Nouvelle demande support",
     description: "Decrivez le probleme rencontre et le resultat attendu.",
-    clientName: "Client CENTRIX",
+    clientName: "",
     clientEmail: "client@entreprise.fr",
     priority: "medium",
     categoryId: "cat-technical"

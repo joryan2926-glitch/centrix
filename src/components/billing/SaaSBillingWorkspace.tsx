@@ -72,12 +72,16 @@ export function SaaSBillingWorkspace({ initialView = "dashboard" }: { initialVie
       notify("Plan gratuit", "Aucun checkout requis pour le plan Free.");
       return;
     }
+    if (!selectedCustomer?.email) {
+      notify("Client requis", "Selectionnez un client avec une adresse email avant d'ouvrir Stripe Checkout.");
+      return;
+    }
     setLoadingAction(plan.id);
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: plan.stripePriceId, customerEmail: selectedCustomer?.email ?? "billing@centrix.local" })
+        body: JSON.stringify({ priceId: plan.stripePriceId, customerEmail: selectedCustomer.email })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Checkout indisponible.");

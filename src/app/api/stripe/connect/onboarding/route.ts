@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
   let accountId = body?.accountId;
 
   if (!accountId) {
-    const accountParams = new URLSearchParams({ type: "express", country: "FR", email: body?.email ?? user.email ?? "provider@centrix.local" });
+    const email = body?.email ?? user.email;
+    if (!email) return Response.json({ error: "Email requis pour creer un compte Stripe Connect." }, { status: 400 });
+    const accountParams = new URLSearchParams({ type: "express", country: "FR", email });
     const accountResponse = await fetch("https://api.stripe.com/v1/accounts", {
       method: "POST",
       headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/x-www-form-urlencoded" },
