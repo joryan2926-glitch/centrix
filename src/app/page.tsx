@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "CENTRIX | Logiciel de gestion d'entreprise, CRM, facturation et automatisation",
+  title: "CENTRIX | Business OS simple pour TPE, indépendants et PME",
   description:
-    "CENTRIX est une plateforme SaaS tout-en-un pour gérer CRM, clients, devis, facturation, comptabilité, projets, RH, documents, automatisations, analytics et IA business.",
+    "CENTRIX est le copilote de gestion, relation client, finance, marketing et IA pour piloter une entreprise sans empiler les outils.",
   alternates: {
     canonical: "/"
   },
@@ -37,13 +37,13 @@ export const metadata: Metadata = {
     "logiciel RH",
     "automatisation entreprise",
     "logiciel tout-en-un",
-    "ERP SaaS",
+    "Business OS",
     "CENTRIX"
   ],
   openGraph: {
-    title: "CENTRIX | Plateforme SaaS tout-en-un pour piloter votre entreprise",
+    title: "CENTRIX | Le copilote business des petites entreprises",
     description:
-      "Centralisez CRM, facturation, comptabilité, projets, RH, automatisations et IA business dans une seule plateforme premium.",
+      "Centralisez prospects, clients, devis, factures, trésorerie, marketing et conseils IA dans une interface SaaS premium.",
     url: "/",
     type: "website"
   }
@@ -62,23 +62,23 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: "Comptabilité & finance",
-    text: "Pilotez revenus, dépenses, trésorerie, comptes bancaires, cashflow, prévisionnel et indicateurs financiers."
+    title: "Finance & trésorerie",
+    text: "Suivez revenus, dépenses, comptes bancaires, cashflow, prévisions et alertes de trésorerie."
   },
   {
     icon: ClipboardList,
-    title: "Gestion de projet",
-    text: "Organisez projets, tâches, deadlines, kanban, planning, documents et collaboration équipe."
+    title: "Marketing & acquisition",
+    text: "Lancez campagnes email, formulaires, landing pages et actions marketing pour convertir plus de prospects."
   },
   {
     icon: UsersRound,
-    title: "RH & équipe",
-    text: "Centralisez employés, contrats, congés, absences, salaires, planning et documents RH."
+    title: "Réseaux sociaux",
+    text: "Planifiez vos publications, structurez votre calendrier éditorial et analysez l'engagement."
   },
   {
     icon: Workflow,
-    title: "Automatisations",
-    text: "Automatisez relances, tâches, notifications, workflows CRM, marketing, support et opérations internes."
+    title: "Entreprise",
+    text: "Gérez profil entreprise, collaborateurs, documents essentiels, paramètres et support."
   },
   {
     icon: Bot,
@@ -87,8 +87,8 @@ const features = [
   },
   {
     icon: ShieldCheck,
-    title: "Sécurité & administration",
-    text: "Contrôlez rôles, permissions, abonnements, intégrations, API, logs, sécurité et multi-workspaces."
+    title: "Intégrations essentielles",
+    text: "Connectez Stripe, Bridge, Brevo, DocuSign, Google et Mistral pour industrialiser vos opérations."
   }
 ];
 
@@ -108,39 +108,39 @@ const plans = [
   {
     name: "Premium",
     price: "79 €",
-    description: "Pour équipes qui veulent automatiser, analyser et collaborer avec l'IA.",
+    description: "Pour équipes qui veulent analyser, vendre et communiquer avec l'IA.",
     highlighted: true,
-    features: ["10 utilisateurs", "Tout Starter", "Projets", "Automatisations", "IA CENTRIX", "Support", "Analytics", "Rapports"]
+    features: ["10 utilisateurs", "Tout Starter", "Marketing", "Réseaux sociaux", "IA CENTRIX", "Support", "Analytics", "Rapports"]
   },
   {
     name: "Business",
     price: "149 €",
-    description: "Pour entreprises en croissance avec finance, RH, marketing et intégrations avancées.",
-    features: ["Utilisateurs illimités", "Tout Premium", "RH", "Banque", "Trésorerie", "Marketing", "Réseaux sociaux", "API"]
+    description: "Pour entreprises en croissance avec banque, trésorerie, réseaux sociaux et intégrations avancées.",
+    features: ["Utilisateurs illimités", "Tout Premium", "Banque", "Trésorerie", "Marketing", "Réseaux sociaux", "API"]
   },
   {
     name: "Entreprise",
     price: "Sur devis",
-    description: "Pour organisations multi-sociétés, franchises et besoins d'accompagnement avancé.",
-    features: ["Tout Business", "Multi-entreprises", "White Label", "Marketplace", "SSO", "API illimitée", "Accompagnement dédié"]
+    description: "Pour organisations avec besoins d'accompagnement, gouvernance et intégrations avancées.",
+    features: ["Tout Business", "Accompagnement dédié", "Gouvernance", "SSO futur", "API illimitée", "Support prioritaire"]
   }
 ];
 
 const faqs = [
   {
-    question: "CENTRIX remplace-t-il un CRM, un outil de facturation et un logiciel de gestion de projet ?",
+    question: "CENTRIX remplace-t-il un CRM, un outil de facturation et des outils marketing ?",
     answer:
-      "Oui. CENTRIX réunit CRM, clients, facturation, comptabilité, projets, tâches, documents, RH, marketing, automatisations et analytics dans une seule interface SaaS."
+      "Oui. CENTRIX réunit prospects, clients, devis, factures, trésorerie, marketing, réseaux sociaux et IA business dans une seule interface SaaS."
   },
   {
-    question: "CENTRIX convient-il aux freelances, TPE, PME et franchises ?",
+    question: "CENTRIX convient-il aux indépendants, TPE, PME et associations ?",
     answer:
-      "Oui. Les plans Free, Starter, Premium, Business et Entreprise permettent d'adapter les modules, utilisateurs, permissions et limites à chaque structure."
+      "Oui. La plateforme est pensée pour les structures qui veulent piloter leur activité simplement sans mettre en place un outil lourd."
   },
   {
-    question: "Les abonnements débloquent-ils automatiquement les modules ?",
+    question: "Les données affichées sont-elles réelles ?",
     answer:
-      "Oui. Les accès sont contrôlés par plan et rôle afin d'afficher les modules autorisés et de proposer une mise à niveau si nécessaire."
+      "Oui. Les modules de l'application utilisent les données Supabase du workspace. Lorsqu'il n'y a aucune donnée, CENTRIX affiche un état vide professionnel."
   },
   {
     question: "Puis-je connecter Stripe, Google, Bridge, Brevo, Mistral et DocuSign ?",
@@ -162,7 +162,7 @@ const seoKeywords = [
   "ressources humaines",
   "automatisation",
   "logiciel de gestion d'entreprise",
-  "ERP SaaS",
+  "Business OS",
   "IA business",
   "tableau de bord entreprise"
 ];
@@ -196,13 +196,13 @@ export default function HomePage() {
         <div className="flex flex-col justify-center">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm">
             <Sparkles size={15} />
-            Logiciel de gestion d&apos;entreprise tout-en-un
+            Business OS pour TPE, indépendants et PME
           </div>
           <h1 className="mt-7 max-w-4xl text-5xl font-black tracking-tight text-slate-950 sm:text-7xl">
-            Gérez toute votre entreprise depuis une seule plateforme SaaS.
+            Pilotez clients, finance, marketing et croissance depuis CENTRIX.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            CENTRIX centralise CRM, facturation, comptabilité, gestion de projet, RH, documents, automatisations, paiements, analytics et IA business dans une interface premium pensée pour les entreprises modernes.
+            CENTRIX centralise prospects, clients, devis, factures, trésorerie, réseaux sociaux, marketing et conseiller IA dans une interface premium pensée pour les dirigeants.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href="/register" className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-gradient-to-b from-[#3478f6] to-[#2563EB] px-6 text-sm font-black text-white shadow-[0_18px_34px_rgba(37,99,235,0.26)] transition hover:-translate-y-0.5">
@@ -269,9 +269,9 @@ export default function HomePage() {
       <section id="fonctionnalites" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="max-w-3xl">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-blue-700">Fonctionnalités CENTRIX</p>
-          <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Tous les outils clés pour gérer une entreprise.</h2>
+          <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Les outils essentiels pour gérer et développer une entreprise.</h2>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Remplacez les outils dispersés par une plateforme de gestion d&apos;entreprise claire, connectée et prête pour la croissance.
+            Remplacez les outils dispersés par une plateforme claire, connectée et orientée croissance.
           </p>
         </div>
         <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -294,15 +294,15 @@ export default function HomePage() {
         <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
           <section className="rounded-[24px] border border-slate-200 bg-white/90 p-7 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-blue-700">Pourquoi CENTRIX</p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Une alternative moderne aux ERP lourds.</h2>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Une alternative moderne aux outils dispersés.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              CENTRIX est conçu pour les dirigeants, équipes commerciales, responsables finance, chefs de projet et équipes support qui veulent une vision unifiée de l&apos;activité.
+              CENTRIX est conçu pour les dirigeants, indépendants et équipes qui veulent une vision claire de leur activité commerciale, financière et marketing.
             </p>
           </section>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              ["Centralisation", "CRM, factures, projets, RH et documents au même endroit."],
-              ["Automatisation", "Moins de tâches répétitives, plus de pilotage opérationnel."],
+              ["Centralisation", "CRM, factures, trésorerie, marketing et IA au même endroit."],
+              ["Automatisation", "Moins de clics, plus d'actions concrètes pour avancer chaque jour."],
               ["Décision", "Des KPI, rapports et recommandations IA pour agir plus vite."]
             ].map(([title, text]) => (
               <article key={title} className="rounded-[20px] border border-slate-200 bg-white/88 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
